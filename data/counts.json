@@ -1,0 +1,16 @@
+{
+ "companies": 41,
+ "lead_rows": 123,
+ "unique_leads_expected": 113,
+ "duplicate_groups": 10,
+ "role_based": 6,
+ "invalid_email": 5,
+ "suppressed_emails": 8,
+ "suppressed_domains": 2,
+ "customer_leads": 8,
+ "invalid_timezone": 3,
+ "invalid_sms_phone": 5,
+ "mailboxes": 4,
+ "must_not_send": 29,
+ "scripted_replies": 10
+}

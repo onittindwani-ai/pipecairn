@@ -1,0 +1,63 @@
+{
+ "measured_on": "2026-11-24",
+ "tests": {
+  "passed": 187,
+  "skipped": 1,
+  "failed": 0,
+  "coverage_percent": 91
+ },
+ "web_unit_tests": 5,
+ "browser_tests": 40,
+ "screenshots": 34,
+ "adapters_registered": 15,
+ "contract_tests": 7,
+ "tool_groups": 7,
+ "tools_scored": 18,
+ "seed": {
+  "companies": 41,
+  "lead_rows": 123,
+  "unique_leads_expected": 113,
+  "duplicate_groups": 10,
+  "role_based": 6,
+  "invalid_email": 5,
+  "suppressed_emails": 8,
+  "suppressed_domains": 2,
+  "customer_leads": 8,
+  "invalid_timezone": 3,
+  "invalid_sms_phone": 5,
+  "mailboxes": 4,
+  "must_not_send": 29,
+  "scripted_replies": 10
+ },
+ "reader": {
+  "set_a_first": {
+   "total": 174,
+   "strict": 103,
+   "strict_percent": 59.2,
+   "lenient": 110,
+   "lenient_percent": 63.2,
+   "stops_missed": 14
+  },
+  "set_a_after": {
+   "total": 174,
+   "strict": 142,
+   "strict_percent": 81.6,
+   "lenient": 146,
+   "lenient_percent": 83.9,
+   "stops_missed": 8
+  },
+  "set_b_first": {
+   "total": 170,
+   "strict": 114,
+   "strict_percent": 67.1,
+   "lenient": 121,
+   "lenient_percent": 71.2,
+   "stops_missed": 7,
+   "clear_stops": 34
+  },
+  "old_heldout_first": {
+   "total": 134,
+   "correct": 44
+  }
+ }
+}

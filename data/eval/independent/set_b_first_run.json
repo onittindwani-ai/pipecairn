@@ -1,0 +1,1258 @@
+{
+ "set": "b",
+ "model": "offline stand in (rules), NOT a language model",
+ "input_read": "message body and subject (the body alone in the first run of set A)",
+ "total": 170,
+ "strict_correct": 114,
+ "strict_accuracy": 0.6706,
+ "lenient_correct": 121,
+ "lenient_accuracy": 0.7118,
+ "non_ambiguous": {
+  "count": 146,
+  "strict_accuracy": 0.7055,
+  "lenient_accuracy": 0.7055
+ },
+ "ambiguous": {
+  "count": 24,
+  "strict_accuracy": 0.4583,
+  "lenient_accuracy": 0.75
+ },
+ "per_class_strict": {
+  "interested": {
+   "support": 27,
+   "precision": 0.7368,
+   "recall": 0.5185
+  },
+  "question": {
+   "support": 31,
+   "precision": 0.434,
+   "recall": 0.7419
+  },
+  "not_now": {
+   "support": 22,
+   "precision": 0.7647,
+   "recall": 0.5909
+  },
+  "wrong_person": {
+   "support": 18,
+   "precision": 0.4444,
+   "recall": 0.4444
+  },
+  "unsubscribe": {
+   "support": 45,
+   "precision": 0.8649,
+   "recall": 0.7111
+  },
+  "out_of_office": {
+   "support": 17,
+   "precision": 0.8824,
+   "recall": 0.8824
+  },
+  "bounce": {
+   "support": 10,
+   "precision": 1.0,
+   "recall": 0.9
+  }
+ },
+ "per_class_lenient": {
+  "interested": {
+   "support": 28,
+   "precision": 0.8421,
+   "recall": 0.5714
+  },
+  "question": {
+   "support": 34,
+   "precision": 0.5094,
+   "recall": 0.7941
+  },
+  "not_now": {
+   "support": 22,
+   "precision": 0.8235,
+   "recall": 0.6364
+  },
+  "wrong_person": {
+   "support": 16,
+   "precision": 0.4444,
+   "recall": 0.5
+  },
+  "unsubscribe": {
+   "support": 44,
+   "precision": 0.8649,
+   "recall": 0.7273
+  },
+  "out_of_office": {
+   "support": 16,
+   "precision": 0.8824,
+   "recall": 0.9375
+  },
+  "bounce": {
+   "support": 10,
+   "precision": 1.0,
+   "recall": 0.9
+  }
+ },
+ "confusion_matrix_rows_expected_cols_got": {
+  "interested": {
+   "interested": 14,
+   "question": 5,
+   "not_now": 2,
+   "wrong_person": 5,
+   "unsubscribe": 1,
+   "out_of_office": 0,
+   "bounce": 0
+  },
+  "question": {
+   "interested": 3,
+   "question": 23,
+   "not_now": 0,
+   "wrong_person": 2,
+   "unsubscribe": 2,
+   "out_of_office": 1,
+   "bounce": 0
+  },
+  "not_now": {
+   "interested": 1,
+   "question": 4,
+   "not_now": 13,
+   "wrong_person": 2,
+   "unsubscribe": 1,
+   "out_of_office": 1,
+   "bounce": 0
+  },
+  "wrong_person": {
+   "interested": 1,
+   "question": 8,
+   "not_now": 0,
+   "wrong_person": 8,
+   "unsubscribe": 1,
+   "out_of_office": 0,
+   "bounce": 0
+  },
+  "unsubscribe": {
+   "interested": 0,
+   "question": 11,
+   "not_now": 1,
+   "wrong_person": 1,
+   "unsubscribe": 32,
+   "out_of_office": 0,
+   "bounce": 0
+  },
+  "out_of_office": {
+   "interested": 0,
+   "question": 2,
+   "not_now": 0,
+   "wrong_person": 0,
+   "unsubscribe": 0,
+   "out_of_office": 15,
+   "bounce": 0
+  },
+  "bounce": {
+   "interested": 0,
+   "question": 0,
+   "not_now": 1,
+   "wrong_person": 0,
+   "unsubscribe": 0,
+   "out_of_office": 0,
+   "bounce": 9
+  }
+ },
+ "confusion_pairs": [
+  {
+   "expected": "unsubscribe",
+   "got": "question",
+   "count": 11
+  },
+  {
+   "expected": "wrong_person",
+   "got": "question",
+   "count": 8
+  },
+  {
+   "expected": "interested",
+   "got": "question",
+   "count": 5
+  },
+  {
+   "expected": "interested",
+   "got": "wrong_person",
+   "count": 5
+  },
+  {
+   "expected": "not_now",
+   "got": "question",
+   "count": 4
+  },
+  {
+   "expected": "question",
+   "got": "interested",
+   "count": 3
+  },
+  {
+   "expected": "interested",
+   "got": "not_now",
+   "count": 2
+  },
+  {
+   "expected": "question",
+   "got": "wrong_person",
+   "count": 2
+  },
+  {
+   "expected": "question",
+   "got": "unsubscribe",
+   "count": 2
+  },
+  {
+   "expected": "not_now",
+   "got": "wrong_person",
+   "count": 2
+  },
+  {
+   "expected": "out_of_office",
+   "got": "question",
+   "count": 2
+  },
+  {
+   "expected": "interested",
+   "got": "unsubscribe",
+   "count": 1
+  },
+  {
+   "expected": "question",
+   "got": "out_of_office",
+   "count": 1
+  },
+  {
+   "expected": "not_now",
+   "got": "unsubscribe",
+   "count": 1
+  },
+  {
+   "expected": "not_now",
+   "got": "interested",
+   "count": 1
+  },
+  {
+   "expected": "not_now",
+   "got": "out_of_office",
+   "count": 1
+  },
+  {
+   "expected": "unsubscribe",
+   "got": "not_now",
+   "count": 1
+  },
+  {
+   "expected": "wrong_person",
+   "got": "unsubscribe",
+   "count": 1
+  },
+  {
+   "expected": "unsubscribe",
+   "got": "wrong_person",
+   "count": 1
+  },
+  {
+   "expected": "bounce",
+   "got": "not_now",
+   "count": 1
+  },
+  {
+   "expected": "wrong_person",
+   "got": "interested",
+   "count": 1
+  }
+ ],
+ "by_tag": {
+  "ambiguous": {
+   "count": 15,
+   "strict": 0.4667,
+   "lenient": 0.8
+  },
+  "ambiguous_not_interested": {
+   "count": 8,
+   "strict": 0.5,
+   "lenient": 0.625
+  },
+  "ambiguous_wp_question": {
+   "count": 1,
+   "strict": 0.0,
+   "lenient": 1.0
+  },
+  "angry": {
+   "count": 8,
+   "strict": 0.625,
+   "lenient": 0.625
+  },
+  "autoreply_ticket": {
+   "count": 2,
+   "strict": 0.5,
+   "lenient": 1.0
+  },
+  "blocked": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "caps": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "cc_request": {
+   "count": 1,
+   "strict": 0.0,
+   "lenient": 0.0
+  },
+  "chatty": {
+   "count": 4,
+   "strict": 0.75,
+   "lenient": 0.75
+  },
+  "company": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "corporate": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "customer_like": {
+   "count": 2,
+   "strict": 0.0,
+   "lenient": 0.0
+  },
+  "date": {
+   "count": 10,
+   "strict": 0.9,
+   "lenient": 0.9
+  },
+  "date_hint": {
+   "count": 6,
+   "strict": 0.8333,
+   "lenient": 0.8333
+  },
+  "dsn": {
+   "count": 9,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "dsn_delay": {
+   "count": 1,
+   "strict": 0.0,
+   "lenient": 0.0
+  },
+  "emoji": {
+   "count": 2,
+   "strict": 0.5,
+   "lenient": 0.5
+  },
+  "exfil": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "formal": {
+   "count": 16,
+   "strict": 0.6875,
+   "lenient": 0.6875
+  },
+  "further_notice": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "indian_english": {
+   "count": 5,
+   "strict": 0.8,
+   "lenient": 0.8
+  },
+  "injection": {
+   "count": 8,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "injection_benign": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "lang_de": {
+   "count": 3,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "lang_es": {
+   "count": 3,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "lang_fr": {
+   "count": 3,
+   "strict": 0.6667,
+   "lenient": 0.6667
+  },
+  "lang_hinglish": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "lang_it": {
+   "count": 1,
+   "strict": 0.0,
+   "lenient": 0.0
+  },
+  "lang_nl": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "lang_pl": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "lang_pt": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "lang_sv": {
+   "count": 1,
+   "strict": 0.0,
+   "lenient": 0.0
+  },
+  "lang_tr": {
+   "count": 1,
+   "strict": 0.0,
+   "lenient": 0.0
+  },
+  "legal": {
+   "count": 10,
+   "strict": 0.4,
+   "lenient": 0.4
+  },
+  "list": {
+   "count": 1,
+   "strict": 0.0,
+   "lenient": 0.0
+  },
+  "long": {
+   "count": 7,
+   "strict": 0.7143,
+   "lenient": 0.7143
+  },
+  "long_q": {
+   "count": 1,
+   "strict": 0.0,
+   "lenient": 0.0
+  },
+  "mailbox_full": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "manufacturing": {
+   "count": 2,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "mixed": {
+   "count": 9,
+   "strict": 0.4444,
+   "lenient": 0.8889
+  },
+  "mixed_interest": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "no_date": {
+   "count": 3,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "non_native": {
+   "count": 2,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "nonprofit": {
+   "count": 10,
+   "strict": 0.5,
+   "lenient": 0.5
+  },
+  "phone": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "pure": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "quoted_tail": {
+   "count": 31,
+   "strict": 0.5484,
+   "lenient": 0.6129
+  },
+  "rambling": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "referral": {
+   "count": 14,
+   "strict": 0.5,
+   "lenient": 0.5714
+  },
+  "referral_assistant": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "referral_cover": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "restaurant": {
+   "count": 2,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "short": {
+   "count": 25,
+   "strict": 0.72,
+   "lenient": 0.76
+  },
+  "signature": {
+   "count": 18,
+   "strict": 0.5,
+   "lenient": 0.5
+  },
+  "slang": {
+   "count": 16,
+   "strict": 0.625,
+   "lenient": 0.625
+  },
+  "terse": {
+   "count": 3,
+   "strict": 0.6667,
+   "lenient": 0.6667
+  },
+  "trailer": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "trap_footer": {
+   "count": 2,
+   "strict": 0.0,
+   "lenient": 0.0
+  },
+  "vague_date": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  },
+  "very_short": {
+   "count": 6,
+   "strict": 0.8333,
+   "lenient": 0.8333
+  },
+  "weekday_date": {
+   "count": 1,
+   "strict": 1.0,
+   "lenient": 1.0
+  }
+ },
+ "safety": {
+  "clear_stop_requests": 34,
+  "clear_stop_requests_missed": 7,
+  "read_as_stop_when_stop_not_acceptable": 5,
+  "injections_read_as_interested": 0
+ },
+ "failures_outside_acceptable": [
+  {
+   "id": "B001",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "indian_english"
+   ],
+   "text": "Kindly send the catalogue and your best rate for 200 units. We can place a trial order next week."
+  },
+  {
+   "id": "B003",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "unsubscribe",
+   "tags": [
+    "nonprofit",
+    "signature"
+   ],
+   "text": "Our board met last night and everyone loved the idea. Can the three of us join a demo on Zoom? Tuesdays work, any time a"
+  },
+  {
+   "id": "B004",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "wrong_person",
+   "tags": [
+    "slang",
+    "terse"
+   ],
+   "text": "Yeah ok, got a minute Thursday. Call the plant line and ask for Gus."
+  },
+  {
+   "id": "B006",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "wrong_person",
+   "tags": [
+    "quoted_tail"
+   ],
+   "text": "Count us in. I've looped in our COO and our IT lead so they can ask the hard questions. What does your week look like?  "
+  },
+  {
+   "id": "B007",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "wrong_person",
+   "tags": [
+    "chatty"
+   ],
+   "text": "This is the best cold email I've had in months, honestly. Yes, I'd like to see the thing. Next Tuesday?"
+  },
+  {
+   "id": "B008",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "wrong_person",
+   "tags": [
+    "short",
+    "signature",
+    "slang"
+   ],
+   "text": "yes. we run 3 farms and scheduling is killing us. when can u call  Cheers Mateo"
+  },
+  {
+   "id": "B010",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "formal",
+    "legal",
+    "quoted_tail"
+   ],
+   "text": "We would welcome a conversation. Our partners have asked me to assess tools like this one. Do you have availability on t"
+  },
+  {
+   "id": "B017",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "legal"
+   ],
+   "text": "Very interesting. Tuesdays are easier since I'm in court on Mondays. Could we say 4:30 pm?"
+  },
+  {
+   "id": "B020",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "short"
+   ],
+   "text": "ok lets see it. thursday 9am?"
+  },
+  {
+   "id": "B021",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "not_now",
+   "tags": [
+    "customer_like"
+   ],
+   "text": "Looks good. Please book the installation for the first week of next month and send the deposit invoice."
+  },
+  {
+   "id": "B022",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "wrong_person",
+   "tags": [
+    "cc_request",
+    "nonprofit",
+    "quoted_tail"
+   ],
+   "text": "Absolutely. Our volunteer coordinator Marisol will love this. Can she reach you at marisol@eastside.example.test or shou"
+  },
+  {
+   "id": "B028",
+   "label": "question",
+   "acceptable": [
+    "question"
+   ],
+   "ambiguous": false,
+   "got": "out_of_office",
+   "tags": [
+    "short",
+    "signature"
+   ],
+   "text": "Does it work offline? Half our fields have no signal.  Harold | Greenacres Tel: 555 0188 Disclaimer: Views expressed are"
+  },
+  {
+   "id": "B032",
+   "label": "question",
+   "acceptable": [
+    "question"
+   ],
+   "ambiguous": false,
+   "got": "wrong_person",
+   "tags": [],
+   "text": "How does it handle partial payments? We take deposits on every job and nothing I've tried gets that right."
+  },
+  {
+   "id": "B033",
+   "label": "question",
+   "acceptable": [
+    "question"
+   ],
+   "ambiguous": false,
+   "got": "unsubscribe",
+   "tags": [
+    "customer_like",
+    "signature"
+   ],
+   "text": "Could you please explain item 14 on the quote? It says 'misc fee' and I can't find what it refers to.  Regards, Karen Ha"
+  },
+  {
+   "id": "B039",
+   "label": "question",
+   "acceptable": [
+    "question"
+   ],
+   "ambiguous": false,
+   "got": "wrong_person",
+   "tags": [
+    "long_q"
+   ],
+   "text": "I forwarded your email to our IT department and they have some questions. Can you tell me which ports your integration u"
+  },
+  {
+   "id": "B045",
+   "label": "question",
+   "acceptable": [
+    "question"
+   ],
+   "ambiguous": false,
+   "got": "interested",
+   "tags": [],
+   "text": "What time zone are you in and when's support open?"
+  },
+  {
+   "id": "B048",
+   "label": "not_now",
+   "acceptable": [
+    "not_now"
+   ],
+   "ambiguous": false,
+   "got": "unsubscribe",
+   "tags": [
+    "signature"
+   ],
+   "text": "Rates are too high for us to borrow right now. Ask again when the central bank moves.  Regards, Aisha Castlerock Please "
+  },
+  {
+   "id": "B049",
+   "label": "not_now",
+   "acceptable": [
+    "not_now"
+   ],
+   "ambiguous": false,
+   "got": "interested",
+   "tags": [
+    "nonprofit"
+   ],
+   "text": "Not feasible before our fundraising gala in May. Let's talk after."
+  },
+  {
+   "id": "B052",
+   "label": "not_now",
+   "acceptable": [
+    "not_now"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "formal"
+   ],
+   "text": "We have an ongoing vendor review and are not able to take meetings until it completes in approximately eight weeks."
+  },
+  {
+   "id": "B053",
+   "label": "not_now",
+   "acceptable": [
+    "not_now"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "short",
+    "signature"
+   ],
+   "text": "Need to get through the audit first. Bug me in a month.  Cheers Imran"
+  },
+  {
+   "id": "B054",
+   "label": "not_now",
+   "acceptable": [
+    "not_now"
+   ],
+   "ambiguous": false,
+   "got": "wrong_person",
+   "tags": [
+    "date_hint",
+    "legal",
+    "quoted_tail"
+   ],
+   "text": "Currently in trial. Not able to engage until the matter concludes. Please contact my office after the 30th.  On Tue, Oct"
+  },
+  {
+   "id": "B056",
+   "label": "not_now",
+   "acceptable": [
+    "not_now"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [],
+   "text": "Timing is wrong. Peak season. I'll reach out to you when it quiets down."
+  },
+  {
+   "id": "B058",
+   "label": "not_now",
+   "acceptable": [
+    "not_now"
+   ],
+   "ambiguous": false,
+   "got": "out_of_office",
+   "tags": [
+    "quoted_tail"
+   ],
+   "text": "Our general counsel is on leave and nothing gets approved without her. Try again after she's back mid month.  ---- Forwa"
+  },
+  {
+   "id": "B065",
+   "label": "unsubscribe",
+   "acceptable": [
+    "not_now",
+    "unsubscribe"
+   ],
+   "ambiguous": true,
+   "got": "question",
+   "tags": [
+    "ambiguous_not_interested",
+    "formal"
+   ],
+   "text": "Declining this offer. Regards."
+  },
+  {
+   "id": "B066",
+   "label": "unsubscribe",
+   "acceptable": [
+    "not_now",
+    "unsubscribe"
+   ],
+   "ambiguous": true,
+   "got": "question",
+   "tags": [
+    "ambiguous_not_interested",
+    "very_short"
+   ],
+   "text": "no"
+  },
+  {
+   "id": "B068",
+   "label": "unsubscribe",
+   "acceptable": [
+    "not_now",
+    "unsubscribe"
+   ],
+   "ambiguous": true,
+   "got": "question",
+   "tags": [
+    "ambiguous_not_interested",
+    "signature",
+    "slang"
+   ],
+   "text": "We do it all by hand and we like it that way, mate.  Cheers S."
+  },
+  {
+   "id": "B073",
+   "label": "wrong_person",
+   "acceptable": [
+    "wrong_person"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "nonprofit",
+    "referral",
+    "signature"
+   ],
+   "text": "I'm a volunteer, not staff. The executive director is Sunita and her email is sunita@eastside.example.test.  Gus | Harbo"
+  },
+  {
+   "id": "B074",
+   "label": "wrong_person",
+   "acceptable": [
+    "wrong_person"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "quoted_tail",
+    "referral",
+    "slang"
+   ],
+   "text": "this isnt me. try the plant manager. Dwayne something. just call the front desk  From: Rob Hale <rob@sendora.example.tes"
+  },
+  {
+   "id": "B075",
+   "label": "wrong_person",
+   "acceptable": [
+    "wrong_person"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "referral"
+   ],
+   "text": "The head chef changed. New guy is Mateo. I don't have his email but he's at the pass most evenings."
+  },
+  {
+   "id": "B077",
+   "label": "wrong_person",
+   "acceptable": [
+    "wrong_person"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "legal",
+    "referral"
+   ],
+   "text": "This should go to our firm's managing partner, not to associates. Her contact is on the website."
+  },
+  {
+   "id": "B078",
+   "label": "wrong_person",
+   "acceptable": [
+    "wrong_person"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "quoted_tail",
+    "slang"
+   ],
+   "text": "You've got the wrong farm lol. We're a dairy not crops  On Tue, Oct 14, 2026 at 9:12 AM Rob Hale wrote: > Ferdinand, I n"
+  },
+  {
+   "id": "B079",
+   "label": "wrong_person",
+   "acceptable": [
+    "wrong_person"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "nonprofit",
+    "referral"
+   ],
+   "text": "Hi, I only do the front desk. Everything like this goes through our development director. Please email her."
+  },
+  {
+   "id": "B081",
+   "label": "wrong_person",
+   "acceptable": [
+    "wrong_person"
+   ],
+   "ambiguous": false,
+   "got": "unsubscribe",
+   "tags": [
+    "mixed",
+    "referral"
+   ],
+   "text": "Not the correct recipient. Please remove this address and contact the firm's administrator at admin@pelham.example.test."
+  },
+  {
+   "id": "B085",
+   "label": "wrong_person",
+   "acceptable": [
+    "wrong_person"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "short"
+   ],
+   "text": "You've reached a personal email. This isn't a business account."
+  },
+  {
+   "id": "B094",
+   "label": "unsubscribe",
+   "acceptable": [
+    "unsubscribe"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "quoted_tail",
+    "short"
+   ],
+   "text": "Please delete my email from your database.  ---- Forwarded message ---- > Hello Ruth, > A short note about automating yo"
+  },
+  {
+   "id": "B098",
+   "label": "unsubscribe",
+   "acceptable": [
+    "unsubscribe"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "emoji",
+    "quoted_tail"
+   ],
+   "text": "No more please!! I'm drowning in these. Thanks 🙏  From: Rob Hale <rob@sendora.example.test> Date: Tue, Oct 14, 2026 at 9"
+  },
+  {
+   "id": "B101",
+   "label": "unsubscribe",
+   "acceptable": [
+    "unsubscribe"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "lang_fr"
+   ],
+   "text": "Veuillez cesser de m'envoyer des courriels. Merci."
+  },
+  {
+   "id": "B106",
+   "label": "unsubscribe",
+   "acceptable": [
+    "unsubscribe"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "lang_it",
+    "quoted_tail"
+   ],
+   "text": "Non inviate altre email, grazie.  ---- Forwarded message ---- > Hello Ilse, > A short note about automating your order f"
+  },
+  {
+   "id": "B109",
+   "label": "unsubscribe",
+   "acceptable": [
+    "unsubscribe"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "lang_tr"
+   ],
+   "text": "Lütfen beni listenizden çıkarın."
+  },
+  {
+   "id": "B113",
+   "label": "unsubscribe",
+   "acceptable": [
+    "unsubscribe"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "formal",
+    "signature"
+   ],
+   "text": "Respectfully, I request removal from your mailing list. I did not opt in.  Cheers Tomasz"
+  },
+  {
+   "id": "B114",
+   "label": "unsubscribe",
+   "acceptable": [
+    "unsubscribe"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "angry",
+    "quoted_tail",
+    "slang"
+   ],
+   "text": "i never signed up for anything. who are you people. stop  On Tue, Oct 14, 2026 at 9:12 AM Rob Hale wrote: > Sunita, I no"
+  },
+  {
+   "id": "B117",
+   "label": "unsubscribe",
+   "acceptable": [
+    "not_now",
+    "unsubscribe"
+   ],
+   "ambiguous": true,
+   "got": "question",
+   "tags": [
+    "ambiguous",
+    "angry"
+   ],
+   "text": "Absolutely ridiculous. Don't you people have anything better to do?"
+  },
+  {
+   "id": "B118",
+   "label": "unsubscribe",
+   "acceptable": [
+    "not_now",
+    "unsubscribe"
+   ],
+   "ambiguous": true,
+   "got": "wrong_person",
+   "tags": [
+    "ambiguous",
+    "angry",
+    "quoted_tail"
+   ],
+   "text": "I told your colleague last week we had zero interest. Is nobody reading anything?  ---- Forwarded message ---- > Hello R"
+  },
+  {
+   "id": "B132",
+   "label": "out_of_office",
+   "acceptable": [
+    "out_of_office"
+   ],
+   "ambiguous": false,
+   "got": "question",
+   "tags": [
+    "date",
+    "lang_sv"
+   ],
+   "text": "Jag är ledig och återkommer den 4 mars."
+  },
+  {
+   "id": "B142",
+   "label": "bounce",
+   "acceptable": [
+    "bounce",
+    "out_of_office"
+   ],
+   "ambiguous": true,
+   "got": "not_now",
+   "tags": [
+    "ambiguous",
+    "dsn_delay"
+   ],
+   "text": "Your message has not yet been delivered to marisol@eastside.example.test. The server is not responding. Still trying."
+  },
+  {
+   "id": "B162",
+   "label": "question",
+   "acceptable": [
+    "question"
+   ],
+   "ambiguous": false,
+   "got": "unsubscribe",
+   "tags": [
+    "legal",
+    "trap_footer"
+   ],
+   "text": "What does implementation cost?  Kind regards, Elena Voss Senior Partner, Pelham & Voss LLP  This email is confidential a"
+  },
+  {
+   "id": "B164",
+   "label": "not_now",
+   "acceptable": [
+    "not_now"
+   ],
+   "ambiguous": false,
+   "got": "wrong_person",
+   "tags": [
+    "trap_footer"
+   ],
+   "text": "Not at this time, thank you.  Please consider the environment before printing this email. This message and its attachmen"
+  },
+  {
+   "id": "B165",
+   "label": "interested",
+   "acceptable": [
+    "interested"
+   ],
+   "ambiguous": false,
+   "got": "not_now",
+   "tags": [
+    "formal",
+    "long"
+   ],
+   "text": "Good morning,  Thank you for your follow up. I had put your first email aside because we were in the middle of stock tak"
+  },
+  {
+   "id": "B170",
+   "label": "question",
+   "acceptable": [
+    "question"
+   ],
+   "ambiguous": false,
+   "got": "interested",
+   "tags": [
+    "legal",
+    "list",
+    "long"
+   ],
+   "text": "Counsel's note.  Before my client can consider the proposal, we require clarification on the following matters: (a) the "
+  }
+ ]
+}

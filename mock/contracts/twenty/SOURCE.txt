@@ -1,0 +1,3 @@
+Vendor: Twenty CRM. Docs read 2026-11-23: https://docs.twenty.com/developers/extend/api
+No machine readable spec exists to test against. The page says "There is no static API reference for Twenty": the API reference is generated per workspace (Settings, Developers, API, after creating a key). It has no example of creating a person or finding people by email, and the only people example is a REST field selection (GET /rest/people?fields=id,name,emails,company).
+So no contract test is possible without a real workspace. The adapter's GraphQL field names stay UNVERIFIED (see docs/facts/twenty.md). The existing test against mock/twenty_mock.py only proves the adapter and the mock agree with each other.

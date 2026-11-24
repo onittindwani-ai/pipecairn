@@ -1,0 +1,5 @@
+email,first_name,last_name,title,company,domain,timezone,source
+nia.fixture@northwind-test.example,Nia,Okoye,Owner,"Northwind Test, LLC",northwind-test.example,America/Chicago,csv_file
+tomas.fixture@harbourlane-test.example,Tomas,Brandt,Practice Manager,Harbour Lane Test Clinic,harbourlane-test.example,America/Denver,csv_file
+ines.fixture@copperfield-test.example,Ines,Marlow,Director,Copperfield Test Studio,copperfield-test.example,America/Los_Angeles,csv_file
+omar.fixture@lindenworks-test.example,Omar,Keane,Founder,Linden Works Test,lindenworks-test.example,America/New_York,csv_file

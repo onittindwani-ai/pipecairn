@@ -1,0 +1,141 @@
+{
+ "duplicate_emails": [
+  "aria.yates61@indigoaccounting.example.test",
+  "cleo.kerr60@riversolar.example.test",
+  "ivy.alder97@granitelogistics.example.test",
+  "liam.ellis96@indigoaccounting.example.test",
+  "maya.yates44@granitefitness.example.test",
+  "priya.marsh94@orchardrealty.example.test",
+  "priya.thorn2@deltaaccounting.example.test",
+  "sven.marsh80@anchorrealty.example.test",
+  "sven.thorn43@orcharddesign.example.test",
+  "zoe.upton73@juniperlegal.example.test"
+ ],
+ "duplicate_group_count": 10,
+ "role_based": [
+  "admin@garnetroofing.example.test",
+  "hello@indigoaccounting.example.test",
+  "info@granitefitness.example.test",
+  "office@brightfitness.example.test",
+  "sales@indigoplumbing.example.test",
+  "support@garnetfitness.example.test"
+ ],
+ "invalid_email": [
+  "double@@bad.example.test",
+  "missingtld@localhost",
+  "no-at-sign.example.test",
+  "spaces in@bad.example.test",
+  "trailingdot@bad.example.test."
+ ],
+ "suppressed_emails": [
+  "cleo.kerr60@riversolar.example.test",
+  "hugo.reeve86@granitelogistics.example.test",
+  "maya.boyd93@deltaplumbing.example.test",
+  "maya.cross35@anchorrealty.example.test",
+  "maya.yates44@granitefitness.example.test",
+  "priya.irwin38@willowfitness.example.test",
+  "ruby.quill69@orcharddesign.example.test",
+  "zoe.marsh54@lanternclinic.example.test"
+ ],
+ "suppressed_domains": [
+  "emberclinic.example.test",
+  "orchardrealty.example.test"
+ ],
+ "customer_leads": [
+  "aria.stone26@harborfitness.example.test",
+  "ethan.ellis28@cedarlegal.example.test",
+  "finn.frost30@harborfitness.example.test",
+  "jude.irwin32@cedarlegal.example.test",
+  "marco.dale27@cedarfitness.example.test",
+  "marco.joyce31@cedarfitness.example.test",
+  "nadia.dale29@maplelogistics.example.test",
+  "yuki.fox25@maplelogistics.example.test"
+ ],
+ "invalid_timezone": [
+  "double@@bad.example.test",
+  "elena.stone76@lanternstudio.example.test",
+  "yuki.fox25@maplelogistics.example.test"
+ ],
+ "invalid_sms_phone": [
+  "cleo.vale10@anchorrealty.example.test",
+  "intern11.cart@gmail.example.test",
+  "intern6.cart@gmail.example.test",
+  "maya.brook9@deltaaccounting.example.test",
+  "yuki.fox25@maplelogistics.example.test"
+ ],
+ "perfect_fit_min_score": 70,
+ "perfect_fit": [
+  "cleo.vale10@anchorrealty.example.test",
+  "hugo.marsh11@juniperplumbing.example.test",
+  "jude.dale6@deltaplumbing.example.test",
+  "liam.hale8@juniperlegal.example.test",
+  "maya.brook9@deltaaccounting.example.test",
+  "maya.ellis4@juniperplumbing.example.test",
+  "nora.fox12@brightclinic.example.test",
+  "omar.joyce7@lanternclinic.example.test",
+  "priya.thorn2@deltaaccounting.example.test",
+  "sven.stone3@anchorrealty.example.test",
+  "zoe.marsh5@brightclinic.example.test",
+  "zoe.vale1@juniperlegal.example.test"
+ ],
+ "poor_fit_max_score": 30,
+ "poor_fit": [
+  "intern0.cart@gmail.example.test",
+  "intern1.cart@gmail.example.test",
+  "intern10.cart@gmail.example.test",
+  "intern11.cart@gmail.example.test",
+  "intern2.cart@gmail.example.test",
+  "intern3.cart@gmail.example.test",
+  "intern4.cart@gmail.example.test",
+  "intern5.cart@gmail.example.test",
+  "intern6.cart@gmail.example.test",
+  "intern7.cart@gmail.example.test",
+  "intern8.cart@gmail.example.test",
+  "intern9.cart@gmail.example.test"
+ ],
+ "must_not_send": [
+  "admin@garnetroofing.example.test",
+  "aria.stone26@harborfitness.example.test",
+  "cleo.kerr60@riversolar.example.test",
+  "double@@bad.example.test",
+  "elena.stone76@lanternstudio.example.test",
+  "ethan.ellis28@cedarlegal.example.test",
+  "finn.frost30@harborfitness.example.test",
+  "hello@indigoaccounting.example.test",
+  "hugo.reeve86@granitelogistics.example.test",
+  "info@granitefitness.example.test",
+  "jude.irwin32@cedarlegal.example.test",
+  "marco.dale27@cedarfitness.example.test",
+  "marco.joyce31@cedarfitness.example.test",
+  "maya.boyd93@deltaplumbing.example.test",
+  "maya.cross35@anchorrealty.example.test",
+  "maya.yates44@granitefitness.example.test",
+  "missingtld@localhost",
+  "nadia.dale29@maplelogistics.example.test",
+  "no-at-sign.example.test",
+  "office@brightfitness.example.test",
+  "priya.irwin38@willowfitness.example.test",
+  "priya.marsh94@orchardrealty.example.test",
+  "ruby.quill69@orcharddesign.example.test",
+  "sales@indigoplumbing.example.test",
+  "spaces in@bad.example.test",
+  "support@garnetfitness.example.test",
+  "trailingdot@bad.example.test.",
+  "yuki.fox25@maplelogistics.example.test",
+  "zoe.marsh54@lanternclinic.example.test"
+ ],
+ "mailbox_over_cap": "jo@send.pipecairn-demo.example.test",
+ "mailbox_high_bounce": "kit@reach.pipecairn-demo.example.test",
+ "scripted_reply_intents": [
+  "interested",
+  "question",
+  "not_now",
+  "wrong_person",
+  "unsubscribe",
+  "out_of_office",
+  "bounce",
+  "interested",
+  "question",
+  "not_now"
+ ]
+}

@@ -1,0 +1,23 @@
+# Glossary
+
+- **Adapter**: a small piece that talks to one outside service (email, texting, calendar, CRM, e-signature).
+- **Approver**: a login that can approve or reject drafts but cannot change settings.
+- **Audit log**: an append only record of important actions. Each entry includes a fingerprint of the one before, so edits are detectable.
+- **Bounce**: an email that could not be delivered. Too many bounces hurt your sender reputation.
+- **Cap (daily cap)**: the most messages one mailbox may send in a day.
+- **Cold email**: email to someone who has not asked to hear from you.
+- **DKIM, SPF, DMARC**: three DNS records that prove an email really came from your domain.
+- **Draft mode**: the app writes and plans messages but nothing leaves.
+- **E.164**: the standard phone number format, such as +15555550123.
+- **Environment variable**: a named setting given to a program before it starts.
+- **Kill switch**: one switch that stops all sending at once.
+- **Lead**: a person at a company you might sell to.
+- **Live mode**: the app really sends, inside the limits.
+- **10DLC**: the US carrier registration needed to send business texts.
+- **Quiet hours**: times when nobody gets a message (here 18:00 to 08:00 at the lead's local time, and weekends).
+- **Role based address**: a shared inbox like info@ or sales@, which is not a person.
+- **Sequence**: the planned list of messages and waits sent to a lead.
+- **Suppression list**: people and domains who must never be contacted again.
+- **Tier A, B, C**: how far an adapter was taken. A is built and tested against a local copy, B is written from docs and not run, C is a recipe prompt.
+- **Webhook**: a service calling your app when something happens, such as a reply arriving.
+- **Worker**: the background program that does timed jobs.

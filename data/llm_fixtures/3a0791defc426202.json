@@ -1,0 +1,7 @@
+{
+  "text": "{\"body\": \"Hi there,\\n\\nThanks for asking. [[FILL IN: your answer to their question]]\\n\\nWould a short call help?\\n\\nBest,\\nAlex\"}",
+  "input_tokens": 150,
+  "output_tokens": 40,
+  "model": "claude-sonnet-5-5",
+  "prompt_preview": "[task:draft_reply]\nWrite the draft answer to the reply that follows.\nFacts (JSON): {\"intent\": \"question\", \"recipient_first_name\": \"there\", \"sender_first_name\": "
+}

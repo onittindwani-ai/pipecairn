@@ -1,0 +1,115 @@
+/* Pipecairn additions on top of the shared kit. Tokens come from the kit (--sx-*). */
+.cl-page { display: grid; gap: var(--sx-space-3); animation: cl-in var(--sx-dur-page) var(--sx-ease-out) both; }
+@keyframes cl-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.cl-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sx-space-2); }
+.cl-title { font-family: var(--sx-font-serif); font-weight: 400; font-size: var(--sx-text-h2); line-height: 1.1; margin: 0; }
+.cl-sub { color: var(--sx-ink-2); margin: 8px 0 0; max-width: 65ch; }
+.cl-banner { min-height: 49px; height: 49px; overflow: hidden; box-sizing: border-box; display: flex; align-items: center; gap: var(--sx-space-2); padding: 8px var(--sx-space-3); font-size: var(--sx-text-caption); border-bottom: 1px solid var(--sx-line); background: var(--sx-warning-bg); color: var(--sx-ink); }
+.cl-banner--danger { background: var(--sx-danger-bg); }
+.cl-banner--live { background: var(--sx-success-bg); }
+.cl-banner--info { background: var(--sx-accent-soft); }
+.cl-two { display: grid; grid-template-columns: 38.2fr 61.8fr; gap: var(--sx-space-3); align-items: start; }
+.cl-two--rev { grid-template-columns: 61.8fr 38.2fr; }
+.cl-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sx-space-2); }
+.cl-cols { display: grid; gap: var(--sx-space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.cl-hero { display: grid; grid-template-columns: auto 1fr; gap: var(--sx-space-3); align-items: center; }
+.cl-big { font-family: var(--sx-font-serif); font-size: var(--sx-text-h1); line-height: 1; }
+.cl-ring-wrap { display: grid; justify-items: center; gap: 8px; }
+.cl-funnel { display: grid; gap: 8px; }
+.cl-funnel__row { display: grid; grid-template-columns: 90px 1fr 48px; align-items: center; gap: var(--sx-space-2); font-size: var(--sx-text-caption); }
+.cl-funnel__bar { height: 21px; border-radius: 8px; background: var(--sx-surface-2); overflow: hidden; }
+.cl-funnel__fill { height: 100%; background: var(--sx-accent); border-radius: 8px; transform-origin: left; animation: cl-grow var(--sx-dur-chart) var(--sx-ease-out) both; }
+@keyframes cl-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.cl-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.cl-item { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; padding: var(--sx-space-2); border: 0; border-bottom: 1px solid var(--sx-line); background: transparent; text-align: left; color: inherit; font: inherit; cursor: pointer; width: 100%; transition: background var(--sx-dur-hover) var(--sx-ease-out); }
+.cl-item:hover { background: var(--sx-surface-2); }
+.cl-item[aria-current="true"] { background: var(--sx-accent-soft); box-shadow: inset 3px 0 0 var(--sx-accent); }
+.cl-item:focus-visible { outline: 2px solid var(--sx-focus); outline-offset: -2px; }
+.cl-item__top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.cl-item__line { color: var(--sx-ink-2); font-size: var(--sx-text-caption); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; border: 1px solid var(--sx-line-strong); background: var(--sx-surface); font-size: var(--sx-text-caption); color: var(--sx-ink); }
+.cl-chip--ok { border-color: var(--sx-success); color: var(--sx-success); }
+.cl-chip--bad { border-color: var(--sx-danger); color: var(--sx-danger); }
+.cl-textarea { width: 100%; min-height: 144px; resize: vertical; padding: 13px; border-radius: var(--sx-radius-2); border: 1px solid var(--sx-line-strong); background: var(--sx-surface); color: var(--sx-ink); font: inherit; line-height: 1.5; transition: border-color var(--sx-dur-hover) var(--sx-ease-out), box-shadow var(--sx-dur-hover) var(--sx-ease-out); }
+.cl-textarea:focus-visible { outline: 2px solid var(--sx-focus); outline-offset: 1px; }
+.cl-select { padding: 8px 13px; border-radius: var(--sx-radius-1); border: 1px solid var(--sx-line-strong); background: var(--sx-surface); color: var(--sx-ink); font: inherit; min-height: 40px; }
+.cl-select:focus-visible { outline: 2px solid var(--sx-focus); outline-offset: 1px; }
+.cl-timeline { display: grid; gap: 0; position: relative; }
+.cl-step { display: grid; grid-template-columns: 34px 1fr; gap: var(--sx-space-2); position: relative; padding-bottom: var(--sx-space-3); }
+.cl-step::before { content: ""; position: absolute; left: 16px; top: 34px; bottom: 0; width: 2px; background: var(--sx-line-strong); }
+.cl-step:last-child::before { display: none; }
+.cl-step__dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--sx-accent-soft); color: var(--sx-accent); border: 1px solid var(--sx-accent); font-variant-numeric: tabular-nums; font-size: var(--sx-text-caption); }
+.cl-delay { color: var(--sx-ink-3); font-size: var(--sx-text-caption); margin-bottom: 8px; }
+.cl-doc { background: #fffdf8; color: #2b1d14; border: 1px solid var(--sx-line-strong); border-radius: var(--sx-radius-1); padding: var(--sx-space-4); box-shadow: var(--sx-shadow-2); min-height: 420px; line-height: 1.55; }
+.cl-doc h1 { font-family: var(--sx-font-serif); font-weight: 400; font-size: var(--sx-text-h3); margin: 0 0 13px; }
+.cl-doc h2 { font-size: var(--sx-text-body); margin: 21px 0 8px; }
+.cl-doc p, .cl-doc li { font-size: 14px; margin: 0 0 8px; }
+.cl-doc ul { padding-left: 21px; margin: 0; }
+.cl-bar { height: 8px; border-radius: 8px; background: var(--sx-surface-2); overflow: hidden; }
+.cl-bar > span { display: block; height: 100%; background: var(--sx-accent); border-radius: 8px; transition: width var(--sx-dur-chart) var(--sx-ease-out); }
+.cl-bar--warn > span { background: var(--sx-warning); }
+.cl-bar--bad > span { background: var(--sx-danger); }
+.cl-login { min-height: 100dvh; display: grid; place-items: center; padding: var(--sx-space-3); }
+.cl-login__card { width: min(100%, 420px); display: grid; gap: var(--sx-space-3); animation: cl-in var(--sx-dur-page) var(--sx-ease-out) both; }
+.cl-kanban-wrap { overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 8px; }
+.cl-kanban-wrap .sx-kanban { min-width: 1130px; grid-auto-columns: minmax(150px, 1fr); }
+.cl-kanban-wrap .sx-kanban__col { max-height: min(72vh, 760px); overflow-y: auto; }
+.cl-page .sx-filterbar { align-items: flex-start; }
+.cl-mini { font-size: var(--sx-text-caption); color: var(--sx-ink-2); }
+.cl-pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.55; }
+.cl-quote { border-left: 3px solid var(--sx-line-strong); padding-left: var(--sx-space-2); color: var(--sx-ink-2); }
+.cl-grow { flex: 1; min-width: 0; }
+@media (max-width: 820px) {
+  .cl-two, .cl-two--rev, .cl-hero { grid-template-columns: 1fr; }
+  .cl-title { font-size: var(--sx-text-h3); }
+  .cl-big { font-size: var(--sx-text-h2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cl-page, .cl-login__card { animation: none; }
+  .cl-funnel__fill { animation: none; }
+  .cl-bar > span { transition: none; }
+}
+
+.cl-top { display: grid; grid-template-columns: 61.8fr 38.2fr; gap: var(--sx-space-3); align-items: stretch; }
+.cl-stats2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sx-space-3); }
+@media (max-width: 1100px) { .cl-top { grid-template-columns: 1fr; } }
+@media (max-width: 820px) {
+  .cl-hide-sm, .sx-topbar .sx-kbd { display: none; }
+  .cl-stats2 { grid-template-columns: 1fr 1fr; gap: var(--sx-space-2); }
+}
+.cl-page > *, .cl-top > *, .cl-stats2 > *, .cl-cols > *, .cl-two > * { min-width: 0; max-width: 100%; }
+.sx-content { min-width: 0; }
+.sx-split > *, .cl-list, .cl-item, .cl-item > *, .sx-card { min-width: 0; }
+.cl-item { max-width: 100%; box-sizing: border-box; }
+.cl-iconify { gap: 6px; }
+@media (max-width: 820px) { .cl-iconify { padding-inline: 5px; min-width: 32px; } .sx-topbar { gap: 4px; } }
+.show-sm-only { display: none; }
+@media (max-width: 820px) { .show-sm-only { display: block; flex: 1; } }
+.cl-file__row { display: flex; align-items: center; gap: var(--sx-space-2); flex-wrap: wrap; }
+.cl-file__input { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.cl-file__btn { cursor: pointer; gap: 8px; }
+.cl-file__input:focus-visible + .cl-file__btn { outline: 2px solid var(--sx-focus); outline-offset: 2px; }
+.cl-file__name { color: var(--sx-ink-2); font-size: var(--sx-text-caption); overflow-wrap: anywhere; }
+.cl-file__sum { margin: 8px 0 8px; color: var(--sx-ink-2); font-size: var(--sx-text-caption); }
+.cl-file__scroll { overflow: auto; max-width: 100%; max-height: 180px; border: 1px solid var(--sx-line-strong); border-radius: var(--sx-radius-1); background: var(--sx-surface); }
+.cl-file__scroll:focus-visible { outline: 2px solid var(--sx-focus); outline-offset: 1px; }
+.cl-file__table { border-collapse: collapse; width: 100%; font-size: var(--sx-text-caption); }
+.cl-file__table th, .cl-file__table td { text-align: left; padding: 5px 13px; white-space: nowrap; border-bottom: 1px solid var(--sx-line); }
+.cl-file__table th { color: var(--sx-ink-2); font-weight: 600; position: sticky; top: 0; background: var(--sx-surface-2); }
+.cl-file__cap { text-align: left; padding: 5px 13px; color: var(--sx-ink-3); font-size: var(--sx-text-caption); caption-side: bottom; }
+.cl-file { min-width: 0; max-width: 100%; }
+.cl-file > *, .cl-file__row > * { min-width: 0; max-width: 100%; }
+.cl-file__sum { overflow-wrap: anywhere; }
+
+/* A mailbox address is shown exactly as typed, never in capitals. */
+.cl-mail .sx-card__title { text-transform: none; letter-spacing: 0; overflow-wrap: anywhere; }
+/* Big numbers stay inside their card on a phone and on a narrow desktop. */
+.cl-stats2 .sx-stat__value { font-size: var(--sx-text-h2); overflow-wrap: anywhere; }
+/* A link inside the page keeps the palette instead of the browser blue. */
+.cl-page a:not(.sx-btn) { color: var(--sx-accent); text-underline-offset: 3px; }
+/* A split view may never be wider than the screen, whatever its widest child wants. */
+.cl-page .sx-split { grid-template-columns: minmax(0, 38.2fr) minmax(0, 61.8fr); }
+@media (max-width: 860px) { .cl-page .sx-split { grid-template-columns: minmax(0, 1fr); } }
+/* The name and address on the left may wrap, so the badge on the right never pushes past the card. */
+.cl-item__top > :first-child { min-width: 0; overflow-wrap: anywhere; }
+.cl-item__top > .sx-badge { flex-shrink: 0; }

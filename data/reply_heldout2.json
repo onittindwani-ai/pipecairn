@@ -1,0 +1,300 @@
+{
+ "label": "Second set, written after tuning. Only partly held out. All text is invented and fictional.",
+ "written": "2026-11-23",
+ "cases": [
+  {
+   "id": "k001",
+   "text": "Looks promising. Can you ring me tomorrow around 10?",
+   "intent": "interested",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k002",
+   "text": "My team is keen. What is the quickest way to get a walkthrough?",
+   "intent": "interested",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k003",
+   "text": "ok send the link to pick a time, we are in",
+   "intent": "interested",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k004",
+   "text": "Right, I read it twice. Let's get 30 minutes in the diary before the end of the month.",
+   "intent": "interested",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k005",
+   "text": "Saw your note this morning, seems relevant to the missed calls we keep having. Free Monday if that helps.",
+   "intent": "interested",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k006",
+   "text": "Yes to a first chat. Bring prices.",
+   "intent": "interested",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k007",
+   "text": "Does the text part need any special phone number registration on our side?",
+   "intent": "question",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k008",
+   "text": "Roughly how much of my time does this take each week once it's running?",
+   "intent": "question",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k009",
+   "text": "Hi there, is this tied to one email provider or can I use my own domain?",
+   "intent": "question",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k010",
+   "text": "What languages does the reply reading handle?",
+   "intent": "question",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k011",
+   "text": "Are the replies sent automatically or does someone check them first",
+   "intent": "question",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k012",
+   "text": "Is there a minimum contract length?",
+   "intent": "question",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k013",
+   "text": "Honestly we can't deal with new software before our year end close, try me in February.",
+   "intent": "not_now",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k014",
+   "text": "We are re-organising the whole team this quarter. Better to speak once that is done.",
+   "intent": "not_now",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k015",
+   "text": "Thanks but we are not changing anything before the summer season is over.",
+   "intent": "not_now",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k016",
+   "text": "Ask me again once our new website is live, probably early next year.",
+   "intent": "not_now",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k017",
+   "text": "Currently paused on all new projects. Happy to hear from you in six months.",
+   "intent": "not_now",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k018",
+   "text": "We already have something in place this year; check in with me in 2027.",
+   "intent": "not_now",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k019",
+   "text": "I think you should reach out to Elena in finance for this, not to me.",
+   "intent": "wrong_person",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k020",
+   "text": "Sorry, we have a separate IT team for that. I will pass your details along.",
+   "intent": "wrong_person",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k021",
+   "text": "I'm a part time assistant, I don't decide on any of this.",
+   "intent": "wrong_person",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k022",
+   "text": "Please contact the owner, Mr Hale. He reads all vendor mail personally.",
+   "intent": "wrong_person",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k023",
+   "text": "Hello, I moved to a different department last spring so this is not my remit any more.",
+   "intent": "wrong_person",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k024",
+   "text": "Not mine. Speak to Chris.",
+   "intent": "wrong_person",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k025",
+   "text": "Enough. Take me out of your database.",
+   "intent": "unsubscribe",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k026",
+   "text": "I never signed up for this. Please wipe my email from your records.",
+   "intent": "unsubscribe",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k027",
+   "text": "No further contact, thank you.",
+   "intent": "unsubscribe",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k028",
+   "text": "pls dont send me anything else",
+   "intent": "unsubscribe",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k029",
+   "text": "Remove this email from your outreach, I'm not the right audience and I'd rather not get more of these.",
+   "intent": "unsubscribe",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k030",
+   "text": "Je ne souhaite plus recevoir vos messages. Merci de me retirer de votre liste.",
+   "intent": "unsubscribe",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k031",
+   "text": "Thank you for your email. I'm travelling and will check messages on my return on 5 March.",
+   "intent": "out_of_office",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k032",
+   "text": "Away on parental leave. For urgent requests contact support at the main office.",
+   "intent": "out_of_office",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k033",
+   "text": "Hello! I'm at a retreat with no wifi until the 18th, I'll write back after.",
+   "intent": "out_of_office",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k034",
+   "text": "Currently on a work trip. I will be slow to reply until next Tuesday.",
+   "intent": "out_of_office",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k035",
+   "text": "Estoy fuera de la oficina hasta el lunes.",
+   "intent": "out_of_office",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k036",
+   "text": "Not in the office today or tomorrow, back Thursday morning.",
+   "intent": "out_of_office",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k037",
+   "text": "The following message to <lee@gone.example> was undeliverable: the destination server said 'no mailbox here by that name'.",
+   "intent": "bounce",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k038",
+   "text": "Sorry, we were unable to deliver your message. Error code 550. Host unknown.",
+   "intent": "bounce",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k039",
+   "text": "Your message to info@closedshop.example could not be sent: that user's account has been disabled.",
+   "intent": "bounce",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k040",
+   "text": "SMTP error from remote mail server after RCPT TO: 550 user not found",
+   "intent": "bounce",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k041",
+   "text": "Failure notice. Hi. This is the mail program at mail.fictional.example. I'm afraid I wasn't able to deliver your message.",
+   "intent": "bounce",
+   "adversarial": false,
+   "tags": []
+  },
+  {
+   "id": "k042",
+   "text": "Your mail was refused by the receiving server. Recipient address does not exist.",
+   "intent": "bounce",
+   "adversarial": false,
+   "tags": []
+  }
+ ]
+}

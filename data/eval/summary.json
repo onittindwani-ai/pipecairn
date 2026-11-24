@@ -1,0 +1,27 @@
+{
+ "model": "offline stand in (rules), NOT a language model",
+ "testset_same_author_as_rules": {
+  "total": 70,
+  "correct": 70,
+  "accuracy": 1.0,
+  "unsubscribe_missed": 0
+ },
+ "heldout_first_run_reported": {
+  "total": 134,
+  "correct": 44,
+  "accuracy": 0.3284,
+  "unsubscribe_missed": 14
+ },
+ "heldout2_first_run_after_tuning_partly_held_out": {
+  "total": 42,
+  "correct": 12,
+  "accuracy": 0.2857,
+  "unsubscribe_missed": 5
+ },
+ "heldout_after_tuning_no_longer_held_out": {
+  "total": 134,
+  "correct": 134,
+  "accuracy": 1.0,
+  "unsubscribe_missed": 0
+ }
+}

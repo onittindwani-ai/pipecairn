@@ -1,0 +1,7 @@
+{
+  "text": "{\"body\": \"Hi there,\\n\\nThanks for letting me know. Who would be the right person to talk to about this? I will keep it short.\\n\\nBest,\\nAlex\"}",
+  "input_tokens": 150,
+  "output_tokens": 40,
+  "model": "claude-sonnet-5-5",
+  "prompt_preview": "[task:draft_reply]\nWrite the draft answer to the reply that follows.\nFacts (JSON): {\"intent\": \"wrong_person\", \"recipient_first_name\": \"there\", \"sender_first_nam"
+}

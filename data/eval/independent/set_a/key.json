@@ -1,0 +1,1989 @@
+[
+  {
+    "id": "A001",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "short"
+    ]
+  },
+  {
+    "id": "A002",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A003",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "short",
+      "signature",
+      "slang"
+    ]
+  },
+  {
+    "id": "A004",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "formal"
+    ]
+  },
+  {
+    "id": "A005",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "short"
+    ]
+  },
+  {
+    "id": "A006",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "mixed_interest",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A007",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A008",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "cc_request",
+      "signature"
+    ]
+  },
+  {
+    "id": "A009",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "short"
+    ]
+  },
+  {
+    "id": "A010",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A011",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A012",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "short",
+      "slang"
+    ]
+  },
+  {
+    "id": "A013",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "booked",
+      "signature"
+    ]
+  },
+  {
+    "id": "A014",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A015",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "short"
+    ]
+  },
+  {
+    "id": "A016",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A017",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "very_short"
+    ]
+  },
+  {
+    "id": "A018",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "phone",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A019",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A020",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "mixed_interest"
+    ]
+  },
+  {
+    "id": "A021",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "mixed_interest"
+    ]
+  },
+  {
+    "id": "A022",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A023",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "emoji",
+      "signature"
+    ]
+  },
+  {
+    "id": "A024",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "slang"
+    ]
+  },
+  {
+    "id": "A025",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "short"
+    ]
+  },
+  {
+    "id": "A026",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A027",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A028",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "short",
+      "signature"
+    ]
+  },
+  {
+    "id": "A029",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A030",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "formal",
+      "list",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A031",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "short"
+    ]
+  },
+  {
+    "id": "A032",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A033",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "short",
+      "signature"
+    ]
+  },
+  {
+    "id": "A034",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A035",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A036",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "slang"
+    ]
+  },
+  {
+    "id": "A037",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A038",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "mixed_interest",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A039",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "mixed_interest"
+    ]
+  },
+  {
+    "id": "A040",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "very_short"
+    ]
+  },
+  {
+    "id": "A041",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A042",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "long_q",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A043",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "short",
+      "signature"
+    ]
+  },
+  {
+    "id": "A044",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A045",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "slang"
+    ]
+  },
+  {
+    "id": "A046",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "quoted_tail",
+      "short"
+    ]
+  },
+  {
+    "id": "A047",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A048",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "signature"
+    ]
+  },
+  {
+    "id": "A049",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A050",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "date_hint",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A051",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "date_hint",
+      "short"
+    ]
+  },
+  {
+    "id": "A052",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A053",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "short",
+      "signature"
+    ]
+  },
+  {
+    "id": "A054",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A055",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "slang"
+    ]
+  },
+  {
+    "id": "A056",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "formal"
+    ]
+  },
+  {
+    "id": "A057",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "short"
+    ]
+  },
+  {
+    "id": "A058",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A059",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A060",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "slang"
+    ]
+  },
+  {
+    "id": "A061",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A062",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A063",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "very_short"
+    ]
+  },
+  {
+    "id": "A064",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A065",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A066",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous_not_interested",
+      "quoted_tail",
+      "short"
+    ]
+  },
+  {
+    "id": "A067",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous_not_interested",
+      "short"
+    ]
+  },
+  {
+    "id": "A068",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous_not_interested",
+      "signature"
+    ]
+  },
+  {
+    "id": "A069",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous_not_interested",
+      "very_short"
+    ]
+  },
+  {
+    "id": "A070",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "firm",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A071",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous_not_interested"
+    ]
+  },
+  {
+    "id": "A072",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous_not_interested",
+      "short",
+      "slang"
+    ]
+  },
+  {
+    "id": "A073",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous_not_interested",
+      "formal",
+      "signature"
+    ]
+  },
+  {
+    "id": "A074",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A075",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "short"
+    ]
+  },
+  {
+    "id": "A076",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "referral"
+    ]
+  },
+  {
+    "id": "A077",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A078",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "quoted_tail",
+      "referral",
+      "slang"
+    ]
+  },
+  {
+    "id": "A079",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A080",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "referral"
+    ]
+  },
+  {
+    "id": "A081",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "mixed",
+      "referral"
+    ]
+  },
+  {
+    "id": "A082",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A083",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "short",
+      "signature"
+    ]
+  },
+  {
+    "id": "A084",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "referral"
+    ]
+  },
+  {
+    "id": "A085",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "referral"
+    ]
+  },
+  {
+    "id": "A086",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "quoted_tail",
+      "slang"
+    ]
+  },
+  {
+    "id": "A087",
+    "label": "wrong_person",
+    "ambiguous": true,
+    "acceptable": [
+      "question",
+      "wrong_person"
+    ],
+    "tags": [
+      "ambiguous_wp_question"
+    ]
+  },
+  {
+    "id": "A088",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "very_short"
+    ]
+  },
+  {
+    "id": "A089",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "very_short"
+    ]
+  },
+  {
+    "id": "A090",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "quoted_tail",
+      "short"
+    ]
+  },
+  {
+    "id": "A091",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "short"
+    ]
+  },
+  {
+    "id": "A092",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A093",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "short",
+      "signature"
+    ]
+  },
+  {
+    "id": "A094",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "firm",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A095",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "angry"
+    ]
+  },
+  {
+    "id": "A096",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "angry",
+      "caps"
+    ]
+  },
+  {
+    "id": "A097",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "slang",
+      "very_short"
+    ]
+  },
+  {
+    "id": "A098",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "quoted_tail",
+      "short"
+    ]
+  },
+  {
+    "id": "A099",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "very_short"
+    ]
+  },
+  {
+    "id": "A100",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "legal"
+    ]
+  },
+  {
+    "id": "A101",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "legal"
+    ]
+  },
+  {
+    "id": "A102",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_de",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A103",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_de",
+      "signature"
+    ]
+  },
+  {
+    "id": "A104",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_fr"
+    ]
+  },
+  {
+    "id": "A105",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_fr"
+    ]
+  },
+  {
+    "id": "A106",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_es",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A107",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_es"
+    ]
+  },
+  {
+    "id": "A108",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_pt",
+      "signature"
+    ]
+  },
+  {
+    "id": "A109",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_it"
+    ]
+  },
+  {
+    "id": "A110",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_nl",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A111",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "lang_hinglish"
+    ]
+  },
+  {
+    "id": "A112",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": []
+  },
+  {
+    "id": "A113",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "signature",
+      "slang"
+    ]
+  },
+  {
+    "id": "A114",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "short",
+      "trailer"
+    ]
+  },
+  {
+    "id": "A115",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "firm"
+    ]
+  },
+  {
+    "id": "A116",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "angry",
+      "short"
+    ]
+  },
+  {
+    "id": "A117",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "formal"
+    ]
+  },
+  {
+    "id": "A118",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "question",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous",
+      "angry",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A119",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous",
+      "angry"
+    ]
+  },
+  {
+    "id": "A120",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "date"
+    ]
+  },
+  {
+    "id": "A121",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "date"
+    ]
+  },
+  {
+    "id": "A122",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "date"
+    ]
+  },
+  {
+    "id": "A123",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "weekday_date"
+    ]
+  },
+  {
+    "id": "A124",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "no_date"
+    ]
+  },
+  {
+    "id": "A125",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "no_date"
+    ]
+  },
+  {
+    "id": "A126",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "date"
+    ]
+  },
+  {
+    "id": "A127",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "date",
+      "lang_de"
+    ]
+  },
+  {
+    "id": "A128",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "date",
+      "lang_fr"
+    ]
+  },
+  {
+    "id": "A129",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "lang_es",
+      "no_date"
+    ]
+  },
+  {
+    "id": "A130",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "company",
+      "date"
+    ]
+  },
+  {
+    "id": "A131",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "slang",
+      "weekday_date"
+    ]
+  },
+  {
+    "id": "A132",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "further_notice",
+      "no_date"
+    ]
+  },
+  {
+    "id": "A133",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "no_date"
+    ]
+  },
+  {
+    "id": "A134",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "date",
+      "lang_de"
+    ]
+  },
+  {
+    "id": "A135",
+    "label": "out_of_office",
+    "ambiguous": false,
+    "acceptable": [
+      "out_of_office"
+    ],
+    "tags": [
+      "date",
+      "phone"
+    ]
+  },
+  {
+    "id": "A136",
+    "label": "out_of_office",
+    "ambiguous": true,
+    "acceptable": [
+      "out_of_office",
+      "question"
+    ],
+    "tags": [
+      "ambiguous",
+      "autoreply_ticket"
+    ]
+  },
+  {
+    "id": "A137",
+    "label": "out_of_office",
+    "ambiguous": true,
+    "acceptable": [
+      "out_of_office",
+      "question"
+    ],
+    "tags": [
+      "ambiguous",
+      "autoreply_ticket"
+    ]
+  },
+  {
+    "id": "A138",
+    "label": "bounce",
+    "ambiguous": false,
+    "acceptable": [
+      "bounce"
+    ],
+    "tags": [
+      "dsn"
+    ]
+  },
+  {
+    "id": "A139",
+    "label": "bounce",
+    "ambiguous": false,
+    "acceptable": [
+      "bounce"
+    ],
+    "tags": [
+      "dsn"
+    ]
+  },
+  {
+    "id": "A140",
+    "label": "bounce",
+    "ambiguous": false,
+    "acceptable": [
+      "bounce"
+    ],
+    "tags": [
+      "dsn"
+    ]
+  },
+  {
+    "id": "A141",
+    "label": "bounce",
+    "ambiguous": true,
+    "acceptable": [
+      "bounce",
+      "out_of_office"
+    ],
+    "tags": [
+      "ambiguous",
+      "dsn_delay"
+    ]
+  },
+  {
+    "id": "A142",
+    "label": "bounce",
+    "ambiguous": false,
+    "acceptable": [
+      "bounce"
+    ],
+    "tags": [
+      "dsn"
+    ]
+  },
+  {
+    "id": "A143",
+    "label": "bounce",
+    "ambiguous": false,
+    "acceptable": [
+      "bounce"
+    ],
+    "tags": [
+      "dsn",
+      "mailbox_full"
+    ]
+  },
+  {
+    "id": "A144",
+    "label": "bounce",
+    "ambiguous": false,
+    "acceptable": [
+      "bounce"
+    ],
+    "tags": [
+      "dsn"
+    ]
+  },
+  {
+    "id": "A145",
+    "label": "bounce",
+    "ambiguous": false,
+    "acceptable": [
+      "bounce"
+    ],
+    "tags": [
+      "blocked",
+      "dsn"
+    ]
+  },
+  {
+    "id": "A146",
+    "label": "bounce",
+    "ambiguous": false,
+    "acceptable": [
+      "bounce"
+    ],
+    "tags": [
+      "dsn"
+    ]
+  },
+  {
+    "id": "A147",
+    "label": "bounce",
+    "ambiguous": false,
+    "acceptable": [
+      "bounce"
+    ],
+    "tags": [
+      "dsn"
+    ]
+  },
+  {
+    "id": "A148",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "injection",
+      "signature"
+    ]
+  },
+  {
+    "id": "A149",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "injection"
+    ]
+  },
+  {
+    "id": "A150",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "injection",
+      "quoted_tail",
+      "referral"
+    ]
+  },
+  {
+    "id": "A151",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "injection"
+    ]
+  },
+  {
+    "id": "A152",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "html",
+      "injection"
+    ]
+  },
+  {
+    "id": "A153",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "exfil",
+      "injection",
+      "signature"
+    ]
+  },
+  {
+    "id": "A154",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "injection",
+      "quoted_tail"
+    ]
+  },
+  {
+    "id": "A155",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "injection_benign"
+    ]
+  },
+  {
+    "id": "A156",
+    "label": "not_now",
+    "ambiguous": true,
+    "acceptable": [
+      "interested",
+      "not_now"
+    ],
+    "tags": [
+      "ambiguous",
+      "injection"
+    ]
+  },
+  {
+    "id": "A157",
+    "label": "question",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "question",
+      "unsubscribe",
+      "wrong_person"
+    ],
+    "tags": [
+      "ambiguous",
+      "injection",
+      "pure"
+    ]
+  },
+  {
+    "id": "A158",
+    "label": "wrong_person",
+    "ambiguous": true,
+    "acceptable": [
+      "interested",
+      "wrong_person"
+    ],
+    "tags": [
+      "ambiguous",
+      "mixed",
+      "quoted_tail",
+      "referral"
+    ]
+  },
+  {
+    "id": "A159",
+    "label": "not_now",
+    "ambiguous": true,
+    "acceptable": [
+      "interested",
+      "not_now"
+    ],
+    "tags": [
+      "ambiguous",
+      "mixed"
+    ]
+  },
+  {
+    "id": "A160",
+    "label": "interested",
+    "ambiguous": true,
+    "acceptable": [
+      "interested",
+      "question"
+    ],
+    "tags": [
+      "ambiguous",
+      "mixed"
+    ]
+  },
+  {
+    "id": "A161",
+    "label": "question",
+    "ambiguous": true,
+    "acceptable": [
+      "interested",
+      "not_now",
+      "question"
+    ],
+    "tags": [
+      "ambiguous",
+      "mixed"
+    ]
+  },
+  {
+    "id": "A162",
+    "label": "out_of_office",
+    "ambiguous": true,
+    "acceptable": [
+      "out_of_office",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous",
+      "mixed"
+    ]
+  },
+  {
+    "id": "A163",
+    "label": "question",
+    "ambiguous": true,
+    "acceptable": [
+      "interested",
+      "question"
+    ],
+    "tags": [
+      "ambiguous",
+      "mixed",
+      "short",
+      "signature"
+    ]
+  },
+  {
+    "id": "A164",
+    "label": "not_now",
+    "ambiguous": true,
+    "acceptable": [
+      "not_now",
+      "question"
+    ],
+    "tags": [
+      "ambiguous",
+      "mixed"
+    ]
+  },
+  {
+    "id": "A165",
+    "label": "unsubscribe",
+    "ambiguous": true,
+    "acceptable": [
+      "interested",
+      "unsubscribe"
+    ],
+    "tags": [
+      "ambiguous",
+      "mixed"
+    ]
+  },
+  {
+    "id": "A166",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "trap_footer"
+    ]
+  },
+  {
+    "id": "A167",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "short",
+      "trailer"
+    ]
+  },
+  {
+    "id": "A168",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "trap_footer"
+    ]
+  },
+  {
+    "id": "A169",
+    "label": "interested",
+    "ambiguous": false,
+    "acceptable": [
+      "interested"
+    ],
+    "tags": [
+      "long"
+    ]
+  },
+  {
+    "id": "A170",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "list",
+      "long"
+    ]
+  },
+  {
+    "id": "A171",
+    "label": "not_now",
+    "ambiguous": false,
+    "acceptable": [
+      "not_now"
+    ],
+    "tags": [
+      "long"
+    ]
+  },
+  {
+    "id": "A172",
+    "label": "wrong_person",
+    "ambiguous": false,
+    "acceptable": [
+      "wrong_person"
+    ],
+    "tags": [
+      "long",
+      "referral"
+    ]
+  },
+  {
+    "id": "A173",
+    "label": "unsubscribe",
+    "ambiguous": false,
+    "acceptable": [
+      "unsubscribe"
+    ],
+    "tags": [
+      "long",
+      "polite"
+    ]
+  },
+  {
+    "id": "A174",
+    "label": "question",
+    "ambiguous": false,
+    "acceptable": [
+      "question"
+    ],
+    "tags": [
+      "list",
+      "long"
+    ]
+  }
+]

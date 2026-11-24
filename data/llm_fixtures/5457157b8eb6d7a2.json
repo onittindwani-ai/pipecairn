@@ -1,0 +1,7 @@
+{
+  "text": "{\"intent\": \"question\", \"confidence\": 0.7, \"reason\": \"Asks a question before deciding.\", \"next_step\": \"answer_question\"}",
+  "input_tokens": 150,
+  "output_tokens": 40,
+  "model": "claude-haiku-5-5",
+  "prompt_preview": "[task:classify_reply]\nClassify the inbound reply that follows.\n\nReply with only JSON matching this schema:\n{\"additionalProperties\": false, \"properties\": {\"inten"
+}

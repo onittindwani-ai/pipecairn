@@ -1,0 +1,2013 @@
+{
+ "companies": [
+  {
+   "name": "Maple Logistics",
+   "domain": "maplelogistics.example.test",
+   "industry": "logistics",
+   "size": 3,
+   "country": "US",
+   "is_customer": true
+  },
+  {
+   "name": "Harbor Fitness",
+   "domain": "harborfitness.example.test",
+   "industry": "fitness",
+   "size": 40,
+   "country": "US",
+   "is_customer": true
+  },
+  {
+   "name": "Cedar Fitness",
+   "domain": "cedarfitness.example.test",
+   "industry": "fitness",
+   "size": 6,
+   "country": "US",
+   "is_customer": true
+  },
+  {
+   "name": "Cedar Legal",
+   "domain": "cedarlegal.example.test",
+   "industry": "legal",
+   "size": 40,
+   "country": "US",
+   "is_customer": true
+  },
+  {
+   "name": "Juniper Legal",
+   "domain": "juniperlegal.example.test",
+   "industry": "legal",
+   "size": 25,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Granite Fitness",
+   "domain": "granitefitness.example.test",
+   "industry": "fitness",
+   "size": 700,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Summit Fitness",
+   "domain": "summitfitness.example.test",
+   "industry": "fitness",
+   "size": 1500,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Willow Roofing",
+   "domain": "willowroofing.example.test",
+   "industry": "home services",
+   "size": 3,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Bright Fitness",
+   "domain": "brightfitness.example.test",
+   "industry": "fitness",
+   "size": 25,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Delta Accounting",
+   "domain": "deltaaccounting.example.test",
+   "industry": "accounting",
+   "size": 12,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "River Solar",
+   "domain": "riversolar.example.test",
+   "industry": "solar",
+   "size": 40,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Anchor Realty",
+   "domain": "anchorrealty.example.test",
+   "industry": "real estate",
+   "size": 80,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Ember Clinic",
+   "domain": "emberclinic.example.test",
+   "industry": "dental",
+   "size": 6,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Ember Studio",
+   "domain": "emberstudio.example.test",
+   "industry": "design",
+   "size": 40,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Juniper Plumbing",
+   "domain": "juniperplumbing.example.test",
+   "industry": "home services",
+   "size": 12,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Pine Studio",
+   "domain": "pinestudio.example.test",
+   "industry": "design",
+   "size": 150,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Bright Accounting",
+   "domain": "brightaccounting.example.test",
+   "industry": "accounting",
+   "size": 3,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Bright Clinic",
+   "domain": "brightclinic.example.test",
+   "industry": "dental",
+   "size": 80,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Indigo Plumbing",
+   "domain": "indigoplumbing.example.test",
+   "industry": "home services",
+   "size": 6,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Bright Design",
+   "domain": "brightdesign.example.test",
+   "industry": "design",
+   "size": 3,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Juniper Accounting",
+   "domain": "juniperaccounting.example.test",
+   "industry": "accounting",
+   "size": 300,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Delta Plumbing",
+   "domain": "deltaplumbing.example.test",
+   "industry": "home services",
+   "size": 150,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Orchard Realty",
+   "domain": "orchardrealty.example.test",
+   "industry": "real estate",
+   "size": 1,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Maple Roofing",
+   "domain": "mapleroofing.example.test",
+   "industry": "home services",
+   "size": 700,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Garnet Fitness",
+   "domain": "garnetfitness.example.test",
+   "industry": "fitness",
+   "size": 3,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Hollow Dental",
+   "domain": "hollowdental.example.test",
+   "industry": "dental",
+   "size": 700,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Maple Design",
+   "domain": "mapledesign.example.test",
+   "industry": "design",
+   "size": 6,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Willow Logistics",
+   "domain": "willowlogistics.example.test",
+   "industry": "logistics",
+   "size": 1,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Copper Dental",
+   "domain": "copperdental.example.test",
+   "industry": "dental",
+   "size": 1,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Willow Fitness",
+   "domain": "willowfitness.example.test",
+   "industry": "fitness",
+   "size": 40,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Garnet Roofing",
+   "domain": "garnetroofing.example.test",
+   "industry": "home services",
+   "size": 300,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Cedar Logistics",
+   "domain": "cedarlogistics.example.test",
+   "industry": "logistics",
+   "size": 150,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Lantern Clinic",
+   "domain": "lanternclinic.example.test",
+   "industry": "dental",
+   "size": 150,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "River Logistics",
+   "domain": "riverlogistics.example.test",
+   "industry": "logistics",
+   "size": 25,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Orchard Design",
+   "domain": "orcharddesign.example.test",
+   "industry": "design",
+   "size": 1,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Fable Solar",
+   "domain": "fablesolar.example.test",
+   "industry": "solar",
+   "size": 25,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Indigo Accounting",
+   "domain": "indigoaccounting.example.test",
+   "industry": "accounting",
+   "size": 6,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Lantern Studio",
+   "domain": "lanternstudio.example.test",
+   "industry": "design",
+   "size": 1500,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Orchard Plumbing",
+   "domain": "orchardplumbing.example.test",
+   "industry": "home services",
+   "size": 3,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Granite Logistics",
+   "domain": "granitelogistics.example.test",
+   "industry": "logistics",
+   "size": 80,
+   "country": "US",
+   "is_customer": false
+  },
+  {
+   "name": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "industry": "retail",
+   "size": 1,
+   "country": "US",
+   "is_customer": false
+  }
+ ],
+ "leads": [
+  {
+   "first_name": "Zoe",
+   "last_name": "Vale",
+   "email": "zoe.vale1@juniperlegal.example.test",
+   "phone": "+14155551001",
+   "title": "CEO",
+   "company": "Juniper Legal",
+   "domain": "juniperlegal.example.test",
+   "timezone": "America/Chicago",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Priya",
+   "last_name": "Thorn",
+   "email": "priya.thorn2@deltaaccounting.example.test",
+   "phone": "+14155551002",
+   "title": "Owner",
+   "company": "Delta Accounting",
+   "domain": "deltaaccounting.example.test",
+   "timezone": "America/Denver",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Sven",
+   "last_name": "Stone",
+   "email": "sven.stone3@anchorrealty.example.test",
+   "phone": "+14155551003",
+   "title": "Owner",
+   "company": "Anchor Realty",
+   "domain": "anchorrealty.example.test",
+   "timezone": "America/New_York",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Maya",
+   "last_name": "Ellis",
+   "email": "maya.ellis4@juniperplumbing.example.test",
+   "phone": "+14155551004",
+   "title": "Owner",
+   "company": "Juniper Plumbing",
+   "domain": "juniperplumbing.example.test",
+   "timezone": "America/Denver",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Zoe",
+   "last_name": "Marsh",
+   "email": "zoe.marsh5@brightclinic.example.test",
+   "phone": "+14155551005",
+   "title": "CEO",
+   "company": "Bright Clinic",
+   "domain": "brightclinic.example.test",
+   "timezone": "America/Chicago",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Jude",
+   "last_name": "Dale",
+   "email": "jude.dale6@deltaplumbing.example.test",
+   "phone": "+14155551006",
+   "title": "CEO",
+   "company": "Delta Plumbing",
+   "domain": "deltaplumbing.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Omar",
+   "last_name": "Joyce",
+   "email": "omar.joyce7@lanternclinic.example.test",
+   "phone": "+14155551007",
+   "title": "Founder",
+   "company": "Lantern Clinic",
+   "domain": "lanternclinic.example.test",
+   "timezone": "Europe/Berlin",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Liam",
+   "last_name": "Hale",
+   "email": "liam.hale8@juniperlegal.example.test",
+   "phone": "+14155551008",
+   "title": "Founder",
+   "company": "Juniper Legal",
+   "domain": "juniperlegal.example.test",
+   "timezone": "America/New_York",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Maya",
+   "last_name": "Brook",
+   "email": "maya.brook9@deltaaccounting.example.test",
+   "phone": "555-0100",
+   "title": "Founder",
+   "company": "Delta Accounting",
+   "domain": "deltaaccounting.example.test",
+   "timezone": "America/Chicago",
+   "source": "referral",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Cleo",
+   "last_name": "Vale",
+   "email": "cleo.vale10@anchorrealty.example.test",
+   "phone": "555-0100",
+   "title": "CEO",
+   "company": "Anchor Realty",
+   "domain": "anchorrealty.example.test",
+   "timezone": "America/Denver",
+   "source": "referral",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Hugo",
+   "last_name": "Marsh",
+   "email": "hugo.marsh11@juniperplumbing.example.test",
+   "phone": "+14155551011",
+   "title": "Managing Partner",
+   "company": "Juniper Plumbing",
+   "domain": "juniperplumbing.example.test",
+   "timezone": "America/New_York",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Nora",
+   "last_name": "Fox",
+   "email": "nora.fox12@brightclinic.example.test",
+   "phone": "+14155551012",
+   "title": "Managing Partner",
+   "company": "Bright Clinic",
+   "domain": "brightclinic.example.test",
+   "timezone": "America/Chicago",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Lena",
+   "last_name": "Stone",
+   "email": "intern0.cart@gmail.example.test",
+   "phone": "+14155551013",
+   "title": "Intern",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Chicago",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Mia",
+   "last_name": "Thorn",
+   "email": "intern1.cart@gmail.example.test",
+   "phone": "+14155551014",
+   "title": "Student",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Denver",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Cleo",
+   "last_name": "Wynn",
+   "email": "intern2.cart@gmail.example.test",
+   "phone": "+14155551015",
+   "title": "Intern",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "Europe/London",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ava",
+   "last_name": "Stone",
+   "email": "intern3.cart@gmail.example.test",
+   "phone": "+14155551016",
+   "title": "Intern",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Denver",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ethan",
+   "last_name": "Zane",
+   "email": "intern4.cart@gmail.example.test",
+   "phone": "+14155551017",
+   "title": "Student",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Chicago",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ivy",
+   "last_name": "Wynn",
+   "email": "intern5.cart@gmail.example.test",
+   "phone": "+14155551018",
+   "title": "Intern",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Denver",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Liam",
+   "last_name": "Frost",
+   "email": "intern6.cart@gmail.example.test",
+   "phone": "555-0100",
+   "title": "Intern",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Chicago",
+   "source": "scraped",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Finn",
+   "last_name": "Calder",
+   "email": "intern7.cart@gmail.example.test",
+   "phone": "+14155551020",
+   "title": "Student",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/New_York",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Sven",
+   "last_name": "Ellis",
+   "email": "intern8.cart@gmail.example.test",
+   "phone": "+14155551021",
+   "title": "Intern",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Sana",
+   "last_name": "Calder",
+   "email": "intern9.cart@gmail.example.test",
+   "phone": "+14155551022",
+   "title": "Intern",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Denver",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Lucas",
+   "last_name": "Grant",
+   "email": "intern10.cart@gmail.example.test",
+   "phone": "+14155551023",
+   "title": "Intern",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Marco",
+   "last_name": "Frost",
+   "email": "intern11.cart@gmail.example.test",
+   "phone": "555-0100",
+   "title": "Student",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Denver",
+   "source": "scraped",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Yuki",
+   "last_name": "Fox",
+   "email": "yuki.fox25@maplelogistics.example.test",
+   "phone": "555-0100",
+   "title": "Associate",
+   "company": "Maple Logistics",
+   "domain": "maplelogistics.example.test",
+   "timezone": "Mars/Olympus",
+   "source": "form",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Aria",
+   "last_name": "Stone",
+   "email": "aria.stone26@harborfitness.example.test",
+   "phone": "+14155551026",
+   "title": "Managing Partner",
+   "company": "Harbor Fitness",
+   "domain": "harborfitness.example.test",
+   "timezone": "America/New_York",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Marco",
+   "last_name": "Dale",
+   "email": "marco.dale27@cedarfitness.example.test",
+   "phone": "+14155551027",
+   "title": "Marketing Manager",
+   "company": "Cedar Fitness",
+   "domain": "cedarfitness.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "form",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Ethan",
+   "last_name": "Ellis",
+   "email": "ethan.ellis28@cedarlegal.example.test",
+   "phone": "+14155551028",
+   "title": "Coordinator",
+   "company": "Cedar Legal",
+   "domain": "cedarlegal.example.test",
+   "timezone": "America/New_York",
+   "source": "referral",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Nadia",
+   "last_name": "Dale",
+   "email": "nadia.dale29@maplelogistics.example.test",
+   "phone": "+14155551029",
+   "title": "Owner",
+   "company": "Maple Logistics",
+   "domain": "maplelogistics.example.test",
+   "timezone": "America/New_York",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Finn",
+   "last_name": "Frost",
+   "email": "finn.frost30@harborfitness.example.test",
+   "phone": "+14155551030",
+   "title": "Marketing Manager",
+   "company": "Harbor Fitness",
+   "domain": "harborfitness.example.test",
+   "timezone": "America/Chicago",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Marco",
+   "last_name": "Joyce",
+   "email": "marco.joyce31@cedarfitness.example.test",
+   "phone": "+14155551031",
+   "title": "Coordinator",
+   "company": "Cedar Fitness",
+   "domain": "cedarfitness.example.test",
+   "timezone": "America/Denver",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Jude",
+   "last_name": "Irwin",
+   "email": "jude.irwin32@cedarlegal.example.test",
+   "phone": "+14155551032",
+   "title": "Director of Operations",
+   "company": "Cedar Legal",
+   "domain": "cedarlegal.example.test",
+   "timezone": "Europe/London",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Yuki",
+   "last_name": "Quill",
+   "email": "yuki.quill33@garnetroofing.example.test",
+   "phone": "+14155551033",
+   "title": "CEO",
+   "company": "Garnet Roofing",
+   "domain": "garnetroofing.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Nora",
+   "last_name": "Vale",
+   "email": "nora.vale34@lanternclinic.example.test",
+   "phone": "+14155551034",
+   "title": "Head of Growth",
+   "company": "Lantern Clinic",
+   "domain": "lanternclinic.example.test",
+   "timezone": "America/New_York",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Maya",
+   "last_name": "Cross",
+   "email": "maya.cross35@anchorrealty.example.test",
+   "phone": "+14155551035",
+   "title": "Director of Marketing",
+   "company": "Anchor Realty",
+   "domain": "anchorrealty.example.test",
+   "timezone": "America/Chicago",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Nadia",
+   "last_name": "Calder",
+   "email": "nadia.calder36@juniperlegal.example.test",
+   "phone": "+14155551036",
+   "title": "Marketing Manager",
+   "company": "Juniper Legal",
+   "domain": "juniperlegal.example.test",
+   "timezone": "America/Denver",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Nadia",
+   "last_name": "Marsh",
+   "email": "nadia.marsh37@mapleroofing.example.test",
+   "phone": "+14155551037",
+   "title": "CEO",
+   "company": "Maple Roofing",
+   "domain": "mapleroofing.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Priya",
+   "last_name": "Irwin",
+   "email": "priya.irwin38@willowfitness.example.test",
+   "phone": "+14155551038",
+   "title": "CEO",
+   "company": "Willow Fitness",
+   "domain": "willowfitness.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Aria",
+   "last_name": "Thorn",
+   "email": "aria.thorn39@willowlogistics.example.test",
+   "phone": "+14155551039",
+   "title": "Coordinator",
+   "company": "Willow Logistics",
+   "domain": "willowlogistics.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Omar",
+   "last_name": "Dunn",
+   "email": "omar.dunn40@riversolar.example.test",
+   "phone": "+14155551040",
+   "title": "Marketing Manager",
+   "company": "River Solar",
+   "domain": "riversolar.example.test",
+   "timezone": "America/Chicago",
+   "source": "referral",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Aria",
+   "last_name": "Boyd",
+   "email": "aria.boyd41@fablesolar.example.test",
+   "phone": "+14155551041",
+   "title": "Founder",
+   "company": "Fable Solar",
+   "domain": "fablesolar.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Elena",
+   "last_name": "Lowe",
+   "email": "elena.lowe42@juniperplumbing.example.test",
+   "phone": "+14155551042",
+   "title": "Marketing Manager",
+   "company": "Juniper Plumbing",
+   "domain": "juniperplumbing.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Sven",
+   "last_name": "Thorn",
+   "email": "sven.thorn43@orcharddesign.example.test",
+   "phone": "+14155551043",
+   "title": "Sales Manager",
+   "company": "Orchard Design",
+   "domain": "orcharddesign.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Maya",
+   "last_name": "Yates",
+   "email": "maya.yates44@granitefitness.example.test",
+   "phone": "+14155551044",
+   "title": "Sales Manager",
+   "company": "Granite Fitness",
+   "domain": "granitefitness.example.test",
+   "timezone": "America/Chicago",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Cleo",
+   "last_name": "Pike",
+   "email": "cleo.pike45@copperdental.example.test",
+   "phone": "+14155551045",
+   "title": "Coordinator",
+   "company": "Copper Dental",
+   "domain": "copperdental.example.test",
+   "timezone": "America/Denver",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ethan",
+   "last_name": "Upton",
+   "email": "ethan.upton46@juniperplumbing.example.test",
+   "phone": "+14155551046",
+   "title": "Coordinator",
+   "company": "Juniper Plumbing",
+   "domain": "juniperplumbing.example.test",
+   "timezone": "America/Chicago",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Marco",
+   "last_name": "Vale",
+   "email": "marco.vale47@willowfitness.example.test",
+   "phone": "+14155551047",
+   "title": "Student",
+   "company": "Willow Fitness",
+   "domain": "willowfitness.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Priya",
+   "last_name": "Thorn",
+   "email": "priya.thorn48@indigoaccounting.example.test",
+   "phone": "+14155551048",
+   "title": "Sales Manager",
+   "company": "Indigo Accounting",
+   "domain": "indigoaccounting.example.test",
+   "timezone": "Europe/Berlin",
+   "source": "referral",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Ava",
+   "last_name": "Glenn",
+   "email": "ava.glenn49@lanternstudio.example.test",
+   "phone": "+14155551049",
+   "title": "Director of Operations",
+   "company": "Lantern Studio",
+   "domain": "lanternstudio.example.test",
+   "timezone": "America/New_York",
+   "source": "form",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Zoe",
+   "last_name": "Zane",
+   "email": "zoe.zane50@hollowdental.example.test",
+   "phone": "+14155551050",
+   "title": "Assistant",
+   "company": "Hollow Dental",
+   "domain": "hollowdental.example.test",
+   "timezone": "America/Chicago",
+   "source": "csv_list",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Mia",
+   "last_name": "Hale",
+   "email": "mia.hale51@granitelogistics.example.test",
+   "phone": "+14155551051",
+   "title": "Assistant",
+   "company": "Granite Logistics",
+   "domain": "granitelogistics.example.test",
+   "timezone": "America/Denver",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Cleo",
+   "last_name": "Lowe",
+   "email": "cleo.lowe52@cedarlogistics.example.test",
+   "phone": "+14155551052",
+   "title": "Director of Marketing",
+   "company": "Cedar Logistics",
+   "domain": "cedarlogistics.example.test",
+   "timezone": "America/Denver",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Omar",
+   "last_name": "Upton",
+   "email": "omar.upton53@cedarlogistics.example.test",
+   "phone": "+14155551053",
+   "title": "Head of Growth",
+   "company": "Cedar Logistics",
+   "domain": "cedarlogistics.example.test",
+   "timezone": "America/Denver",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Zoe",
+   "last_name": "Marsh",
+   "email": "zoe.marsh54@lanternclinic.example.test",
+   "phone": "+14155551054",
+   "title": "Office Manager",
+   "company": "Lantern Clinic",
+   "domain": "lanternclinic.example.test",
+   "timezone": "America/Denver",
+   "source": "form",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Lucas",
+   "last_name": "Vale",
+   "email": "lucas.vale55@mapledesign.example.test",
+   "phone": "+14155551055",
+   "title": "Founder",
+   "company": "Maple Design",
+   "domain": "mapledesign.example.test",
+   "timezone": "America/New_York",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Jude",
+   "last_name": "Wynn",
+   "email": "jude.wynn56@brightdesign.example.test",
+   "phone": "+14155551056",
+   "title": "Owner",
+   "company": "Bright Design",
+   "domain": "brightdesign.example.test",
+   "timezone": "America/New_York",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Owen",
+   "last_name": "Hale",
+   "email": "owen.hale57@willowfitness.example.test",
+   "phone": "+14155551057",
+   "title": "Director of Marketing",
+   "company": "Willow Fitness",
+   "domain": "willowfitness.example.test",
+   "timezone": "America/Denver",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Nadia",
+   "last_name": "Joyce",
+   "email": "nadia.joyce58@summitfitness.example.test",
+   "phone": "+14155551058",
+   "title": "Owner",
+   "company": "Summit Fitness",
+   "domain": "summitfitness.example.test",
+   "timezone": "Australia/Sydney",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Jude",
+   "last_name": "Irwin",
+   "email": "jude.irwin59@mapleroofing.example.test",
+   "phone": "+14155551059",
+   "title": "Associate",
+   "company": "Maple Roofing",
+   "domain": "mapleroofing.example.test",
+   "timezone": "Australia/Sydney",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Cleo",
+   "last_name": "Kerr",
+   "email": "cleo.kerr60@riversolar.example.test",
+   "phone": "+14155551060",
+   "title": "Marketing Manager",
+   "company": "River Solar",
+   "domain": "riversolar.example.test",
+   "timezone": "America/New_York",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Aria",
+   "last_name": "Yates",
+   "email": "aria.yates61@indigoaccounting.example.test",
+   "phone": "+14155551061",
+   "title": "Sales Manager",
+   "company": "Indigo Accounting",
+   "domain": "indigoaccounting.example.test",
+   "timezone": "Europe/Berlin",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ava",
+   "last_name": "Calder",
+   "email": "ava.calder62@garnetfitness.example.test",
+   "phone": "+14155551062",
+   "title": "Managing Partner",
+   "company": "Garnet Fitness",
+   "domain": "garnetfitness.example.test",
+   "timezone": "America/Chicago",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Mia",
+   "last_name": "Brook",
+   "email": "mia.brook63@indigoaccounting.example.test",
+   "phone": "+14155551063",
+   "title": "Head of Growth",
+   "company": "Indigo Accounting",
+   "domain": "indigoaccounting.example.test",
+   "timezone": "Asia/Kolkata",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Liam",
+   "last_name": "Zane",
+   "email": "liam.zane64@garnetfitness.example.test",
+   "phone": "+14155551064",
+   "title": "Marketing Manager",
+   "company": "Garnet Fitness",
+   "domain": "garnetfitness.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Elena",
+   "last_name": "Lowe",
+   "email": "elena.lowe65@brightdesign.example.test",
+   "phone": "+14155551065",
+   "title": "Marketing Manager",
+   "company": "Bright Design",
+   "domain": "brightdesign.example.test",
+   "timezone": "America/Denver",
+   "source": "csv_list",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Ava",
+   "last_name": "Joyce",
+   "email": "ava.joyce66@garnetroofing.example.test",
+   "phone": "+14155551066",
+   "title": "Owner",
+   "company": "Garnet Roofing",
+   "domain": "garnetroofing.example.test",
+   "timezone": "Europe/London",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Aria",
+   "last_name": "Fox",
+   "email": "aria.fox67@garnetroofing.example.test",
+   "phone": "+14155551067",
+   "title": "Director of Operations",
+   "company": "Garnet Roofing",
+   "domain": "garnetroofing.example.test",
+   "timezone": "America/Chicago",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Owen",
+   "last_name": "Vale",
+   "email": "owen.vale68@pinestudio.example.test",
+   "phone": "+14155551068",
+   "title": "Founder",
+   "company": "Pine Studio",
+   "domain": "pinestudio.example.test",
+   "timezone": "America/Chicago",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ruby",
+   "last_name": "Quill",
+   "email": "ruby.quill69@orcharddesign.example.test",
+   "phone": "+14155551069",
+   "title": "Office Manager",
+   "company": "Orchard Design",
+   "domain": "orcharddesign.example.test",
+   "timezone": "America/Denver",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Tariq",
+   "last_name": "Reeve",
+   "email": "tariq.reeve70@copperdental.example.test",
+   "phone": "+14155551070",
+   "title": "Director of Marketing",
+   "company": "Copper Dental",
+   "domain": "copperdental.example.test",
+   "timezone": "Asia/Kolkata",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Marco",
+   "last_name": "Reeve",
+   "email": "marco.reeve71@granitelogistics.example.test",
+   "phone": "+14155551071",
+   "title": "Sales Manager",
+   "company": "Granite Logistics",
+   "domain": "granitelogistics.example.test",
+   "timezone": "Australia/Sydney",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Kai",
+   "last_name": "Pike",
+   "email": "kai.pike72@fablesolar.example.test",
+   "phone": "+14155551072",
+   "title": "Intern",
+   "company": "Fable Solar",
+   "domain": "fablesolar.example.test",
+   "timezone": "America/New_York",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Zoe",
+   "last_name": "Upton",
+   "email": "zoe.upton73@juniperlegal.example.test",
+   "phone": "+14155551073",
+   "title": "Marketing Manager",
+   "company": "Juniper Legal",
+   "domain": "juniperlegal.example.test",
+   "timezone": "Europe/Berlin",
+   "source": "csv_list",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Theo",
+   "last_name": "Upton",
+   "email": "theo.upton74@soloretailcart.example.test",
+   "phone": "+14155551074",
+   "title": "Owner",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/Denver",
+   "source": "scraped",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Diego",
+   "last_name": "Irwin",
+   "email": "diego.irwin75@brightfitness.example.test",
+   "phone": "+14155551075",
+   "title": "Director of Operations",
+   "company": "Bright Fitness",
+   "domain": "brightfitness.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "form",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Elena",
+   "last_name": "Stone",
+   "email": "elena.stone76@lanternstudio.example.test",
+   "phone": "+14155551076",
+   "title": "Marketing Manager",
+   "company": "Lantern Studio",
+   "domain": "lanternstudio.example.test",
+   "timezone": "Mars/Olympus",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ethan",
+   "last_name": "Lowe",
+   "email": "ethan.lowe77@garnetfitness.example.test",
+   "phone": "+14155551077",
+   "title": "Assistant",
+   "company": "Garnet Fitness",
+   "domain": "garnetfitness.example.test",
+   "timezone": "Asia/Kolkata",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Lucas",
+   "last_name": "Yates",
+   "email": "lucas.yates78@anchorrealty.example.test",
+   "phone": "+14155551078",
+   "title": "VP Sales",
+   "company": "Anchor Realty",
+   "domain": "anchorrealty.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Cleo",
+   "last_name": "Quill",
+   "email": "cleo.quill79@brightclinic.example.test",
+   "phone": "+14155551079",
+   "title": "Head of Growth",
+   "company": "Bright Clinic",
+   "domain": "brightclinic.example.test",
+   "timezone": "Europe/Berlin",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Sven",
+   "last_name": "Marsh",
+   "email": "sven.marsh80@anchorrealty.example.test",
+   "phone": "+14155551080",
+   "title": "Owner",
+   "company": "Anchor Realty",
+   "domain": "anchorrealty.example.test",
+   "timezone": "Asia/Kolkata",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Aria",
+   "last_name": "Dunn",
+   "email": "aria.dunn81@orchardplumbing.example.test",
+   "phone": "+14155551081",
+   "title": "Associate",
+   "company": "Orchard Plumbing",
+   "domain": "orchardplumbing.example.test",
+   "timezone": "America/New_York",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Cleo",
+   "last_name": "Kerr",
+   "email": "cleo.kerr82@granitefitness.example.test",
+   "phone": "+14155551082",
+   "title": "Marketing Manager",
+   "company": "Granite Fitness",
+   "domain": "granitefitness.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Jude",
+   "last_name": "Quill",
+   "email": "jude.quill83@riverlogistics.example.test",
+   "phone": "+14155551083",
+   "title": "VP Sales",
+   "company": "River Logistics",
+   "domain": "riverlogistics.example.test",
+   "timezone": "America/Chicago",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ethan",
+   "last_name": "Joyce",
+   "email": "ethan.joyce84@deltaplumbing.example.test",
+   "phone": "+14155551084",
+   "title": "Coordinator",
+   "company": "Delta Plumbing",
+   "domain": "deltaplumbing.example.test",
+   "timezone": "America/New_York",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Owen",
+   "last_name": "Quill",
+   "email": "owen.quill85@cedarlogistics.example.test",
+   "phone": "+14155551085",
+   "title": "CEO",
+   "company": "Cedar Logistics",
+   "domain": "cedarlogistics.example.test",
+   "timezone": "America/Denver",
+   "source": "csv_list",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Hugo",
+   "last_name": "Reeve",
+   "email": "hugo.reeve86@granitelogistics.example.test",
+   "phone": "+14155551086",
+   "title": "Head of Growth",
+   "company": "Granite Logistics",
+   "domain": "granitelogistics.example.test",
+   "timezone": "America/Chicago",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ava",
+   "last_name": "Wynn",
+   "email": "ava.wynn87@brightclinic.example.test",
+   "phone": "+14155551087",
+   "title": "Director of Operations",
+   "company": "Bright Clinic",
+   "domain": "brightclinic.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ava",
+   "last_name": "Kerr",
+   "email": "ava.kerr88@indigoplumbing.example.test",
+   "phone": "+14155551088",
+   "title": "Founder",
+   "company": "Indigo Plumbing",
+   "domain": "indigoplumbing.example.test",
+   "timezone": "America/Chicago",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Owen",
+   "last_name": "Fox",
+   "email": "owen.fox89@brightaccounting.example.test",
+   "phone": "+14155551089",
+   "title": "VP Sales",
+   "company": "Bright Accounting",
+   "domain": "brightaccounting.example.test",
+   "timezone": "America/Chicago",
+   "source": "scraped",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Tariq",
+   "last_name": "Pike",
+   "email": "tariq.pike90@brightaccounting.example.test",
+   "phone": "+14155551090",
+   "title": "Associate",
+   "company": "Bright Accounting",
+   "domain": "brightaccounting.example.test",
+   "timezone": "America/New_York",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Jude",
+   "last_name": "Yates",
+   "email": "jude.yates91@garnetfitness.example.test",
+   "phone": "+14155551091",
+   "title": "Director of Marketing",
+   "company": "Garnet Fitness",
+   "domain": "garnetfitness.example.test",
+   "timezone": "America/New_York",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Finn",
+   "last_name": "Yates",
+   "email": "finn.yates92@garnetroofing.example.test",
+   "phone": "+14155551092",
+   "title": "Managing Partner",
+   "company": "Garnet Roofing",
+   "domain": "garnetroofing.example.test",
+   "timezone": "America/Denver",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Maya",
+   "last_name": "Boyd",
+   "email": "maya.boyd93@deltaplumbing.example.test",
+   "phone": "+14155551093",
+   "title": "Marketing Manager",
+   "company": "Delta Plumbing",
+   "domain": "deltaplumbing.example.test",
+   "timezone": "America/New_York",
+   "source": "scraped",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Priya",
+   "last_name": "Marsh",
+   "email": "priya.marsh94@orchardrealty.example.test",
+   "phone": "+14155551094",
+   "title": "CEO",
+   "company": "Orchard Realty",
+   "domain": "orchardrealty.example.test",
+   "timezone": "Asia/Kolkata",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Marco",
+   "last_name": "Kerr",
+   "email": "marco.kerr95@soloretailcart.example.test",
+   "phone": "+14155551095",
+   "title": "VP Sales",
+   "company": "Solo Retail Cart",
+   "domain": "soloretailcart.example.test",
+   "timezone": "America/New_York",
+   "source": "csv_list",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Liam",
+   "last_name": "Ellis",
+   "email": "liam.ellis96@indigoaccounting.example.test",
+   "phone": "+14155551096",
+   "title": "Owner",
+   "company": "Indigo Accounting",
+   "domain": "indigoaccounting.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ivy",
+   "last_name": "Alder",
+   "email": "ivy.alder97@granitelogistics.example.test",
+   "phone": "+14155551097",
+   "title": "Director of Operations",
+   "company": "Granite Logistics",
+   "domain": "granitelogistics.example.test",
+   "timezone": "Europe/London",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ethan",
+   "last_name": "Wynn",
+   "email": "ethan.wynn98@lanternclinic.example.test",
+   "phone": "+14155551098",
+   "title": "Associate",
+   "company": "Lantern Clinic",
+   "domain": "lanternclinic.example.test",
+   "timezone": "America/Denver",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Aria",
+   "last_name": "Brook",
+   "email": "aria.brook99@willowlogistics.example.test",
+   "phone": "+14155551099",
+   "title": "Head of Growth",
+   "company": "Willow Logistics",
+   "domain": "willowlogistics.example.test",
+   "timezone": "America/Chicago",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Nora",
+   "last_name": "Grant",
+   "email": "nora.grant100@granitelogistics.example.test",
+   "phone": "+14155551100",
+   "title": "VP Sales",
+   "company": "Granite Logistics",
+   "domain": "granitelogistics.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Lena",
+   "last_name": "Nash",
+   "email": "lena.nash101@riverlogistics.example.test",
+   "phone": "+14155551101",
+   "title": "CEO",
+   "company": "River Logistics",
+   "domain": "riverlogistics.example.test",
+   "timezone": "America/Chicago",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Nadia",
+   "last_name": "Marsh",
+   "email": "nadia.marsh102@deltaplumbing.example.test",
+   "phone": "+14155551102",
+   "title": "Marketing Manager",
+   "company": "Delta Plumbing",
+   "domain": "deltaplumbing.example.test",
+   "timezone": "America/Denver",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Aria",
+   "last_name": "Yates",
+   "email": " ARIA.YATES61@INDIGOACCOUNTING.EXAMPLE.TEST ",
+   "phone": "+14155551061",
+   "title": "Sales Manager",
+   "company": "Indigo Accounting",
+   "domain": "indigoaccounting.example.test",
+   "timezone": "Europe/Berlin",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Priya",
+   "last_name": "Marsh",
+   "email": " PRIYA.MARSH94@ORCHARDREALTY.EXAMPLE.TEST ",
+   "phone": "+14155551094",
+   "title": "CEO",
+   "company": "Orchard Realty",
+   "domain": "orchardrealty.example.test",
+   "timezone": "Asia/Kolkata",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ivy",
+   "last_name": "Alder",
+   "email": " IVY.ALDER97@GRANITELOGISTICS.EXAMPLE.TEST ",
+   "phone": "+14155551097",
+   "title": "Director of Operations",
+   "company": "Granite Logistics",
+   "domain": "granitelogistics.example.test",
+   "timezone": "Europe/London",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Cleo",
+   "last_name": "Kerr",
+   "email": " CLEO.KERR60@RIVERSOLAR.EXAMPLE.TEST ",
+   "phone": "+14155551060",
+   "title": "Marketing Manager",
+   "company": "River Solar",
+   "domain": "riversolar.example.test",
+   "timezone": "America/New_York",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Zoe",
+   "last_name": "Upton",
+   "email": " ZOE.UPTON73@JUNIPERLEGAL.EXAMPLE.TEST ",
+   "phone": "+14155551073",
+   "title": "Marketing Manager",
+   "company": "Juniper Legal",
+   "domain": "juniperlegal.example.test",
+   "timezone": "Europe/Berlin",
+   "source": "csv_list",
+   "sms_consent": true
+  },
+  {
+   "first_name": "Sven",
+   "last_name": "Thorn",
+   "email": " SVEN.THORN43@ORCHARDDESIGN.EXAMPLE.TEST ",
+   "phone": "+14155551043",
+   "title": "Sales Manager",
+   "company": "Orchard Design",
+   "domain": "orcharddesign.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Priya",
+   "last_name": "Thorn",
+   "email": " PRIYA.THORN2@DELTAACCOUNTING.EXAMPLE.TEST ",
+   "phone": "+14155551002",
+   "title": "Owner",
+   "company": "Delta Accounting",
+   "domain": "deltaaccounting.example.test",
+   "timezone": "America/Denver",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Liam",
+   "last_name": "Ellis",
+   "email": " LIAM.ELLIS96@INDIGOACCOUNTING.EXAMPLE.TEST ",
+   "phone": "+14155551096",
+   "title": "Owner",
+   "company": "Indigo Accounting",
+   "domain": "indigoaccounting.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Maya",
+   "last_name": "Yates",
+   "email": " MAYA.YATES44@GRANITEFITNESS.EXAMPLE.TEST ",
+   "phone": "+14155551044",
+   "title": "Sales Manager",
+   "company": "Granite Fitness",
+   "domain": "granitefitness.example.test",
+   "timezone": "America/Chicago",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Sven",
+   "last_name": "Marsh",
+   "email": " SVEN.MARSH80@ANCHORREALTY.EXAMPLE.TEST ",
+   "phone": "+14155551080",
+   "title": "Owner",
+   "company": "Anchor Realty",
+   "domain": "anchorrealty.example.test",
+   "timezone": "Asia/Kolkata",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Ethan",
+   "last_name": "Brook",
+   "email": "info@granitefitness.example.test",
+   "phone": "+14155551103",
+   "title": "Marketing Manager",
+   "company": "Granite Fitness",
+   "domain": "granitefitness.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Yuki",
+   "last_name": "Quill",
+   "email": "sales@indigoplumbing.example.test",
+   "phone": "+14155551104",
+   "title": "Assistant",
+   "company": "Indigo Plumbing",
+   "domain": "indigoplumbing.example.test",
+   "timezone": "Australia/Sydney",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Jude",
+   "last_name": "Joyce",
+   "email": "admin@garnetroofing.example.test",
+   "phone": "+14155551105",
+   "title": "CEO",
+   "company": "Garnet Roofing",
+   "domain": "garnetroofing.example.test",
+   "timezone": "America/Denver",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Marco",
+   "last_name": "Vale",
+   "email": "office@brightfitness.example.test",
+   "phone": "+14155551106",
+   "title": "Office Manager",
+   "company": "Bright Fitness",
+   "domain": "brightfitness.example.test",
+   "timezone": "Europe/Berlin",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Jude",
+   "last_name": "Frost",
+   "email": "support@garnetfitness.example.test",
+   "phone": "+14155551107",
+   "title": "Owner",
+   "company": "Garnet Fitness",
+   "domain": "garnetfitness.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Sana",
+   "last_name": "Orr",
+   "email": "hello@indigoaccounting.example.test",
+   "phone": "+14155551108",
+   "title": "Head of Growth",
+   "company": "Indigo Accounting",
+   "domain": "indigoaccounting.example.test",
+   "timezone": "Europe/London",
+   "source": "scraped",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Nora",
+   "last_name": "Upton",
+   "email": "no-at-sign.example.test",
+   "phone": "+14155551109",
+   "title": "Sales Manager",
+   "company": "Hollow Dental",
+   "domain": "hollowdental.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Mia",
+   "last_name": "Calder",
+   "email": "double@@bad.example.test",
+   "phone": "+14155551110",
+   "title": "Assistant",
+   "company": "Maple Design",
+   "domain": "mapledesign.example.test",
+   "timezone": "Mars/Olympus",
+   "source": "referral",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Jude",
+   "last_name": "Lowe",
+   "email": "spaces in@bad.example.test",
+   "phone": "+14155551111",
+   "title": "Coordinator",
+   "company": "Orchard Design",
+   "domain": "orcharddesign.example.test",
+   "timezone": "Australia/Sydney",
+   "source": "csv_list",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Elena",
+   "last_name": "Thorn",
+   "email": "missingtld@localhost",
+   "phone": "+14155551112",
+   "title": "Managing Partner",
+   "company": "Juniper Accounting",
+   "domain": "juniperaccounting.example.test",
+   "timezone": "America/Los_Angeles",
+   "source": "form",
+   "sms_consent": false
+  },
+  {
+   "first_name": "Lena",
+   "last_name": "Joyce",
+   "email": "trailingdot@bad.example.test.",
+   "phone": "+14155551113",
+   "title": "Sales Manager",
+   "company": "Pine Studio",
+   "domain": "pinestudio.example.test",
+   "timezone": "America/Denver",
+   "source": "csv_list",
+   "sms_consent": false
+  }
+ ],
+ "mailboxes": [
+  {
+   "address": "alex@mail.pipecairn-demo.example.test",
+   "provider": "smtp_imap",
+   "daily_cap": 40,
+   "sent_today": 0,
+   "bounce_count": 0,
+   "sent_total": 220,
+   "warmup_days": 45,
+   "spf_ok": true,
+   "dkim_ok": true,
+   "dmarc_ok": true
+  },
+  {
+   "address": "sam@mail.pipecairn-demo.example.test",
+   "provider": "smtp_imap",
+   "daily_cap": 40,
+   "sent_today": 0,
+   "bounce_count": 1,
+   "sent_total": 180,
+   "warmup_days": 38,
+   "spf_ok": true,
+   "dkim_ok": true,
+   "dmarc_ok": true
+  },
+  {
+   "address": "jo@send.pipecairn-demo.example.test",
+   "provider": "smtp_imap",
+   "daily_cap": 5,
+   "sent_today": 5,
+   "bounce_count": 0,
+   "sent_total": 40,
+   "warmup_days": 9,
+   "spf_ok": true,
+   "dkim_ok": true,
+   "dmarc_ok": false
+  },
+  {
+   "address": "kit@reach.pipecairn-demo.example.test",
+   "provider": "smtp_imap",
+   "daily_cap": 30,
+   "sent_today": 0,
+   "bounce_count": 14,
+   "sent_total": 100,
+   "warmup_days": 20,
+   "spf_ok": true,
+   "dkim_ok": false,
+   "dmarc_ok": true
+  }
+ ],
+ "suppressions": [
+  {
+   "kind": "email",
+   "value": "zoe.marsh54@lanternclinic.example.test",
+   "reason": "unsubscribed earlier",
+   "source": "import"
+  },
+  {
+   "kind": "email",
+   "value": "hugo.reeve86@granitelogistics.example.test",
+   "reason": "unsubscribed earlier",
+   "source": "import"
+  },
+  {
+   "kind": "email",
+   "value": "maya.yates44@granitefitness.example.test",
+   "reason": "unsubscribed earlier",
+   "source": "import"
+  },
+  {
+   "kind": "email",
+   "value": "cleo.kerr60@riversolar.example.test",
+   "reason": "unsubscribed earlier",
+   "source": "import"
+  },
+  {
+   "kind": "email",
+   "value": "priya.irwin38@willowfitness.example.test",
+   "reason": "unsubscribed earlier",
+   "source": "import"
+  },
+  {
+   "kind": "email",
+   "value": "maya.boyd93@deltaplumbing.example.test",
+   "reason": "unsubscribed earlier",
+   "source": "import"
+  },
+  {
+   "kind": "email",
+   "value": "maya.cross35@anchorrealty.example.test",
+   "reason": "unsubscribed earlier",
+   "source": "import"
+  },
+  {
+   "kind": "email",
+   "value": "ruby.quill69@orcharddesign.example.test",
+   "reason": "unsubscribed earlier",
+   "source": "import"
+  },
+  {
+   "kind": "domain",
+   "value": "emberclinic.example.test",
+   "reason": "asked not to be contacted",
+   "source": "import"
+  },
+  {
+   "kind": "domain",
+   "value": "orchardrealty.example.test",
+   "reason": "asked not to be contacted",
+   "source": "import"
+  }
+ ],
+ "sequence": {
+  "name": "First touch and follow up",
+  "steps": [
+   {
+    "channel": "email",
+    "delay_hours": 0,
+    "subject": "Quick idea for {{company}}",
+    "body": "Hi {{first_name}},\n\nI help {{industry}} teams answer new enquiries within minutes. Would a short call this week be useful?\n\nBest,\nAlex"
+   },
+   {
+    "channel": "email",
+    "delay_hours": 72,
+    "subject": "Re: Quick idea for {{company}}",
+    "body": "Hi {{first_name}}, a short follow up in case my first note got buried. Happy to send a two line summary instead of a call."
+   },
+   {
+    "channel": "sms",
+    "delay_hours": 24,
+    "subject": "",
+    "body": "Hi {{first_name}}, Alex here. Sent you an email about faster replies for {{company}}. Reply STOP to opt out."
+   },
+   {
+    "channel": "email",
+    "delay_hours": 96,
+    "subject": "Should I close your file?",
+    "body": "Hi {{first_name}}, I will stop writing after this one. If timing is wrong, tell me when to check back."
+   }
+  ]
+ },
+ "inbound_script": [
+  {
+   "email": "ethan.joyce84@deltaplumbing.example.test",
+   "intent": "interested",
+   "text": "Yes, this sounds useful. Can we talk Thursday afternoon?",
+   "after_hours": 30
+  },
+  {
+   "email": "finn.yates92@garnetroofing.example.test",
+   "intent": "question",
+   "text": "What does this cost, and does it work with our current phone system?",
+   "after_hours": 30
+  },
+  {
+   "email": "marco.reeve71@granitelogistics.example.test",
+   "intent": "not_now",
+   "text": "Not now, we are in the middle of a move. Try me again in January.",
+   "after_hours": 30
+  },
+  {
+   "email": "lucas.vale55@mapledesign.example.test",
+   "intent": "wrong_person",
+   "text": "I do not handle this. You want our office manager, Dana Reed.",
+   "after_hours": 30
+  },
+  {
+   "email": "jude.yates91@garnetfitness.example.test",
+   "intent": "unsubscribe",
+   "text": "Please remove me from your list.",
+   "after_hours": 30
+  },
+  {
+   "email": "cleo.pike45@copperdental.example.test",
+   "intent": "out_of_office",
+   "text": "I am out of the office until the 14th with limited email access.",
+   "after_hours": 30
+  },
+  {
+   "email": "owen.hale57@willowfitness.example.test",
+   "intent": "bounce",
+   "text": "Delivery Status Notification (Failure). The address was not found. 550 5.1.1 User unknown.",
+   "after_hours": 30
+  },
+  {
+   "email": "sven.marsh80@anchorrealty.example.test",
+   "intent": "interested",
+   "text": "Send me a proposal please, budget is approved.",
+   "after_hours": 30
+  },
+  {
+   "email": "mia.brook63@indigoaccounting.example.test",
+   "intent": "question",
+   "text": "Do you have any examples from dental practices?",
+   "after_hours": 30
+  },
+  {
+   "email": "sven.thorn43@orcharddesign.example.test",
+   "intent": "not_now",
+   "text": "Maybe next quarter, send me a note then.",
+   "after_hours": 30
+  }
+ ]
+}

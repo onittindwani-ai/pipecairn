@@ -1,0 +1,259 @@
+{
+ "set": "heldout2",
+ "model": "offline stand in (rules), NOT a language model",
+ "total": 42,
+ "correct": 12,
+ "accuracy": 0.2857,
+ "per_class": {
+  "bounce": {
+   "support": 6,
+   "precision": 1.0,
+   "recall": 0.167
+  },
+  "interested": {
+   "support": 6,
+   "precision": null,
+   "recall": 0.0
+  },
+  "not_now": {
+   "support": 6,
+   "precision": 1.0,
+   "recall": 0.333
+  },
+  "out_of_office": {
+   "support": 6,
+   "precision": 1.0,
+   "recall": 0.333
+  },
+  "question": {
+   "support": 6,
+   "precision": 0.167,
+   "recall": 1.0
+  },
+  "unsubscribe": {
+   "support": 6,
+   "precision": 1.0,
+   "recall": 0.167
+  },
+  "wrong_person": {
+   "support": 6,
+   "precision": null,
+   "recall": 0.0
+  }
+ },
+ "confusion_pairs": [
+  {
+   "expected": "interested",
+   "got": "question",
+   "count": 6
+  },
+  {
+   "expected": "wrong_person",
+   "got": "question",
+   "count": 6
+  },
+  {
+   "expected": "unsubscribe",
+   "got": "question",
+   "count": 5
+  },
+  {
+   "expected": "bounce",
+   "got": "question",
+   "count": 5
+  },
+  {
+   "expected": "not_now",
+   "got": "question",
+   "count": 4
+  },
+  {
+   "expected": "out_of_office",
+   "got": "question",
+   "count": 4
+  }
+ ],
+ "unsubscribe_missed": 5,
+ "failures": [
+  {
+   "id": "k001",
+   "expected": "interested",
+   "got": "question",
+   "text": "Looks promising. Can you ring me tomorrow around 10?"
+  },
+  {
+   "id": "k002",
+   "expected": "interested",
+   "got": "question",
+   "text": "My team is keen. What is the quickest way to get a walkthrough?"
+  },
+  {
+   "id": "k003",
+   "expected": "interested",
+   "got": "question",
+   "text": "ok send the link to pick a time, we are in"
+  },
+  {
+   "id": "k004",
+   "expected": "interested",
+   "got": "question",
+   "text": "Right, I read it twice. Let's get 30 minutes in the diary before the end of the month."
+  },
+  {
+   "id": "k005",
+   "expected": "interested",
+   "got": "question",
+   "text": "Saw your note this morning, seems relevant to the missed calls we keep having. Free Monday"
+  },
+  {
+   "id": "k006",
+   "expected": "interested",
+   "got": "question",
+   "text": "Yes to a first chat. Bring prices."
+  },
+  {
+   "id": "k013",
+   "expected": "not_now",
+   "got": "question",
+   "text": "Honestly we can't deal with new software before our year end close, try me in February."
+  },
+  {
+   "id": "k014",
+   "expected": "not_now",
+   "got": "question",
+   "text": "We are re-organising the whole team this quarter. Better to speak once that is done."
+  },
+  {
+   "id": "k015",
+   "expected": "not_now",
+   "got": "question",
+   "text": "Thanks but we are not changing anything before the summer season is over."
+  },
+  {
+   "id": "k017",
+   "expected": "not_now",
+   "got": "question",
+   "text": "Currently paused on all new projects. Happy to hear from you in six months."
+  },
+  {
+   "id": "k019",
+   "expected": "wrong_person",
+   "got": "question",
+   "text": "I think you should reach out to Elena in finance for this, not to me."
+  },
+  {
+   "id": "k020",
+   "expected": "wrong_person",
+   "got": "question",
+   "text": "Sorry, we have a separate IT team for that. I will pass your details along."
+  },
+  {
+   "id": "k021",
+   "expected": "wrong_person",
+   "got": "question",
+   "text": "I'm a part time assistant, I don't decide on any of this."
+  },
+  {
+   "id": "k022",
+   "expected": "wrong_person",
+   "got": "question",
+   "text": "Please contact the owner, Mr Hale. He reads all vendor mail personally."
+  },
+  {
+   "id": "k023",
+   "expected": "wrong_person",
+   "got": "question",
+   "text": "Hello, I moved to a different department last spring so this is not my remit any more."
+  },
+  {
+   "id": "k024",
+   "expected": "wrong_person",
+   "got": "question",
+   "text": "Not mine. Speak to Chris."
+  },
+  {
+   "id": "k025",
+   "expected": "unsubscribe",
+   "got": "question",
+   "text": "Enough. Take me out of your database."
+  },
+  {
+   "id": "k026",
+   "expected": "unsubscribe",
+   "got": "question",
+   "text": "I never signed up for this. Please wipe my email from your records."
+  },
+  {
+   "id": "k027",
+   "expected": "unsubscribe",
+   "got": "question",
+   "text": "No further contact, thank you."
+  },
+  {
+   "id": "k028",
+   "expected": "unsubscribe",
+   "got": "question",
+   "text": "pls dont send me anything else"
+  },
+  {
+   "id": "k030",
+   "expected": "unsubscribe",
+   "got": "question",
+   "text": "Je ne souhaite plus recevoir vos messages. Merci de me retirer de votre liste."
+  },
+  {
+   "id": "k031",
+   "expected": "out_of_office",
+   "got": "question",
+   "text": "Thank you for your email. I'm travelling and will check messages on my return on 5 March."
+  },
+  {
+   "id": "k033",
+   "expected": "out_of_office",
+   "got": "question",
+   "text": "Hello! I'm at a retreat with no wifi until the 18th, I'll write back after."
+  },
+  {
+   "id": "k034",
+   "expected": "out_of_office",
+   "got": "question",
+   "text": "Currently on a work trip. I will be slow to reply until next Tuesday."
+  },
+  {
+   "id": "k036",
+   "expected": "out_of_office",
+   "got": "question",
+   "text": "Not in the office today or tomorrow, back Thursday morning."
+  },
+  {
+   "id": "k038",
+   "expected": "bounce",
+   "got": "question",
+   "text": "Sorry, we were unable to deliver your message. Error code 550. Host unknown."
+  },
+  {
+   "id": "k039",
+   "expected": "bounce",
+   "got": "question",
+   "text": "Your message to info@closedshop.example could not be sent: that user's account has been di"
+  },
+  {
+   "id": "k040",
+   "expected": "bounce",
+   "got": "question",
+   "text": "SMTP error from remote mail server after RCPT TO: 550 user not found"
+  },
+  {
+   "id": "k041",
+   "expected": "bounce",
+   "got": "question",
+   "text": "Failure notice. Hi. This is the mail program at mail.fictional.example. I'm afraid I wasn'"
+  },
+  {
+   "id": "k042",
+   "expected": "bounce",
+   "got": "question",
+   "text": "Your mail was refused by the receiving server. Recipient address does not exist."
+  }
+ ]
+}
