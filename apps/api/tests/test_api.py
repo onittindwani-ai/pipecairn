@@ -178,7 +178,7 @@ def test_telnyx_and_calcom_webhooks(tmp_path):
 
 
 def test_demo_routes_do_not_exist_outside_demo_mode(tmp_path):
-    s = make_settings(tmp_path, demo_mode=False, mode="draft", owner_password_hash="x")
+    s = make_settings(tmp_path, demo_mode=False, session_secret="Rt7Kq2Vw9Xm4Zc8Lb3Nf6Hy1Js5Dp0Ga2Ue7Tq4Wi9", mode="draft", owner_password_hash="x")
     c = TestClient(create_app(s), base_url="http://api.test")
     from sendora_core.auth import make_session_token
 

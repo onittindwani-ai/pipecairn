@@ -1,8 +1,10 @@
 import { defineConfig } from "@playwright/test";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const ROOT = resolve(__dirname, "../..");
+// the API runs from the project's own virtual environment (make install), or from the Python on PATH when there is none
+const PY = process.env.PYTHON ?? (existsSync(`${ROOT}/.venv/bin/python`) ? `${ROOT}/.venv/bin/python` : "python3");
 mkdirSync(resolve(ROOT, ".demo/handoff"), { recursive: true }); // the demo database and handoff files live here and are not committed
 const env = {
   ...process.env,
@@ -19,7 +21,7 @@ export default defineConfig({
   reporter: [["list"]],
   use: { baseURL: "http://localhost:3000", channel: "chrome", headless: true },
   webServer: [
-    { command: `"${ROOT}/.venv/bin/python" -m uvicorn pipecairn.api.app:app_from_env --factory --port 8000 --log-level warning --proxy-headers --forwarded-allow-ips 127.0.0.1`, cwd: ROOT, url: "http://127.0.0.1:8000/health", reuseExistingServer: false, env, timeout: 60_000 },
+    { command: `"${PY}" -m uvicorn pipecairn.api.app:app_from_env --factory --port 8000 --log-level warning --proxy-headers --forwarded-allow-ips 127.0.0.1`, cwd: ROOT, url: "http://127.0.0.1:8000/health", reuseExistingServer: false, env, timeout: 60_000 },
     { command: "pnpm start", cwd: __dirname, url: "http://localhost:3000/login", reuseExistingServer: false, env, timeout: 60_000 },
   ],
 });

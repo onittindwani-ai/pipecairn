@@ -21,3 +21,7 @@ next-env.d.ts
 .demo/
 demo.sqlite3-*
 handoff/*/
+.env.*
+!.env.example
+*.pem
+*.key
