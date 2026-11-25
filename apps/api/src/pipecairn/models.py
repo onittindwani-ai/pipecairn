@@ -104,6 +104,8 @@ class Mailbox(Base):
     sent_day: Mapped[str] = mapped_column(String(10), default="")
     sent_total: Mapped[int] = mapped_column(Integer, default=0)
     bounce_count: Mapped[int] = mapped_column(Integer, default=0)
+    sent_base: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # sent_total and bounce_count when the mailbox was last resumed:
+    bounce_base: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # the pause rule counts the bounce rate from there, so a resume is not undone at once
     warmup_days: Mapped[int] = mapped_column(Integer, default=0)
     spf_ok: Mapped[bool] = mapped_column(Boolean, default=False)
     dkim_ok: Mapped[bool] = mapped_column(Boolean, default=False)

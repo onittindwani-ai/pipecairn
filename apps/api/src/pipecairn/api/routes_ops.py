@@ -12,6 +12,7 @@ from pipecairn.api.serializers import iso
 from pipecairn.context import Ctx, set_state
 from pipecairn.models import Mailbox, Reply
 from pipecairn.registry import CATEGORIES, ENV_VARS
+from pipecairn.sender import resume_mailbox
 from sendora_core.approvals import ApprovalError, decide
 from sendora_core.audit import record_audit
 from sendora_core.models import Approval, AuditEntry, Event
@@ -29,7 +30,7 @@ def resume(mailbox_id: int, s: Session = Depends(db, scope="function"), u: dict 
     mb = s.get(Mailbox, mailbox_id)
     if mb is None:
         raise HTTPException(404, "That mailbox does not exist.")
-    mb.is_active, mb.paused_reason = True, ""
+    resume_mailbox(mb)
     record_audit(s, u["user"], "mailbox.resumed", f"mailbox:{mb.id}", {})
     return {"ok": True}
 

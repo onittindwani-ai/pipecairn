@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from pipecairn import scoring
 from pipecairn.models import Activity, Company, Contact, Deal, Enrollment, Lead, Sequence
 from pipecairn.suppression import suppression_reason
-from pipecairn.util import email_domain, is_e164, is_role_based, is_valid_email, normalize_email, zone
+from pipecairn.util import clean_person_text, email_domain, is_e164, is_role_based, is_valid_email, normalize_email, zone
 from sendora_core.events import record_event
 from sendora_core.llm import LLM
 
@@ -151,6 +151,8 @@ def import_leads(session: Session, rows: list[dict[str, Any]], now: datetime, de
         if not email:
             rep.flag("missing_email")
             continue
+        # names and titles go into the first email, so a file gets the same cleaning as the web form: no links, markup, template fields or line breaks
+        row = {**row, **{f: clean_person_text(str(row[f]), FIELD_LIMITS[f]) for f in ("first_name", "last_name", "title") if f in row}}
         existing = session.scalars(select(Contact).where(Contact.email == email)).first()
         if existing is not None:
             rep.duplicates += 1

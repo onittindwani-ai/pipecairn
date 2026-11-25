@@ -371,6 +371,56 @@
     }
    }
   },
+  "/api/leads/{lead_id}/lift-suppression": {
+   "post": {
+    "tags": [
+     "data"
+    ],
+    "summary": "Undo a stop for one lead, for example one set by a reply that was read wrongly (owner only, audited)",
+    "operationId": "lift_api_leads__lead_id__lift_suppression_post",
+    "parameters": [
+     {
+      "name": "lead_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Lead Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LiftIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/sequences": {
    "get": {
     "tags": [
@@ -2401,6 +2451,19 @@
      "csv"
     ],
     "title": "ImportBody"
+   },
+   "LiftIn": {
+    "properties": {
+     "reason": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 3,
+      "title": "Reason",
+      "default": "lifted by the owner"
+     }
+    },
+    "type": "object",
+    "title": "LiftIn"
    },
    "Login": {
     "properties": {

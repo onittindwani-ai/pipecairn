@@ -100,7 +100,7 @@ These used to be fixed in the code. The defaults are the old values. Role based 
 |---|---|---|
 | `TARGET_INDUSTRIES` | Comma separated industries that earn the full industry points in the score. | `home services,dental,legal,real estate,accounting` |
 | `MIN_ENROLL_SCORE` | A lead scoring below this is not enrolled in the sequence. | `40` |
-| `BOUNCE_PAUSE_RATE`, `BOUNCE_MIN_SENDS` | A mailbox pauses when its share of bounces passes the rate, after at least this many sends. | `0.05`, `20` |
+| `BOUNCE_PAUSE_RATE`, `BOUNCE_MIN_SENDS` | A mailbox pauses when its share of bounces passes the rate, after at least this many sends. The share is counted from the last **Resume** (from the start until then). | `0.05`, `20` |
 | `DEFAULT_TIMEZONE` | Used for a CSV row with no valid time zone, for example `America/New_York`. Empty means such rows are flagged and never sent to. | empty |
 | `CURRENCY_SYMBOL` | Shown before prices in proposals and contracts. | `$` |
 | `PROPOSAL_VALID_DAYS`, `CONTRACT_NOTICE_DAYS` | Days a proposal is valid; days of written notice in the contract text. | `14`, `14` |

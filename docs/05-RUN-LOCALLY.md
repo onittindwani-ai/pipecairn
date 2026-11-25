@@ -32,7 +32,7 @@ Open http://localhost:3000.
 
 ## Tests
 
-- Python: `.venv/bin/python -m pytest` (<!--n:tests.passed-->462<!--/n--> passed, <!--n:tests.skipped-->1<!--/n--> skipped at the last full run; the skipped one needs a Postgres, set `TEST_POSTGRES_URL`).
+- Python: `.venv/bin/python -m pytest` (<!--n:tests.passed-->540<!--/n--> passed, <!--n:tests.skipped-->1<!--/n--> skipped at the last full run; the skipped one needs a Postgres, set `TEST_POSTGRES_URL`).
 - Seed check: `.venv/bin/python tools/score_seed.py` prints one PASS line per planted trap.
 - Reply reader score: `.venv/bin/python tools/eval_replies.py`.
 - Browser tests: `pnpm e2e` (needs Google Chrome; it starts its own API and web server and uses its own throwaway database).

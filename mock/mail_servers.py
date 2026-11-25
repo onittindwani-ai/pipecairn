@@ -1,10 +1,11 @@
 """A tiny fake SMTP and IMAP server for tests and the demo. Not a real mail server.
 
 SMTP: EHLO, AUTH PLAIN, MAIL, RCPT, DATA, RSET, NOOP, QUIT. Accepted messages land in `MailStore.outbox`.
-To test failures: `MailStore.refuse_rcpt` maps an address to the reply code the server gives at RCPT TO (550 for a permanent refusal, 450 for a temporary one),
+To test failures: `MailStore.refuse_rcpt` maps an address to the reply the server gives at RCPT TO: a code (550 answers "550 5.1.1 ... User unknown", 450 a temporary one)
+or a whole reply line ("554 5.7.1 <a@b>: Relay access denied"),
 `silent_after_data` makes the server take the message and then never answer, `silent_at_quit` makes it ignore QUIT (the client times out), and
 `quit_reply` replaces its answer to QUIT (for example "421 4.4.2 closing connection", which is not the 221 a client expects).
-IMAP: CAPABILITY, LOGIN, SELECT, UID SEARCH (ALL, UNSEEN), UID FETCH (RFC822 or BODY.PEEK[]; neither marks the message read), UID STORE (flags), NOOP, LOGOUT.
+IMAP: CAPABILITY, LOGIN, SELECT, UID SEARCH (ALL, UNSEEN), UID FETCH (RFC822 or BODY.PEEK[], also BODY.PEEK[]<0.N> for the first N bytes and RFC822.SIZE; none marks the message read), UID STORE (flags), NOOP, LOGOUT.
 Messages in `MailStore.inbox` are what the IMAP client sees. It speaks only what Python's smtplib and imaplib send.
 """
 
@@ -23,7 +24,7 @@ class MailStore:
     inbox: list[dict] = field(default_factory=list)  # visible to IMAP: {"uid","raw","seen"}
     lock: threading.Lock = field(default_factory=threading.Lock)
     users: dict[str, str] = field(default_factory=lambda: {"demo": "demo-password"})
-    refuse_rcpt: dict[str, int] = field(default_factory=dict)  # address -> SMTP reply code at RCPT TO (for tests)
+    refuse_rcpt: dict[str, int | str] = field(default_factory=dict)  # address -> SMTP reply code, or a whole reply line, at RCPT TO (for tests)
     silent_after_data: bool = False  # take the message, then never answer (for tests)
     silent_at_quit: bool = False  # never answer QUIT (for tests)
     quit_reply: str = ""  # the full reply line to QUIT instead of "221 bye" (for tests)
@@ -63,7 +64,10 @@ class _SMTP(socketserver.StreamRequestHandler):
                 addr = line.split(":", 1)[1].strip().strip("<>").split(">")[0]
                 code = self.store.refuse_rcpt.get(addr)
                 if code:
-                    self._w(f"{code} 5.1.1 <{addr}>: Recipient address rejected: User unknown" if code >= 500 else f"{code} 4.2.0 <{addr}>: Try again later")
+                    if isinstance(code, str):
+                        self._w(code)
+                    else:
+                        self._w(f"{code} 5.1.1 <{addr}>: Recipient address rejected: User unknown" if code >= 500 else f"{code} 4.2.0 <{addr}>: Try again later")
                 else:
                     rcpts.append(addr)
                     self._w("250 ok")
@@ -139,7 +143,12 @@ class _IMAP(socketserver.StreamRequestHandler):
                     else:
                         body = msg["raw"]
                         label = "BODY[]" if "PEEK" in a2.upper() else "RFC822"
-                        self._w(f"* {uid} FETCH (UID {uid} {label} {{{len(body)}}}\r\n".encode() + body + b")\r\n" + tag.encode() + b" OK done\r\n")
+                        size = f"RFC822.SIZE {len(body)} " if "RFC822.SIZE" in a2.upper() else ""
+                        part = re.search(r"<(\d+)\.(\d+)>", a2)
+                        if part:  # a partial fetch: only the bytes asked for come back
+                            start, count = int(part.group(1)), int(part.group(2))
+                            body, label = body[start:start + count], f"{label}<{start}>"
+                        self._w(f"* {uid} FETCH (UID {uid} {size}{label} {{{len(body)}}}\r\n".encode() + body + b")\r\n" + tag.encode() + b" OK done\r\n")
                 elif sub == "STORE":
                     uid = int(a2.split(" ", 1)[0])
                     with self.store.lock:

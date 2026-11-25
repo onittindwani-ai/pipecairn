@@ -33,6 +33,9 @@ class InboundEmail:
     parse_problem: str = ""
     unreadable: bool = False
     skipped: bool = False  # set by the inbox when it deliberately left the message alone (not from a lead): the poller then does not mark it as read
+    # True when the mail itself says a machine wrote it (Auto-Submitted other than "no", X-Autoreply, X-Autorespond, Precedence auto_reply). False when it has no such header,
+    # which is also what a mail relay that does not pass headers on looks like. Only with this header does a date or a ticket number alone count as an automatic reply.
+    auto_reply: bool = False
 
 
 @dataclass

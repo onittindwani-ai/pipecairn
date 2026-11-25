@@ -124,7 +124,8 @@ def email(raw: bytes = Depends(raw_body), s: Session = Depends(db, scope="functi
         refs = d.get("references") or []
         inb = InboundEmail(external_id=str(d.get("message_id") or ""), from_addr=str(d["from"]), to_addr=str(d.get("to", "")), subject=str(d.get("subject", "")), body=str(d.get("text", "")),
                            is_dsn=d.get("dsn") is True, references=tuple(str(r) for r in refs[:20]) if isinstance(refs, list) else (), auth_results=str(d.get("authentication_results", ""))[:300],
-                           dsn_action=str(d.get("dsn_action", ""))[:20], dsn_status=str(d.get("dsn_status", ""))[:20])
+                           dsn_action=str(d.get("dsn_action", ""))[:20], dsn_status=str(d.get("dsn_status", ""))[:20],
+                           auto_reply=d.get("auto_submitted") is True or str(d.get("auto_submitted") or "").strip().lower() not in {"", "no", "false"})
     except (KeyError, ValueError, AttributeError, TypeError):
         raise HTTPException(422, "Expected JSON with from, to, subject, text and message_id.") from None
     r = inbox.capture_email(s, ctx.effective(s), ctx.llm(s), ctx.adapters.calendar, inb, ctx.now(s))

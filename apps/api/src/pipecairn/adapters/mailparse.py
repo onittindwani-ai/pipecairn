@@ -5,14 +5,27 @@ nested parts or no parts at all. None of that may stop the other messages from b
 So: a message is read in two steps. The first reads it properly and decodes every part on its own (a bad part is decoded with replacement characters and the
 message is flagged). If even that fails, the second step keeps the raw bytes as text and takes the sender, subject and message ids from the header lines with
 plain patterns. Either way a message comes out, never an exception.
+
+Limits, because the sender is anyone on the internet and one message is read again at every poll until it is stored or marked read:
+- only the first MAX_RAW_BYTES (256 KB) of a message are read; a bigger one is read from its first part and flagged ("large message");
+- every header value is cut to HEADER_VALUE_LIMIT characters before the standard library parses it (its address parser is quadratic on long quoted headers);
+- tags are stripped by a scanner that never goes back over text it has seen (the old pattern took minutes on a megabyte of "<script ");
+- the whole parse has a time limit (PARSE_SECONDS). It uses SIGALRM, so it works in the worker, which runs jobs on its main thread; where it cannot be set (another
+  thread, Windows) the size limits and the linear scanner are what protect the reader. A message that takes too long is kept as raw text and flagged unreadable.
 """
 
 from __future__ import annotations
 
 import codecs
+import dataclasses
 import email
 import html
 import re
+import signal
+import threading
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from email.header import decode_header, make_header
 from email.policy import default as default_policy
 from email.utils import parseaddr
@@ -21,9 +34,17 @@ from pipecairn.adapters.base import InboundEmail
 
 TEXT_LIMIT = 20_000
 HEADER_LIMIT = 50_000  # bytes of the header block read by the fallback
+MAX_RAW_BYTES = 262_144  # a message is read up to here and no further; the mailbox is asked for no more than this either
+HEADER_VALUE_LIMIT = 2_000  # characters of one header value (folded lines included) handed to the standard library parser
+HEADER_BLOCK_LIMIT = 65_536  # bytes of one block of header lines
+HTML_LIMIT = 200_000  # characters of a web page body whose tags are stripped
+TAG_LIMIT = 2_000  # a "<" with no ">" within this many characters is plain text
+PARSE_SECONDS = 5.0  # a message that takes longer than this to read is kept as raw text
 MESSAGE_ID = re.compile(r"<[^<>\s]+>")
 HEADER_ID = re.compile(r"^message-id:\s*(<[^<>\s]+>)", re.I | re.M)
-TAGS = re.compile(r"<(script|style)\b.*?</\1>|<[^>]{0,2000}>", re.I | re.S)
+BLANK_LINE = re.compile(rb"\r?\n[ \t]*\r?\n")
+BOUNDARY_LINE = re.compile(rb"--[\w'()+_,./:=?-]{1,70}[ \t]*\r?\n?")  # "--" and the boundary text, nothing else on the line ("-- " alone, a signature mark, is not one)
+ASCII_LOWER = {c: c + 32 for c in range(65, 91)}  # upper to lower case without ever changing the length of the text
 STATUS_CODE = re.compile(r"\b([245])\.\d{1,3}\.\d{1,3}\b")
 
 
@@ -92,22 +113,136 @@ def _part_text(part) -> tuple[str, str]:
         return text, note or "part could not be decoded cleanly"
 
 
+def strip_tags(markup: str) -> str:
+    """The text of a web page body without its tags, scripts and styles, in one pass: a position is never looked at twice (the old pattern restarted a search at every
+    "<script" and took minutes on a megabyte of them). A script or style block with no end, or a "<" with no ">" after it, ends the text there."""
+    low = markup.translate(ASCII_LOWER)
+    out: list[str] = []
+    i, n, gt = 0, len(markup), -2
+    while i < n:
+        lt = markup.find("<", i)
+        if lt == -1:
+            out.append(markup[i:])
+            break
+        out.append(markup[i:lt])
+        name = "script" if low.startswith("<script", lt) else "style" if low.startswith("<style", lt) else ""
+        if name and not low[lt + 1 + len(name): lt + 2 + len(name)].isalnum():
+            close = low.find("</" + name, lt)
+            end = markup.find(">", close) if close != -1 else -1
+            if end == -1:
+                break  # no end to the block: the rest of it is not text
+            out.append(" ")
+            i = end + 1
+            continue
+        if gt != -1 and gt < lt:
+            gt = markup.find(">", lt + 1)
+        if gt == -1:
+            out.append(markup[lt:])  # no tag can end after this point, so what is left is text
+            break
+        if gt - lt <= TAG_LIMIT:
+            out.append(" ")
+            i = gt + 1
+        else:
+            out.append("<")
+            i = lt + 1
+    return "".join(out)
+
+
 def _body_text(msg) -> tuple[str, str]:
     part = msg.get_body(preferencelist=("plain", "html"))
     if part is None:
         return "", ""
     text, note = _part_text(part)
     if part.get_content_type() == "text/html":
-        text = html.unescape(TAGS.sub(" ", text))
+        text = html.unescape(strip_tags(text[:HTML_LIMIT]))
     return text, note
 
 
-def parse_inbound(uid: str, raw: bytes) -> InboundEmail:
-    """One raw message to an InboundEmail. Never raises."""
+class ParseTimeout(BaseException):
+    """Raised inside a parse that ran out of time. A BaseException on purpose: the decoding code catches Exception and must not swallow it."""
+
+
+@contextmanager
+def time_limit(seconds: float) -> Iterator[None]:
+    """Stop the block after `seconds`. Needs SIGALRM and the main thread (the worker has both); anywhere else it does nothing and the size limits are the protection."""
+    if not hasattr(signal, "setitimer") or threading.current_thread() is not threading.main_thread():
+        yield
+        return
+
+    def fire(signum, frame):
+        raise ParseTimeout()
+
+    previous = signal.signal(signal.SIGALRM, fire)
+    started = time.monotonic()
+    before = signal.setitimer(signal.ITIMER_REAL, seconds)
     try:
-        return _parse(uid, raw)
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
+        if before[0] > 0:  # somebody else's timer was running: give it back, minus the time used here
+            signal.setitimer(signal.ITIMER_REAL, max(0.001, before[0] - (time.monotonic() - started)))
+
+
+def limit_headers(raw: bytes) -> bytes:
+    """The message with every header value cut to HEADER_VALUE_LIMIT characters and every block of header lines to HEADER_BLOCK_LIMIT bytes. Header lines are the lines
+    before the first blank line and the lines after a boundary line ("--...") up to the next blank line; the text of the message is left as it is."""
+    out: list[bytes] = []
+    entry: list[bytes] = []
+    in_headers, block_bytes = True, 0
+
+    def flush() -> None:
+        if sum(map(len, entry)) <= HEADER_VALUE_LIMIT:
+            out.extend(entry)
+        else:
+            out.append(entry[0][:HEADER_VALUE_LIMIT].rstrip(b"\r\n") + b"\n")
+        entry.clear()
+
+    for line in raw.splitlines(keepends=True):
+        if in_headers:
+            if not line.strip():
+                flush()
+                in_headers, block_bytes = False, 0
+                out.append(line)
+                continue
+            block_bytes += len(line)
+            if block_bytes > HEADER_BLOCK_LIMIT:
+                continue  # the rest of an enormous block of header lines is dropped
+            if line[:1] in (b" ", b"\t") and entry:
+                entry.append(line)
+            else:
+                flush()
+                entry.append(line)
+        else:
+            if BOUNDARY_LINE.fullmatch(line):
+                in_headers, block_bytes = True, 0
+            out.append(line)
+    flush()
+    return b"".join(out)
+
+
+def parse_inbound(uid: str, raw: bytes, total_size: int | None = None) -> InboundEmail:
+    """One raw message to an InboundEmail. Never raises. `total_size` is how big the whole message is in the mailbox when only its first part was fetched."""
+    large = len(raw) > MAX_RAW_BYTES or (total_size or 0) > len(raw) or (total_size is None and len(raw) == MAX_RAW_BYTES)
+    raw = limit_headers(raw[:MAX_RAW_BYTES])
+    try:
+        with time_limit(PARSE_SECONDS):
+            got = _parse(uid, raw)
+    except ParseTimeout:
+        return _salvage(uid, raw, "took too long")
     except Exception as exc:  # RecursionError on deeply nested parts, header errors, anything: the message is kept
         return _salvage(uid, raw, type(exc).__name__)
+    if large:
+        notes = [got.parse_problem[7:]] if got.parse_problem else []
+        got = dataclasses.replace(got, parse_problem=("parse: " + "; ".join(["large message, only the first 256 KB were read", *notes]))[:120])
+    return got
+
+
+def _auto_reply(msg) -> bool:
+    """The message says it was written by a machine: Auto-Submitted (anything but "no"), X-Autoreply, X-Autorespond, or a Precedence of auto_reply."""
+    submitted = str(msg["Auto-Submitted"] or "").strip().lower()
+    precedence = str(msg["Precedence"] or "").strip().lower()
+    return bool((submitted and submitted != "no") or msg["X-Autoreply"] or msg["X-Autorespond"] or precedence in {"auto_reply", "auto-reply", "autoreply"})
 
 
 def _parse(uid: str, raw: bytes) -> InboundEmail:
@@ -118,13 +253,13 @@ def _parse(uid: str, raw: bytes) -> InboundEmail:
     return InboundEmail(
         external_id=str(msg["Message-ID"] or f"imap-{uid}"), from_addr=parseaddr(str(msg["From"] or ""))[1], to_addr=parseaddr(str(msg["To"] or ""))[1],
         subject=str(msg["Subject"] or ""), body=text[:TEXT_LIMIT], is_dsn=is_dsn, references=refs, auth_results=str(msg["Authentication-Results"] or "")[:300], uid=uid,
-        dsn_action=action, dsn_status=status, parse_problem=f"parse: {note}"[:120] if note else "",
+        dsn_action=action, dsn_status=status, parse_problem=f"parse: {note}"[:120] if note else "", auto_reply=_auto_reply(msg),
     )
 
 
 def _header(block: str, name: str) -> str:
     m = re.search(rf"^{name}:[ \t]*(.*(?:\r?\n[ \t]+.*)*)", block, re.I | re.M)
-    return re.sub(r"\s*\r?\n\s*", " ", m.group(1)).strip() if m else ""
+    return re.sub(r"\s*\r?\n\s*", " ", m.group(1)).strip()[:HEADER_VALUE_LIMIT] if m else ""
 
 
 def _decoded(value: str) -> str:
@@ -136,9 +271,9 @@ def _decoded(value: str) -> str:
 
 def _salvage(uid: str, raw: bytes, why: str) -> InboundEmail:
     """The whole message as text, flagged. Sender, subject and the ids it answers come from the header lines; the body is everything after them, decoded loosely."""
-    parts = re.split(rb"\r?\n\r?\n", raw, maxsplit=1)
-    block = parts[0][:HEADER_LIMIT].decode("utf-8", "replace")
-    body = (parts[1] if len(parts) > 1 else b"")[: TEXT_LIMIT * 4].decode("utf-8", "replace").replace("\x00", "")
+    cut = BLANK_LINE.search(raw[:MAX_RAW_BYTES])
+    block = (raw[: cut.start()] if cut else raw[:HEADER_LIMIT])[:HEADER_LIMIT].decode("utf-8", "replace")
+    body = (raw[cut.end():] if cut else b"")[: TEXT_LIMIT * 4].decode("utf-8", "replace").replace("\x00", "")
     refs = tuple(dict.fromkeys(MESSAGE_ID.findall(_header(block, "In-Reply-To")) + MESSAGE_ID.findall(_header(block, "References"))))[:20]
     mid = MESSAGE_ID.search(_header(block, "Message-ID"))
     return InboundEmail(

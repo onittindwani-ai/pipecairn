@@ -1,7 +1,9 @@
 """Inbox: capture an inbound message, read it, act on it, and send an approved reply.
 
 Rules about acting:
-- unsubscribe, bounce: act at once, no message goes out (stop and suppress).
+- a complete request to stop, a verified bounce: act at once, no message goes out (stop and suppress).
+- wording that only MIGHT be a stop request, a bounce or an automatic reply (a single word, a date, a ticket number): the sequence stops, nothing is suppressed, and the
+  reply stays open for a person.
 - everything that would send a message goes to the approval queue first.
 - the text of a reply is data. It can never trigger a tool call.
 """
@@ -34,6 +36,11 @@ from sendora_core.settings import BaseAppSettings
 PLACEHOLDER = "[[FILL IN"
 STATUS_CODE = re.compile(r"\b([245])\.\d{1,3}\.\d{1,3}\b")
 MAX_READ_FAILURES = 3  # a message that fails to store this many polls in a row is kept as unreadable mail for a person instead of blocking the line
+
+
+def _own_subjects(session: Session, lead_id: int) -> list[str]:
+    """The subjects of the messages we sent this lead: a reply that only repeats one of them says nothing about stopping."""
+    return list(session.scalars(select(Message.subject).where(Message.lead_id == lead_id, Message.direction == "out", Message.subject != "").distinct().limit(30)))
 
 
 def _stop_enrollments(session: Session, lead_id: int, reason: str) -> None:
@@ -191,7 +198,7 @@ def capture_email(session: Session, settings: BaseAppSettings, llm: LLM | None, 
     session.add(msg)
     session.flush()
     return _read_and_act(session, settings, llm, calendar, lead, msg, now, bounce_verified=verified, auth_note=(inbound.auth_results or "none")[:300], is_dsn=inbound.is_dsn,
-                         unreadable=inbound.unreadable)
+                         unreadable=inbound.unreadable, auto_reply=inbound.auto_reply)
 
 
 def capture_sms(session: Session, settings: BaseAppSettings, llm: LLM | None, calendar, inbound: InboundSms, now: datetime) -> Reply | None:
@@ -211,14 +218,15 @@ def capture_sms(session: Session, settings: BaseAppSettings, llm: LLM | None, ca
 
 
 def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, calendar, lead: Lead, msg: Message, now: datetime, *, bounce_verified: bool = False,
-                  auth_note: str = "", is_dsn: bool = False, unreadable: bool = False) -> Reply:
+                  auth_note: str = "", is_dsn: bool = False, unreadable: bool = False, auto_reply: bool | None = None) -> Reply:
     if bounce_verified:
         cls = Classification(intent="bounce", confidence=0.99, summary="The mail server reported that the message could not be delivered for good.", source="rule")
     elif is_dsn:
         # A delivery status report that does not say whether the delivery failed for good: a person reads it, nothing is changed and nothing is drafted.
         cls = Classification(intent="bounce", confidence=0.6, summary="A delivery report that does not say whether the message failed for good.", source="rule")
     else:
-        cls = classify_reply(msg.body, None if unreadable else llm, msg.subject or "", is_dsn=is_dsn)  # raw text of a message that could not be read never goes to the model
+        cls = classify_reply(msg.body, None if unreadable else llm, msg.subject or "", is_dsn=is_dsn, auto_reply=auto_reply,
+                             own_subjects=_own_subjects(session, lead.id))  # raw text of a message that could not be read never goes to the model
     summary = cls.summary
     if msg.blocked_reason.startswith("parse:") and not unreadable:
         summary = f"{summary} Not fully readable ({msg.blocked_reason[7:]}), so check the text."
@@ -230,7 +238,16 @@ def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, 
     deal = session.scalars(select(Deal).where(Deal.lead_id == lead.id)).first()
     c = lead.contact
     i = cls.intent
-    if i == "unsubscribe":
+    if cls.stop_wording:
+        record_audit(session, "system", "reply.stop_wording_not_certain", f"reply:{reply.id}", {"intent": i, "certain": cls.certain})
+    if i == "unsubscribe" and not cls.certain:
+        # The reader took it for a request to stop, but the words are not a complete one ("block", "legal team", "remove the setup fee"). Nothing is suppressed: the
+        # sequence stops and a person reads it. One click on the reply makes it permanent, and a wrongly stopped person can be written to by hand.
+        _stop_enrollments(session, lead.id, "possible_stop")
+        if lead.status not in {"suppressed", "dead", "won"}:
+            lead.status = "replied"
+        reply.suggested_action, reply.handled = "review_stop", False
+    elif i == "unsubscribe":
         add_suppression(session, "email", c.email, "asked to stop (reply)", "reply")
         if msg.channel == "sms" and c.phone:
             add_suppression(session, "phone", c.phone, "asked to stop (text)", "reply")
@@ -242,6 +259,8 @@ def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, 
     elif i == "bounce" and not bounce_verified:
         # "Mail delivery failed" typed into any email proves nothing. It changes no address, no lead and no mailbox. It also is not hidden: a person may have
         # written "your mail bounced to my spam, happy to talk Tuesday", so it stays open in the Inbox until someone reads it and marks it done.
+        # The sequence stops meanwhile: a person who may just have answered must not get the next step while this waits.
+        _stop_enrollments(session, lead.id, "unverified_bounce")
         reply.suggested_action, reply.handled = "unverified_bounce", False
         record_audit(session, "system", "bounce.not_verified", f"reply:{reply.id}", {"authentication": auth_note or "not available"})
     elif i == "bounce":
@@ -255,6 +274,11 @@ def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, 
                 mb.bounce_count += 1
                 maybe_pause_for_bounces(mb, *bounce_limits(settings))
         reply.suggested_action, reply.handled = "suppressed", True
+    elif i == "out_of_office" and not cls.certain:
+        # A date or a ticket number with no auto reply header ("I'm back in the office next Tuesday", "re ticket #4412") is often a person. The sequence stops, nothing is
+        # drafted and the reply stays open, so a hot reply is not buried as an away message.
+        _stop_enrollments(session, lead.id, "possible_auto_reply")
+        reply.suggested_action, reply.handled = "check_auto_reply", False
     elif i == "out_of_office":
         until = parse_return_date(msg.body, now, 7)
         for e in session.scalars(select(Enrollment).where(Enrollment.lead_id == lead.id, Enrollment.status == "active")):
@@ -264,7 +288,7 @@ def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, 
         until = parse_return_date(msg.body, now, 90)
         for e in session.scalars(select(Enrollment).where(Enrollment.lead_id == lead.id, Enrollment.status == "active")):
             e.status, e.paused_until, e.next_send_at = "paused", until, None
-        reply.suggested_action, reply.handled, reply.return_on = "snooze", True, until.date().isoformat()
+        reply.suggested_action, reply.handled, reply.return_on = "snooze", cls.certain, until.date().isoformat()  # stop wording in it: a person still reads it
         if deal and deal.stage in {"new", "contacted"}:
             deal.stage = "replied"
     elif unreadable:

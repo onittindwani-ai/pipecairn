@@ -7,11 +7,11 @@ import { get, post } from "@/lib/api";
 import { usePermissions } from "@/lib/hooks";
 import type { ReplyRow, UnmatchedMail } from "@/lib/types";
 
-const ACTION_TEXT: Record<string, string> = { book_call: "Offer times and book a call", answer_question: "Answer their question", ask_referral: "Ask who the right person is", snooze: "Come back on the date below", wait: "Wait until they are back", suppressed: "Stopped and never contacted again", unverified_bounce: "Read it: it says the mail bounced, but it is not a real delivery report, so nothing was changed", unreadable_mail: "This message could not be read properly here. Open it in your mailbox and decide. The follow ups to this person are stopped, as for any reply" };
+const ACTION_TEXT: Record<string, string> = { book_call: "Offer times and book a call", answer_question: "Answer their question", ask_referral: "Ask who the right person is", snooze: "Come back on the date below", wait: "Wait until they are back", suppressed: "Stopped and never contacted again", unverified_bounce: "Read it: it says the mail bounced, but it is not a real delivery report, so nothing was changed", review_stop: "Read it: the wording may be a request to stop, but it is not a complete one. The follow ups are stopped and nothing is suppressed. Use the button below if it is a real stop", check_auto_reply: "Read it: it looks like an away or acknowledgement message, but nothing proves a machine wrote it. The follow ups are stopped until you decide", unreadable_mail: "This message could not be read properly here. Open it in your mailbox and decide. The follow ups to this person are stopped, as for any reply" };
 
 function Detail({ r }: { r: ReplyRow }) {
   const qc = useQueryClient();
-  const { canWrite } = usePermissions();
+  const { canWrite, isOwner } = usePermissions();
   const key = `cl-draft-${r.id}`;
   const [draft, setDraft] = useState(r.draft_reply);
   const [slot, setSlot] = useState("");
@@ -30,6 +30,17 @@ function Detail({ r }: { r: ReplyRow }) {
     onSuccess: (x) => { notify.success(`Call booked for ${new Date(x.starts_at).toUTCString()}.`); refresh(); },
     onError: (e: Error) => notify.error("Could not book", e.message),
   });
+  const stopForever = useMutation({
+    mutationFn: () => post(`/leads/suppress`, { ids: [r.lead_id], reason: "asked to stop (read by a person)" }),
+    onSuccess: () => { notify.success("That address will never be written to again."); refresh(); },
+    onError: (e: Error) => notify.error("Could not stop it", e.message),
+  });
+  const lift = useMutation({
+    mutationFn: () => post(`/leads/${r.lead_id}/lift-suppression`, { reason: "lifted by the owner from the Inbox" }),
+    onSuccess: () => { notify.success("The stop is lifted. This person is not put back in a sequence."); refresh(); },
+    onError: (e: Error) => notify.error("Could not lift it", e.message),
+  });
+  const wordsMayStop = r.suggested_action === "review_stop" || r.summary.includes("may be a request to stop");
   const hasFill = draft.includes("[[FILL IN");
   const blank = !draft.trim();
   return (
@@ -39,6 +50,12 @@ function Detail({ r }: { r: ReplyRow }) {
         <blockquote className="cl-quote cl-pre" style={{ margin: 0 }}>{r.body}</blockquote>
         <div className="cl-mini">Read as <strong>{intentLabel(r.intent)}</strong> ({Math.round(r.confidence * 100)}% sure). {r.summary}</div>
         {r.suggested_action ? <div className="sx-row"><span className="cl-mini">Suggested next step:</span><span className="cl-chip">{ACTION_TEXT[r.suggested_action] ?? r.suggested_action}</span>{r.return_on ? <span className="cl-chip">Back on {r.return_on}</span> : null}</div> : null}
+        {canWrite && wordsMayStop && r.lead_status !== "suppressed" ? (
+          <div className="sx-row"><Button variant="ghost" onClick={async () => { await stopForever.mutateAsync(); }}>Never contact this person again</Button><span className="cl-mini">Only if it is a real request to stop.</span></div>
+        ) : null}
+        {isOwner && r.lead_status === "suppressed" ? (
+          <div className="sx-row"><Button variant="ghost" onClick={async () => { if (window.confirm("Lift the stop for this person? They can be written to again by hand.")) await lift.mutateAsync(); }}>Lift the stop (owner)</Button><span className="cl-mini">Use it when this was read wrongly. It is written to the audit log.</span></div>
+        ) : null}
         {r.approval_id && !r.handled ? (
           <>
             <Textarea label="Draft reply" value={draft} onChange={(e) => { setDraft(e.target.value); try { sessionStorage.setItem(key, e.target.value); } catch { /* ignore */ } }}

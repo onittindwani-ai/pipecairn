@@ -15,7 +15,7 @@ export interface Deal { id: number; lead_id: number; stage: string; value_cents:
 export interface Pipeline { stages: string[]; deals: Deal[] }
 export interface ReplyRow {
   id: number; lead_id: number; channel: string; intent: string; confidence: number; summary: string; body: string; subject: string; suggested_action: string; draft_reply: string;
-  approval_id: number | null; handled: boolean; return_on: string; created_at: string; name: string; company: string; email: string; score: number | null;
+  approval_id: number | null; handled: boolean; return_on: string; created_at: string; name: string; company: string; email: string; score: number | null; lead_status: string;
 }
 export interface StepRow { position: number; channel: "email" | "sms"; delay_hours: number; subject: string; body: string }
 export interface SequenceRow { id: number; name: string; active: boolean; steps: StepRow[]; variables: string[] }

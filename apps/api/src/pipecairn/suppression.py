@@ -64,3 +64,27 @@ def suppress_everywhere(session: Session, kind: str, value: str, reason: str, so
         n += 1
     session.flush()
     return n
+
+
+def lift_suppression(session: Session, lead, actor: str, reason: str) -> dict:
+    """Undo a stop for one lead (an owner decision, audited). The lead's own address and phone number are removed from the list. The lead goes to "replied", never back
+    into a sequence on its own: a person writes to them. A stop that comes from the whole domain stays: it is not about this person. Raises ValueError when there is
+    nothing to lift."""
+    c = lead.contact
+    email = normalize_email(c.email)
+    domain = email_domain(email)
+    rows = list(session.scalars(select(Suppression).where(Suppression.kind == "email", Suppression.value == email)))
+    if c.phone:
+        rows += list(session.scalars(select(Suppression).where(Suppression.kind == "phone", Suppression.value == c.phone.strip())))
+    by_domain = bool(domain and session.scalars(select(Suppression).where(Suppression.kind == "domain", Suppression.value == domain)).first())
+    if not rows and lead.status != "suppressed":
+        raise ValueError("This person is not on the do not contact list.")
+    if by_domain and not rows:
+        raise ValueError("This person is stopped because their whole domain is on the do not contact list. Remove the domain, not the person.")
+    for row in rows:
+        session.delete(row)
+    lead.status = "replied"
+    session.flush()
+    record_audit(session, actor, "suppression.lifted", f"lead:{lead.id}", {"reason": reason[:300], "removed": [r.kind for r in rows], "domain_still_stopped": by_domain})
+    record_event(session, "suppression.lifted", "lead", lead.id, {"removed": len(rows)})
+    return {"removed": len(rows), "domain_still_stopped": by_domain}

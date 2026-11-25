@@ -5,6 +5,7 @@ from __future__ import annotations
 import imaplib
 import ipaddress
 import logging
+import re
 import smtplib
 import ssl
 from email.message import EmailMessage
@@ -12,7 +13,7 @@ from email.policy import default as default_policy
 from email.utils import make_msgid
 
 from pipecairn.adapters.base import InboundEmail, RecipientRefused, SendUnconfirmed
-from pipecairn.adapters.mailparse import delivery_report_facts, parse_inbound  # noqa: F401  (delivery_report_facts is re-exported)
+from pipecairn.adapters.mailparse import MAX_RAW_BYTES, delivery_report_facts, parse_inbound  # noqa: F401  (delivery_report_facts is re-exported)
 from pipecairn.unsubscribe import list_unsubscribe_headers
 from pipecairn.util import clean_header
 from sendora_core.adapters import AdapterError
@@ -30,6 +31,26 @@ def _problem(text: str, *, message_specific: bool = False) -> AdapterError:
     err = AdapterError(text)
     err.message_specific = message_specific  # type: ignore[attr-defined]
     return err
+
+
+ENHANCED_CODE = re.compile(r"\b([245])\.(\d{1,3})\.(\d{1,3})\b")
+POLICY_WORDS = re.compile(r"\b(?:relay|relaying|denied|blocked|blacklist\w*|blocklist\w*|spam\w*|policy|reputation|rbl|dnsbl|not permitted|not allowed to|forbidden|greylist\w*|too many|rate limit\w*)\b", re.I)
+FETCH_SIZE = re.compile(rb"RFC822\.SIZE (\d+)")
+
+
+def refusal_kind(code: int, text: str) -> str:
+    """What a refusal at RCPT TO means: "bad_address" (the mailbox does not exist: suppress the address, count a bounce) or "policy" (the server or its rules said no: a
+    blocked sending address, a relay rule, a spam list, a full or disabled mailbox, a busy server. Nothing is wrong with the address, so nothing is suppressed).
+    The enhanced status code decides when there is one (5.1.x is a bad address, anything else is not); without one, only 550, 551 and 553 count, and not when the text
+    talks about relaying, blocking or policy."""
+    m = ENHANCED_CODE.search(text or "")
+    if m:
+        return "bad_address" if m.group(1) == "5" and m.group(2) == "1" else "policy"
+    return "bad_address" if code in {550, 551, 553} and not POLICY_WORDS.search(text or "") else "policy"
+
+
+def _reply_text(raw) -> str:
+    return raw.decode("utf-8", "replace") if isinstance(raw, bytes) else str(raw or "")
 
 
 def is_loopback(host: str) -> bool:
@@ -135,12 +156,19 @@ class SmtpImapEmail:
             exc.external_id = m["Message-ID"]  # type: ignore[attr-defined]  # a later delivery report can still be matched to this message
             raise
         except smtplib.SMTPRecipientsRefused as exc:
-            codes = [code for code, _ in exc.recipients.values()]
-            if codes and all(500 <= code < 600 for code in codes):
-                err = RecipientRefused(f"The mail server refused the address for good (code {codes[0]}).")
+            replies = [(code, _reply_text(text)) for code, text in exc.recipients.values()]
+            if replies and all(500 <= code < 600 and refusal_kind(code, text) == "bad_address" for code, text in replies):
+                err = RecipientRefused(f"The mail server refused the address for good (code {replies[0][0]}).")
                 err.external_id = m["Message-ID"]  # type: ignore[attr-defined]
                 raise err from exc
-            raise _problem(f"The mail server refused the address for now (code {codes[0] if codes else 'unknown'}). It will be tried again later.", message_specific=True) from exc
+            code = replies[0][0] if replies else "unknown"
+            if replies and all(500 <= c < 600 for c, _ in replies):
+                # A refusal that is not about the address: a blocked sending address or host, a relay rule, a spam list. It is the mail server's or the mailbox's problem, so
+                # it is tried again later, it never counts toward the limit of tries for the lead, and the audit log gets a note for the mailbox.
+                err = _problem(f"The mail server refused the message for a reason that is not the address (code {code}). Check the mailbox, its host and your sending reputation. It will be tried again later.")
+                err.policy_refusal = code  # type: ignore[attr-defined]
+                raise err from exc
+            raise _problem(f"The mail server refused the address for now (code {code}). It will be tried again later.", message_specific=True) from exc
         except smtplib.SMTPDataError as exc:
             raise _problem(f"The mail server refused the message (code {exc.smtp_code}).", message_specific=True) from exc
         except smtplib.SMTPAuthenticationError as exc:
@@ -152,16 +180,23 @@ class SmtpImapEmail:
         return m["Message-ID"]
 
     @staticmethod
-    def _fetch_one(c: imaplib.IMAP4, uid: str) -> bytes | None:
-        """The raw bytes of one message, or None when the server has nothing for it or refuses this one fetch (the others are still read)."""
+    def _fetch_one(c: imaplib.IMAP4, uid: str) -> tuple[bytes, int | None] | None:
+        """(the first MAX_RAW_BYTES of the raw message, its full size when the server says it), or None when the server has nothing for it or refuses this one fetch (the
+        others are still read). Only the first part is asked for, so a message of many megabytes costs one small read."""
         try:
-            _, parts = c.uid("FETCH", uid, "(BODY.PEEK[])")
+            _, parts = c.uid("FETCH", uid, f"(RFC822.SIZE BODY.PEEK[]<0.{MAX_RAW_BYTES}>)")
         except imaplib.IMAP4.error:
             log.warning("the mail server refused to give message %s; the others are still read", uid)
             return None
+        size = None
+        for part in parts or []:
+            head = part[0] if isinstance(part, tuple) else part
+            found = FETCH_SIZE.search(head) if isinstance(head, bytes) else None
+            if found:
+                size = int(found.group(1))
         for part in parts or []:
             if isinstance(part, tuple) and len(part) > 1 and isinstance(part[1], bytes):
-                return part[1]
+                return part[1][:MAX_RAW_BYTES], size
         return None
 
     def fetch_replies(self) -> list[InboundEmail]:
@@ -175,9 +210,9 @@ class SmtpImapEmail:
                 c.select("INBOX")
                 _, data = c.uid("SEARCH", None, "UNSEEN")
                 for uid in (data[0] or b"").split():
-                    raw = self._fetch_one(c, uid.decode())
-                    if raw is not None:
-                        out.append(parse_inbound(uid.decode(), raw))  # never raises: a message that cannot be read is kept as raw text and flagged
+                    got = self._fetch_one(c, uid.decode())
+                    if got is not None:
+                        out.append(parse_inbound(uid.decode(), got[0], got[1]))  # never raises: a message that cannot be read is kept as raw text and flagged
             finally:
                 try:
                     c.logout()

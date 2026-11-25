@@ -15,7 +15,7 @@ from pipecairn.inbox import approve_and_send, dismiss_reply, reject_reply
 from pipecairn.jobs import active_sequence
 from pipecairn.models import DEAL_STAGES, Activity, Company, Contact, Deal, Enrollment, Lead, Meeting, Message, Reply, Sequence, Step, UnmatchedMail
 from pipecairn.sender import STOP_STATUSES, mark_not_sent
-from pipecairn.suppression import suppress_everywhere
+from pipecairn.suppression import lift_suppression, suppress_everywhere
 from pipecairn.util import is_valid_email, normalize_email
 from sendora_core.approvals import ApprovalError, pending
 from sendora_core.audit import record_audit
@@ -106,6 +106,22 @@ def suppress(body: SuppressIn, s: Session = Depends(db, scope="function"), u: di
     return {"suppressed": n}
 
 
+class LiftIn(BaseModel):
+    reason: str = Field(default="lifted by the owner", min_length=3, max_length=300)
+
+
+@router.post("/leads/{lead_id}/lift-suppression", summary="Undo a stop for one lead, for example one set by a reply that was read wrongly (owner only, audited)")
+def lift(lead_id: int, body: LiftIn, s: Session = Depends(db, scope="function"), u: dict = Depends(owner)):
+    lead = s.get(Lead, lead_id)
+    if lead is None:
+        raise HTTPException(404, "That lead does not exist.")
+    try:
+        out = lift_suppression(s, lead, u["user"], body.reason)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return {"ok": True, **out}
+
+
 class StepIn(BaseModel):
     channel: str = Field(pattern="^(email|sms)$")
     delay_hours: int = Field(ge=0, le=24 * 60)
@@ -184,7 +200,7 @@ def inbox(open: bool = False, s: Session = Depends(db, scope="function")):
     for r in s.scalars(stmt):
         row = reply_row(r)
         lead = s.get(Lead, r.lead_id)
-        row.update({"name": lead_row(lead)["name"], "company": lead_row(lead)["company"], "email": lead.contact.email, "score": lead.score})
+        row.update({"name": lead_row(lead)["name"], "company": lead_row(lead)["company"], "email": lead.contact.email, "score": lead.score, "lead_status": lead.status})
         out.append(row)
     return out
 

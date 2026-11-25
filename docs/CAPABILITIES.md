@@ -57,3 +57,6 @@ The owner now also sees an "Add a sending mailbox" card above the mailboxes (add
 | Every email has a footer (company, address, stop line) and `List-Unsubscribe` headers; texts get a stop line | `test_hardening_mail.py` |
 | A forged "mail delivery failed" cannot suppress a lead or pause a mailbox; a real stop request still acts at once | `test_hardening_mail.py` |
 | The in app kill switch and force draft stop CRM writes even with `MODE=live` | `test_hardening_ops.py` |
+| A hostile email (a megabyte of `<script `, a header made of quotes, thousands of nested parts) is read in a fraction of a second and cannot keep the worker busy; a very large message is read from its first 256 KB and flagged | `test_round4.py` |
+| Ordinary hot replies ("can we block this Thursday", "I'll loop in our legal team", "remove the setup fee") stop the follow ups but never suppress anyone; STOPALL, QUIT, CANCEL, END and "Please stop" do; the owner can lift a stop | `test_round4.py` |
+| A resumed mailbox stays resumed; a policy or relay refusal is not a bad address; one failing enrolment cannot block the rest of the batch | `test_round4.py` |

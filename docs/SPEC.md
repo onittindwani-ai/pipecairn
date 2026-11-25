@@ -19,7 +19,7 @@ Pipecairn takes a lead from first contact to a signed deal. This file is the spe
 | Deal | The money side of a lead | stage, value, closed_at, lost_reason |
 | Activity | A human readable timeline entry | lead, kind, summary |
 | Suppression | Never contact again | kind (email, domain, phone), value, reason |
-| Mailbox | A sending address | address, provider, daily_cap, sent_today, bounce_count, health, spf, dkim, dmarc |
+| Mailbox | A sending address | address, provider, daily_cap, sent_today, bounce_count, sent_base and bounce_base (the counts at the last resume, so the pause rule counts from there), health, spf, dkim, dmarc |
 | Event | Every meaningful change | stored in the base `core_events` table |
 
 Pipeline stages on a deal: new, contacted, replied, meeting, proposal, won, lost.

@@ -22,7 +22,7 @@ Browser  ->  Web app (Next.js)  ->  API (FastAPI)  ->  Database (SQLite or Postg
 2. **Enrich and score**: a 0 to 100 fit score from simple rules (see `apps/api/src/pipecairn/scoring.py`).
 3. **Enrol** in the sequence.
 4. **Send tick** (the heart): for each due step it runs the gates in order and then chooses a mailbox.
-5. **Replies** arrive through IMAP, the Telnyx webhook or the email webhook. A reader sorts them; stop words stop everything for that person at once.
+5. **Replies** arrive through IMAP, the Telnyx webhook or the email webhook. A reader sorts them; a complete request to stop suppresses that person at once, and wording that only might be one stops the follow ups and waits for a person.
 6. **Draft reply and approval**: the suggested reply waits in the Inbox until a person approves.
 7. **Book** a call (Cal.com or Google Calendar), **proposal** and **contract** as PDFs, then **handoff** for signature.
 
@@ -40,4 +40,4 @@ The app can pull toward draft or stop (State keys `kill_switch`, `force_draft`).
 
 ## API
 
-57 paths, 62 operations, in `docs/openapi.json`. Live docs at `/docs` on the API, in demo mode only (they are off when `DEMO_MODE=false`).
+58 paths, 63 operations, in `docs/openapi.json`. Live docs at `/docs` on the API, in demo mode only (they are off when `DEMO_MODE=false`).

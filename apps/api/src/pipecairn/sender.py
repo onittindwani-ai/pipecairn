@@ -6,17 +6,19 @@ contact's own time zone, a mailbox with room under its daily cap, and finally th
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func, or_, select, update
+from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 from sqlalchemy.orm import Session
 
 from pipecairn import timing
 from pipecairn.adapters.base import RecipientRefused, SendUnconfirmed
-from pipecairn.models import Activity, Deal, Enrollment, Lead, Mailbox, Message
+from pipecairn.models import Activity, Deal, Enrollment, Lead, Mailbox, Message, State
 from pipecairn.suppression import add_suppression, suppression_reason
 from pipecairn.templating import TemplateError, render
 from pipecairn.unsubscribe import with_footer
@@ -31,6 +33,9 @@ BOUNCE_RATE_PAUSE = 0.05
 MIN_SENDS_FOR_BOUNCE_CHECK = 20
 MAX_SEND_ATTEMPTS = 3  # one step is tried this many times (an hour apart) when the mail server refuses the message itself; then the lead is stopped for a person to look at
 STEP_COUNTED = ";step_counted"  # added to an unconfirmed message's blocked_reason once its sequence step has been counted as done, so that happens exactly once
+MAX_TICK_ERRORS = 3  # a sequence step that raises an error this many times in a row is stopped for a person to look at, so one broken row never blocks the queue
+SUBJECT_MAX = 300  # the width of Message.subject
+log = logging.getLogger("pipecairn.sender")
 SERVER_PROBLEM = "server:"  # blocked_reason prefix for a failure that is the mail server's or the mailbox's (login, certificate, connection): it is retried, but never counts toward the limit
 
 
@@ -41,6 +46,7 @@ class TickReport:
     deferred: int = 0
     blocked: int = 0
     stopped: int = 0
+    errors: int = 0  # enrolments whose step raised an error and was set aside (see _isolate)
     halted: bool = False
     reasons: dict[str, int] = field(default_factory=dict)
 
@@ -85,10 +91,19 @@ def bounce_limits(settings: BaseAppSettings) -> tuple[float, int]:
 
 
 def maybe_pause_for_bounces(mb: Mailbox, rate: float = BOUNCE_RATE_PAUSE, min_sends: int = MIN_SENDS_FOR_BOUNCE_CHECK) -> bool:
-    if mb.sent_total >= min_sends and mb.bounce_count / mb.sent_total > rate and mb.is_active:
+    """Pause a mailbox whose bounce rate is above the limit. The rate is counted from the last resume (the whole history until there is one): the totals that caused a pause
+    would otherwise pause the mailbox again at the very next send, and resuming would do nothing."""
+    sent, bounced = (mb.sent_total or 0) - (mb.sent_base or 0), (mb.bounce_count or 0) - (mb.bounce_base or 0)  # a row not yet flushed has no defaults
+    if sent >= max(1, min_sends) and bounced / sent > rate and mb.is_active:
         mb.is_active, mb.paused_reason = False, f"Bounce rate above {rate * 100:g} percent. Fix the list, then resume by hand."
         return True
     return False
+
+
+def resume_mailbox(mb: Mailbox) -> None:
+    """Switch a paused mailbox back on and start counting its bounce rate again from now: it gets min_sends fresh sends before the rule can pause it again."""
+    mb.is_active, mb.paused_reason = True, ""
+    mb.sent_base, mb.bounce_base = mb.sent_total or 0, mb.bounce_count or 0
 
 
 def _stop(session: Session, enr: Enrollment, reason: str, report: TickReport, now: datetime) -> None:
@@ -157,6 +172,7 @@ def deliver(
         mb = pick_mailbox(session, now, *bounce_limits(settings))
         if mb is None:
             return "deferred", "mailbox_caps_reached"
+    subject = subject[:SUBJECT_MAX]
     body = with_footer(settings, channel, body)  # who writes, where they are, how to say stop: added here so a draft shows exactly what would go out
     msg = Message(lead_id=lead.id, enrollment_id=enr.id if enr else None, mailbox_id=mb.id if mb else None, channel=channel, direction="out",
                   to_addr=to, subject=subject, body=body, created_at=now)
@@ -186,6 +202,9 @@ def deliver(
         return "unconfirmed", "send_unconfirmed"
     except Exception as exc:  # the vendor failed, we keep the message and retry later (a limited number of times)
         counts = getattr(exc, "message_specific", True)
+        policy_code = getattr(exc, "policy_refusal", None)
+        if policy_code is not None and mb is not None:  # the server said no for a reason that is not the address: a note for the mailbox, nothing for the lead
+            record_audit(session, "system", "mailbox.server_refusal", f"mailbox:{mb.id}", {"code": str(policy_code)})
         msg.status, msg.blocked_reason = "failed", ("" if counts else SERVER_PROBLEM) + f"{type(exc).__name__}"[:100]
         record_event(session, "message.failed", "message", None, {"lead": lead.id, "error": type(exc).__name__})
         return "failed", type(exc).__name__
@@ -346,10 +365,60 @@ def send_tick(session: Session, settings: BaseAppSettings, adapters: Any, now: d
         if enr.status != "active":
             continue
         session.refresh(enr.lead)
-        _tick_enrollment(session, live, adapters, enr, now, report)
-        session.commit()
+        enr_id = enr.id
+        try:
+            _tick_enrollment(session, live, adapters, enr, now, report)
+            session.commit()
+        except (OperationalError, InterfaceError):
+            raise  # the database itself is not answering: that is not this enrolment's fault, and the next run starts again from the same rows
+        except DBAPIError as exc:
+            if getattr(exc, "connection_invalidated", False):
+                raise
+            _isolate(session, enr_id, exc, now, report)
+        except Exception as exc:  # one broken row: set it aside and carry on with the others
+            _isolate(session, enr_id, exc, now, report)
+        else:
+            _clear_errors(session, enr_id)
     session.flush()
     return report
+
+
+def _error_key(enr_id: int) -> str:
+    return f"se:{enr_id}"
+
+
+def _clear_errors(session: Session, enr_id: int) -> None:
+    row = session.get(State, _error_key(enr_id))
+    if row is not None:
+        session.delete(row)
+        session.commit()
+
+
+def _isolate(session: Session, enr_id: int, exc: Exception, now: datetime, report: TickReport) -> None:
+    """A step raised an error. Undo what it half did, write the error on the enrolment (an Activity line and a counter), move the enrolment an hour back in the queue so it
+    is not first in line again, and stop it for a person after MAX_TICK_ERRORS errors in a row. The others in the batch are not touched."""
+    session.rollback()
+    report.errors += 1
+    report.why("tick_error")
+    log.warning("sequence step failed for enrolment %s: %s", enr_id, type(exc).__name__)
+    enr = session.get(Enrollment, enr_id)
+    if enr is None:
+        return
+    key = _error_key(enr_id)
+    row = session.get(State, key)
+    n = int(row.value or 0) + 1 if row is not None else 1
+    if row is None:
+        session.add(State(key=key, value=str(n)))
+    else:
+        row.value = str(n)
+    step = enr.current_step + 1
+    if n >= MAX_TICK_ERRORS:
+        session.add(Activity(lead_id=enr.lead_id, kind="message", summary=f"Step {step} could not be prepared {n} times ({type(exc).__name__}). The sequence for this person is stopped: check the step and the lead.", created_at=now))
+        _stop(session, enr, "send_error", report, now)
+    else:
+        session.add(Activity(lead_id=enr.lead_id, kind="message", summary=f"Step {step} could not be prepared ({type(exc).__name__}). It will be tried again in an hour.", created_at=now))
+        enr.next_send_at = now + timedelta(hours=1)
+    session.commit()
 
 
 def _tick_enrollment(session: Session, settings: BaseAppSettings, adapters: Any, enr: Enrollment, now: datetime, report: TickReport) -> None:
@@ -363,7 +432,7 @@ def _tick_enrollment(session: Session, settings: BaseAppSettings, adapters: Any,
     step = steps[enr.current_step]
     try:
         name = getattr(settings, "sender_name", "Alex")
-        subject = render(step.subject, _ctx(lead, name), header=True)
+        subject = render(step.subject, _ctx(lead, name), header=True)[:SUBJECT_MAX]  # the column holds this much; a longer one is refused by Postgres
         body = render(step.body, _ctx(lead, name))
     except TemplateError:
         _stop(session, enr, "template_error", report, now)
