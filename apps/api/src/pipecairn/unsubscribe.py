@@ -27,14 +27,17 @@ def make_token(secret: str, email: str) -> str:
     return f"{_b64(email.encode())}.{_sig(secret, email)}"
 
 
-def read_token(secret: str, token: str) -> str | None:
-    """The address in a valid token, otherwise None."""
+def read_token(secret: str, token: str, *older_secrets: str) -> str | None:
+    """The address in a valid token, otherwise None. `older_secrets` (SESSION_SECRET_PREVIOUS) keep links valid that were emailed before the secret was replaced."""
     try:
         body, sig = token.split(".", 1)
         email = base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)).decode()
     except (ValueError, UnicodeDecodeError):
         return None
-    return email if hmac.compare_digest(sig.encode(), _sig(secret, email).encode()) else None
+    for s in (secret, *(o for o in older_secrets if o)):
+        if hmac.compare_digest(sig.encode(), _sig(s, email).encode()):
+            return email
+    return None
 
 
 def unsubscribe_url(settings: Any, email: str) -> str:

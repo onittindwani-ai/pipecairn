@@ -8,7 +8,7 @@ import threading
 import pytest
 from sqlalchemy import select
 
-from conftest import NOW, make_settings
+from support import NOW, make_settings
 from mock.mail_servers import FakeMailServers
 from pipecairn.adapters.base import InboundEmail
 from pipecairn.adapters.smtp_imap import SmtpImapEmail, delivery_report_facts
@@ -163,7 +163,7 @@ def test_a_forged_bounce_changes_nothing(session, world):  # noqa: F811
     before = (mb.bounce_count, lead.status)
     # from the lead's own address, plain text: the words are not proof
     r = cap(session, world, "Delivery Status Notification (Failure). 550 5.1.1 User unknown.", ext="plain-1")
-    assert r.intent == "bounce" and r.suggested_action == "unverified_bounce" and r.handled
+    assert r.intent == "bounce" and r.suggested_action == "unverified_bounce" and not r.handled  # kept open: a person reads it
     # from a made up mail system address: the old code looked the lead up from the address written in the text
     assert capture_email(session, world["settings"], world["llm"], world["adapters"].calendar, forged_bounce(world), NOW) is None
     # a report shaped like a real one but naming a message we never sent

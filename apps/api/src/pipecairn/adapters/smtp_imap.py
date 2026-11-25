@@ -118,6 +118,8 @@ class SmtpImapEmail:
         return m["Message-ID"]
 
     def fetch_replies(self) -> list[InboundEmail]:
+        """Unread messages, read with BODY.PEEK so the mailbox does NOT mark them read. The caller stores each one and only then calls mark_seen:
+        a failure part way through leaves the unstored ones unread, so they come again at the next poll (a stored one is recognised and skipped)."""
         self._need("imap_host", "smtp_user")
         out: list[InboundEmail] = []
         try:
@@ -126,7 +128,7 @@ class SmtpImapEmail:
                 c.select("INBOX")
                 _, data = c.uid("SEARCH", None, "UNSEEN")
                 for uid in (data[0] or b"").split():
-                    _, parts = c.uid("FETCH", uid.decode(), "(RFC822)")
+                    _, parts = c.uid("FETCH", uid.decode(), "(BODY.PEEK[])")
                     if not parts or not parts[0]:
                         continue
                     msg = email.message_from_bytes(parts[0][1], policy=default_policy)
@@ -135,8 +137,7 @@ class SmtpImapEmail:
                     is_dsn, refs = delivery_report_facts(msg)
                     out.append(InboundEmail(external_id=str(msg["Message-ID"] or f"imap-{uid.decode()}"), from_addr=parseaddr(str(msg["From"] or ""))[1],
                                             to_addr=parseaddr(str(msg["To"] or ""))[1], subject=str(msg["Subject"] or ""), body=text[:20000],
-                                            is_dsn=is_dsn, references=refs, auth_results=str(msg["Authentication-Results"] or "")[:300]))
-                    c.uid("STORE", uid.decode(), "+FLAGS", "(\\Seen)")
+                                            is_dsn=is_dsn, references=refs, auth_results=str(msg["Authentication-Results"] or "")[:300], uid=uid.decode()))
             finally:
                 try:
                     c.logout()
@@ -149,6 +150,25 @@ class SmtpImapEmail:
         except OSError as exc:
             raise AdapterError(f"Could not reach the inbox at {self.settings.imap_host}: {type(exc).__name__}.") from exc
         return out
+
+    def mark_seen(self, uids: list[str]) -> None:
+        """Mark messages as read once they are stored. A failure here is harmless: the message is fetched again and recognised as already stored."""
+        if not uids:
+            return
+        self._need("imap_host", "smtp_user")
+        try:
+            c = self._imap()
+            try:
+                c.select("INBOX")
+                for uid in uids:
+                    c.uid("STORE", uid, "+FLAGS", "(\\Seen)")
+            finally:
+                try:
+                    c.logout()
+                except Exception:
+                    pass
+        except (imaplib.IMAP4.error, ssl.SSLCertVerificationError, OSError) as exc:
+            raise AdapterError(f"Could not mark mail as read at {self.settings.imap_host}: {type(exc).__name__}.") from exc
 
     def healthcheck(self) -> tuple[bool, str]:
         try:

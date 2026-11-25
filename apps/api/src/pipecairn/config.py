@@ -7,11 +7,15 @@ import re
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from sendora_core.settings import BaseAppSettings, Mode
+from sendora_core.settings import MIN_SECRET_LENGTH, PLACEHOLDER_SECRET, BaseAppSettings, Mode
 
 DEFAULT_SENDER_NAME = "Alex"
 DEFAULT_COMPANY_NAME = "Your Company"
 EMAIL_LIKE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def secret_is_weak(secret: str) -> bool:
+    return len(secret) < MIN_SECRET_LENGTH or bool(PLACEHOLDER_SECRET.search(secret))
 
 
 class Settings(BaseAppSettings):
@@ -65,6 +69,7 @@ class Settings(BaseAppSettings):
     google_calendar_token: str = ""
 
     webhook_shared_secret: str = ""
+    session_secret_previous: str = ""  # SESSION_SECRET_PREVIOUS: the secret you replaced. Unsubscribe links already emailed were signed with it, so it stays valid for them. Empty once old links no longer matter
     quiet_start_hour: int = Field(default=18, ge=0, le=23)  # no sends from this local hour
     quiet_end_hour: int = Field(default=8, ge=0, le=23)  # until this local hour
     send_weekends: bool = False
@@ -115,8 +120,17 @@ class Settings(BaseAppSettings):
 
     def runtime_errors(self) -> list[str]:
         out = super().runtime_errors()
+        if self.owner_password_hash and self.demo_mode and secret_is_weak(self.session_secret):
+            # The base check skips demo mode, but an owner password switches the demo shortcuts off: this is then a real login, and the session token is
+            # signed with SESSION_SECRET. The demo secret in the quick start guide is public, so anyone could sign a token for the owner.
+            out.append(
+                f"OWNER_PASSWORD_HASH is set, so this is a real login, but SESSION_SECRET is missing, too short (under {MIN_SECRET_LENGTH} characters) or still an example value. "
+                "Anyone who has read the public code could sign in as the owner. Create one with: python3 -c \"import secrets; print(secrets.token_urlsafe(48))\""
+            )
         if self.mode is Mode.LIVE and not self.demo_mode:
             out += self.identity_problems()
+            if self.email_adapter == "seed":
+                out.append("MODE is live but EMAIL_ADAPTER is seed, the offline stand in that sends nothing and records a fake \"sent\". Set EMAIL_ADAPTER=smtp_imap.")
         return list(dict.fromkeys(out))
 
     def problems(self) -> list[str]:
@@ -129,6 +143,4 @@ class Settings(BaseAppSettings):
             out += [p for p in self.identity_problems() if p not in out]
         if not self.demo_mode and self.mode.value == "live" and self.webhook_shared_secret == "":
             out.append("WEBHOOK_SHARED_SECRET is empty, so signed inbound email webhooks are refused.")
-        if self.mode is Mode.LIVE and self.email_adapter == "seed" and not self.demo_mode:
-            out.append("MODE is live but EMAIL_ADAPTER is seed, so nothing real can be sent. Set EMAIL_ADAPTER=smtp_imap.")
         return out

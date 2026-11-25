@@ -7,7 +7,7 @@ You run Pipecairn for someone else's business. Keep each client in their own cop
 1. **One install per client.** Own database, own settings, own mailboxes, own domains. Never mix two clients' leads in one database.
 2. **Their accounts, their names.** The client creates and owns the email, texting, calendar and CRM accounts. You get access, not ownership. The texting carrier registration is in the client's business name.
 3. **Their consent.** Only import lists the client has the right to contact. You are not a source of leads in this system.
-4. **Two logins.** The client owner is the owner. If you need to approve work for them, use the approver login so you cannot change settings.
+4. **Two logins.** The client owner is the owner. If you need to approve work for them, use the approver login so you cannot change settings, edit the sequences or import leads.
 5. **Start in draft.** Run a week of drafts with the client reading them.
 
 ## Setting up

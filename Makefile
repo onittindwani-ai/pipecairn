@@ -1,6 +1,6 @@
 PY=.venv/bin/python
 
-.PHONY: e2e install test seed-check doctor check-env api worker web demo-note
+.PHONY: e2e install test test-web seed-check doctor check-env api worker web demo-note
 
 install:
 	@if command -v uv >/dev/null 2>&1; then \
@@ -14,7 +14,10 @@ install:
 	pnpm install
 
 test:
-	$(PY) -m pytest
+	$(PY) -m pytest  # the app, the mock servers, the tools and the shared base package (see pytest.ini)
+
+test-web:
+	pnpm --filter web test:unit
 
 seed-check:
 	$(PY) tools/score_seed.py

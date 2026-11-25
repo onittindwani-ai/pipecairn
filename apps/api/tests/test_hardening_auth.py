@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from conftest import DATA, make_settings
+from support import DATA, make_settings
 from pipecairn.api import routes_auth
 from pipecairn.api.app import create_app
 from pipecairn.config import Settings
@@ -90,7 +90,7 @@ def test_live_mode_refuses_the_placeholder_sender_identity(tmp_path):
     with pytest.raises(ConfigError) as e:
         create_app(real_settings(tmp_path, mode="live"))
     assert "SENDER_NAME" in str(e.value) and "COMPANY_ADDRESS" in str(e.value)
-    ok = real_settings(tmp_path, mode="live", sender_name="Sam Rivera", company_name="Rivera Works", company_address="12 Main Street, Springfield, IL 62701, USA")
+    ok = real_settings(tmp_path, mode="live", sender_name="Sam Rivera", company_name="Rivera Works", company_address="12 Main Street, Springfield, IL 62701, USA", email_adapter="smtp_imap")
     assert not [p for p in ok.runtime_errors()]
     create_app(ok)  # starts
 
@@ -112,15 +112,16 @@ def test_an_empty_line_in_the_env_file_means_not_set(tmp_path):
     assert s.llm_call_budget is None and s.calcom_event_type_id == 0
 
 
-def test_guesses_spread_over_many_addresses_still_run_out(tmp_path):
+def test_guesses_spread_over_many_addresses_are_limited_per_address_and_never_lock_the_account(tmp_path):
     app = create_app(real_settings(tmp_path, login_burst=2))
     codes = []
     for i in range(30):
         c = TestClient(app, base_url="http://api.test", client=(f"203.0.113.{i + 1}", 50000 + i))  # a different visitor each time
         codes.append(c.post("/api/auth/login", json={"email": "owner@example.test", "password": "wrong-password"}).status_code)
-    assert codes[0] == 401 and 429 in codes[20:]  # the per account limit (20 here) stops them even though no single address is busy
+    # Each address has its own tries. There is no limit on the account as a whole: it would let a stranger lock the owner out of their own system.
+    assert codes == [401] * 30
     other = TestClient(app, base_url="http://api.test", client=("198.51.100.5", 40000))
-    assert other.post("/api/auth/login", json={"email": "someone.else@example.test", "password": "x"}).status_code == 401  # other accounts are not affected
+    assert other.post("/api/auth/login", json={"email": "owner@example.test", "password": PASSWORD}).status_code == 200
 
 
 def test_me_reports_demo_only_while_the_demo_routes_exist(tmp_path):

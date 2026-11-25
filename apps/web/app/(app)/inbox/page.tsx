@@ -5,9 +5,9 @@ import { Badge, Button, Card, CopyButton, EmptyState, SegmentedControl, SplitVie
 import { IntentBadge, ListSkeleton, LoadError, PageHead, Textarea, intentLabel } from "@/components/Parts";
 import { get, post } from "@/lib/api";
 import { usePermissions } from "@/lib/hooks";
-import type { ReplyRow } from "@/lib/types";
+import type { ReplyRow, UnmatchedMail } from "@/lib/types";
 
-const ACTION_TEXT: Record<string, string> = { book_call: "Offer times and book a call", answer_question: "Answer their question", ask_referral: "Ask who the right person is", snooze: "Come back on the date below", wait: "Wait until they are back", suppressed: "Stopped and never contacted again" };
+const ACTION_TEXT: Record<string, string> = { book_call: "Offer times and book a call", answer_question: "Answer their question", ask_referral: "Ask who the right person is", snooze: "Come back on the date below", wait: "Wait until they are back", suppressed: "Stopped and never contacted again", unverified_bounce: "Read it: it says the mail bounced, but it is not a real delivery report, so nothing was changed" };
 
 function Detail({ r }: { r: ReplyRow }) {
   const qc = useQueryClient();
@@ -24,6 +24,7 @@ function Detail({ r }: { r: ReplyRow }) {
     onError: (e: Error) => notify.error("Could not send", e.message),
   });
   const reject = useMutation({ mutationFn: () => post(`/inbox/${r.id}/reject`), onSuccess: () => { notify.info("Draft rejected."); refresh(); } });
+  const dismiss = useMutation({ mutationFn: () => post(`/inbox/${r.id}/dismiss`), onSuccess: () => { notify.info("Marked as read."); refresh(); }, onError: (e: Error) => notify.error("Could not mark it", e.message) });
   const book = useMutation({
     mutationFn: () => post<{ starts_at: string }>(`/inbox/${r.id}/book`, { slot }),
     onSuccess: (x) => { notify.success(`Call booked for ${new Date(x.starts_at).toUTCString()}.`); refresh(); },
@@ -59,8 +60,28 @@ function Detail({ r }: { r: ReplyRow }) {
               </div>
             ) : null}
           </>
-        ) : r.handled ? <Badge tone="success">Handled</Badge> : null}
+        ) : r.handled ? <Badge tone="success">Handled</Badge> : canWrite ? <div className="sx-row"><Button variant="ghost" onClick={async () => { await dismiss.mutateAsync(); }}>Mark as read</Button><span className="cl-mini">Nothing is sent. This only takes it off the list.</span></div> : null}
       </div>
+    </Card>
+  );
+}
+
+function UnmatchedCard() {
+  const qc = useQueryClient();
+  const { canWrite } = usePermissions();
+  const q = useQuery({ queryKey: ["inbox-unmatched"], queryFn: () => get<UnmatchedMail[]>("/inbox/unmatched") });
+  const dismiss = useMutation({ mutationFn: (id: number) => post(`/inbox/unmatched/${id}/dismiss`), onSuccess: () => { qc.invalidateQueries({ queryKey: ["inbox-unmatched"] }); }, onError: (e: Error) => notify.error("Could not mark it", e.message) });
+  if (!q.data?.length) return null;
+  return (
+    <Card title={`Mail from addresses that are not leads (${q.data.length})`}>
+      <p className="cl-mini" style={{ marginTop: 0 }}>An alias, a forward, a colleague or a stranger wrote to the inbox. Nothing was done with these. Read them, and write back yourself if it matters.</p>
+      <ul className="cl-list">{q.data.map((m) => (
+        <li key={m.id} className="cl-item" style={{ cursor: "default" }}>
+          <span className="cl-item__top"><strong>{m.from || "unknown sender"}</strong><span className="cl-mini">{formatWhen(new Date(m.created_at))}</span></span>
+          <span className="cl-item__line">{m.subject || "(no subject)"}</span>
+          <blockquote className="cl-quote cl-pre" style={{ margin: 0 }}>{m.snippet}</blockquote>
+          {canWrite ? <span className="sx-row"><Button size="sm" variant="ghost" onClick={async () => { await dismiss.mutateAsync(m.id); }}>Mark as read</Button></span> : null}
+        </li>))}</ul>
     </Card>
   );
 }
@@ -74,6 +95,7 @@ export default function InboxPage() {
   return (
     <div className="cl-page">
       <PageHead title="Inbox" sub="Replies from leads, read for you. Anything that would send a message waits for your approval." actions={<SegmentedControl label="Show" value={view} onChange={setView} options={[{ value: "open", label: "Open" }, { value: "all", label: "All" }]} />} />
+      <UnmatchedCard />
       {q.isError ? <LoadError error={q.error} onRetry={() => q.refetch()} what="the inbox" /> : !q.data ? <ListSkeleton rows={6} /> : rows.length === 0 ? (
         <Card><EmptyState title={view === "open" ? "Nothing needs you" : "No replies yet"} body="When a lead answers, it appears here with a suggested next step. In the demo, press Run now, then +1 day, a few times." /></Card>
       ) : (

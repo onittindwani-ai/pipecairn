@@ -8,7 +8,7 @@ from pipecairn.models import Deal, Enrollment, Lead, Mailbox, Message, Reply, Se
 from pipecairn.offline_llm import OfflineBackend
 from pipecairn.sender import send_tick
 from pipecairn.suppression import suppression_reason
-from conftest import NOW
+from support import NOW
 from sendora_core.approvals import ApprovalError
 from sendora_core.llm import LLM
 

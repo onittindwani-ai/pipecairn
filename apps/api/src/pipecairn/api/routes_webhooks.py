@@ -21,6 +21,7 @@ from pipecairn.context import Ctx
 from pipecairn.models import Activity, Deal, Lead, Meeting
 from pipecairn.suppression import suppress_everywhere
 from pipecairn.unsubscribe import read_token
+from pipecairn.util import clean_person_text
 from sendora_core.adapters import AdapterError
 from sendora_core.audit import record_audit
 from sendora_core.auth import verify_webhook_signature
@@ -47,6 +48,12 @@ async def body_of(request: Request) -> bytes:
     return b"".join(chunks)
 
 
+async def raw_body(request: Request) -> bytes:
+    """The bounded body as a dependency. Reading the body is the only part that has to wait on the network, so it runs on the event loop; the route that
+    uses it is a plain function that runs on a worker thread, so a slow database call or a model call cannot freeze every other request."""
+    return await body_of(request)
+
+
 def check_shared(ctx: Ctx, raw: bytes, sig: str | None, timestamp: str | None = None, now: float | None = None) -> None:
     """Signature check for the shared secret webhooks. A sender that adds an `x-timestamp` header (seconds since 1970) signs `timestamp.body`
     and a captured request stops working after five minutes. Without the header the body alone is signed, and the receiver drops a message it has already stored."""
@@ -67,8 +74,7 @@ def check_shared(ctx: Ctx, raw: bytes, sig: str | None, timestamp: str | None = 
 
 
 @router.post("/telnyx", summary="Inbound text from Telnyx (Ed25519 signed)")
-async def telnyx(request: Request, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), telnyx_signature_ed25519: str | None = Header(default=None), telnyx_timestamp: str | None = Header(default=None)):
-    raw = await body_of(request)
+def telnyx(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), telnyx_signature_ed25519: str | None = Header(default=None), telnyx_timestamp: str | None = Header(default=None)):
     if not (telnyx_signature_ed25519 and telnyx_timestamp and verify_telnyx_webhook(ctx.settings.telnyx_public_key, raw, telnyx_signature_ed25519, telnyx_timestamp)):
         raise HTTPException(401, "Bad signature.")
     try:
@@ -80,8 +86,7 @@ async def telnyx(request: Request, s: Session = Depends(db), ctx: Ctx = Depends(
 
 
 @router.post("/calcom", summary="Booking events from Cal.com (HMAC signed)")
-async def calcom(request: Request, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), x_cal_signature_256: str | None = Header(default=None)):
-    raw = await body_of(request)
+def calcom(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), x_cal_signature_256: str | None = Header(default=None)):
     if not verify_calcom_webhook(ctx.settings.calcom_webhook_secret, raw, x_cal_signature_256 or ""):
         raise HTTPException(401, "Bad signature.")
     try:
@@ -111,8 +116,7 @@ async def calcom(request: Request, s: Session = Depends(db), ctx: Ctx = Depends(
 
 
 @router.post("/email", summary="Inbound email relayed by your mail provider (HMAC signed)")
-async def email(request: Request, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), x_signature: str | None = Header(default=None), x_timestamp: str | None = Header(default=None)):
-    raw = await body_of(request)
+def email(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), x_signature: str | None = Header(default=None), x_timestamp: str | None = Header(default=None)):
     check_shared(ctx, raw, x_signature, x_timestamp)
     try:
         d = json.loads(raw)
@@ -126,12 +130,13 @@ async def email(request: Request, s: Session = Depends(db), ctx: Ctx = Depends(g
 
 
 @router.post("/form", summary="A web form lead (HMAC signed)")
-async def form(request: Request, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), x_signature: str | None = Header(default=None), x_timestamp: str | None = Header(default=None)):
-    raw = await body_of(request)
+def form(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), x_signature: str | None = Header(default=None), x_timestamp: str | None = Header(default=None)):
     check_shared(ctx, raw, x_signature, x_timestamp)
     try:
         d = json.loads(raw)
         row = {k: str(d.get(k, "")) for k in intake.CSV_COLUMNS if k != "sms_consent"}
+        for k in ("first_name", "last_name", "title"):
+            row[k] = clean_person_text(row[k])  # these go into the first email, so anything that is not a plain name is dropped
         row["sms_consent"] = "yes" if d.get("sms_consent") is True else ""
         if not row["email"]:
             raise ValueError
@@ -151,7 +156,7 @@ PAGE = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta nam
 @router.get("/unsubscribe/{token}", response_class=HTMLResponse, summary="The page behind the unsubscribe link in an email (asks for one click to confirm)")
 def unsubscribe_page(token: str, ctx: Ctx = Depends(get_ctx)):
     """Opening a link must not change anything (mail scanners open links), so this only shows the button."""
-    if read_token(ctx.settings.session_secret, token) is None:
+    if read_token(ctx.settings.session_secret, token, ctx.settings.session_secret_previous) is None:
         return HTMLResponse(PAGE.format(title="This link is not valid", body="<p>Reply STOP to the email instead and we will remove you.</p>"), status_code=404)
     return HTMLResponse(PAGE.format(title="Stop these emails?", body=f"<form method=\"post\" action=\"/api/webhooks/unsubscribe/{token}\"><button type=\"submit\">Yes, stop emailing me</button></form>"))
 
@@ -159,7 +164,7 @@ def unsubscribe_page(token: str, ctx: Ctx = Depends(get_ctx)):
 @router.post("/unsubscribe/{token}", summary="One click unsubscribe from the List-Unsubscribe header (signed link, no session)")
 def unsubscribe(token: str, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
     """A mail program (or the page above) posts here. The signed address is suppressed at once and its leads stop."""
-    addr = read_token(ctx.settings.session_secret, token)
+    addr = read_token(ctx.settings.session_secret, token, ctx.settings.session_secret_previous)
     if addr is None:
         raise HTTPException(404, "This link is not valid.")
     stopped = suppress_everywhere(s, "email", addr, "asked to stop (unsubscribe link)", "unsubscribe_link")

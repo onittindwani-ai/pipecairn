@@ -6,13 +6,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from pipecairn import metrics
+from pipecairn.audit_check import DEFAULT_LIMIT, verify_recent
 from pipecairn.api.deps import db, get_ctx, owner, writer
 from pipecairn.api.serializers import iso
 from pipecairn.context import Ctx, set_state
 from pipecairn.models import Mailbox, Reply
 from pipecairn.registry import CATEGORIES, ENV_VARS
 from sendora_core.approvals import ApprovalError, decide
-from sendora_core.audit import record_audit, verify_audit_chain
+from sendora_core.audit import record_audit
 from sendora_core.models import Approval, AuditEntry
 
 router = APIRouter(prefix="/api", tags=["operations"])
@@ -33,15 +34,19 @@ def resume(mailbox_id: int, s: Session = Depends(db), u: dict = Depends(owner)):
     return {"ok": True}
 
 
-def approval_row(a: Approval) -> dict:
+def approval_row(a: Approval, reply: Reply | None = None) -> dict:
+    """`draft` is the text that will go out when a reply approval is approved, so the person deciding reads what they approve. `reply_open` is true while an approved
+    reply has not gone out yet (the daily cap, a quiet hour, a vendor error): it can be sent again or dismissed."""
     return {"id": a.id, "action": a.action, "summary": a.summary, "risk": a.risk, "status": a.status, "requested_by": a.requested_by, "decided_by": a.decided_by, "note": a.decision_note,
-            "created_at": iso(a.created_at), "payload": a.payload}
+            "created_at": iso(a.created_at), "payload": a.payload, "draft": reply.draft_reply if reply is not None else "", "reply_id": reply.id if reply is not None else None,
+            "reply_open": bool(reply is not None and not reply.handled)}
 
 
 @router.get("/approvals", summary="Pending and recent approvals")
 def approvals(s: Session = Depends(db)):
     rows = list(s.scalars(select(Approval).order_by(Approval.id.desc()).limit(100)))
-    return [approval_row(a) for a in rows]
+    by_approval = {r.approval_id: r for r in s.scalars(select(Reply).where(Reply.approval_id.in_([a.id for a in rows if a.action == "reply.send"] or [0])))}
+    return [approval_row(a, by_approval.get(a.id)) for a in rows]
 
 
 class DecideIn(BaseModel):
@@ -76,10 +81,10 @@ def audit(limit: int = Query(100, ge=1, le=1000), s: Session = Depends(db)):
     return [{"id": e.id, "actor": e.actor, "action": e.action, "target": e.target, "detail": e.detail, "at": e.created_at} for e in rows]
 
 
-@router.get("/audit/verify", summary="Check the audit chain has not been edited")
-def audit_verify(s: Session = Depends(db)):
-    ok, bad = verify_audit_chain(s)
-    return {"ok": ok, "first_bad_id": bad}
+@router.get("/audit/verify", summary="Check the audit chain has not been edited (the newest rows; limit=0 checks every row)")
+def audit_verify(limit: int = Query(DEFAULT_LIMIT, ge=0, le=5_000_000), s: Session = Depends(db)):
+    ok, bad, checked = verify_recent(s, limit)
+    return {"ok": ok, "first_bad_id": bad, "checked": checked}
 
 
 @router.get("/integrations", summary="Every adapter, which one is selected, and what it needs")

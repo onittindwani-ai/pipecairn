@@ -2,7 +2,7 @@ from sqlalchemy import func, select
 
 from pipecairn import intake
 from pipecairn.models import Contact, Deal, Enrollment, Lead, Sequence
-from conftest import NOW
+from support import NOW
 
 
 def flagged(session, flag):

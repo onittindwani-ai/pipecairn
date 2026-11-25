@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 from sqlalchemy import select
 
-from conftest import NOW, make_settings
+from support import NOW, make_settings
 from mock.anthropic_mock import FakeAnthropic, ok
 from pipecairn import intake, model_tasks
 from pipecairn.adapters.base import InboundEmail

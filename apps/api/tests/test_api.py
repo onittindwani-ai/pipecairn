@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from pipecairn.api.app import create_app
 from pipecairn.models import Lead
-from conftest import DATA, make_settings
+from support import DATA, make_settings
 
 
 @pytest.fixture

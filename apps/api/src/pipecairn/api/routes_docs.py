@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -18,7 +20,7 @@ router = APIRouter(prefix="/api", tags=["proposals"])
 class ProposalIn(BaseModel):
     lead_id: int
     title: str = Field(min_length=1, max_length=200)
-    scope: list[str] = Field(default_factory=list, max_length=20)
+    scope: list[Annotated[str, StringConstraints(max_length=300)]] = Field(default_factory=list, max_length=20)  # 20 items of up to 300 characters
     price_cents: int = Field(ge=0, le=100_000_000)
     call_notes: str = Field(default="", max_length=8000)
 

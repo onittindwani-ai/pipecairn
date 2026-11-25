@@ -2,7 +2,8 @@
 
 ## Daily
 
-- Open Inbox. Approve or reject drafts. Reply to people who want a call.
+- Open Inbox. Approve or reject drafts. Reply to people who want a call. A reply that was approved but did not go out (the daily limit was reached, it was outside sending hours, the mail server failed) stays open: press **Approve and send** again, or **Reject** it.
+- Also in the Inbox: mail from addresses that are not leads (an alias, a forward, a colleague) and bounce notices that could not be verified. Read them and press **Mark as read**. Nothing is dropped.
 - Glance at Deliverability. A paused mailbox means more than 5 percent of its last 20 or more sends bounced. Find out why before pressing **Resume** (owner only).
 
 ## Weekly
@@ -12,7 +13,11 @@
 
 ## Stopping fast
 
-Press **Pause all** (the kill switch). It stops the whole sending tick at once. To stop even if the web app is down, set `KILL_SWITCH=true` and restart the API and worker.
+Press **Pause all** (the kill switch). It stops the whole sending tick at once, also one that is already part way through a batch: the switch is read again before every send. To stop even if the web app is down, set `KILL_SWITCH=true` and restart the API and worker.
+
+## If the worker was killed while sending
+
+Every send is recorded the moment it starts and kept when it finishes, one message at a time. If the worker is killed in the middle, the message that was being sent is marked **unconfirmed** (see the lead's message list, or `status = 'unconfirmed'` in `cl_message`). It is never sent a second time on its own: the mail server may or may not have sent it, and a second copy to a real person is worse than a missing one. Look in the mailbox's Sent folder, and write to that person by hand if it did not go.
 
 ## Backups
 

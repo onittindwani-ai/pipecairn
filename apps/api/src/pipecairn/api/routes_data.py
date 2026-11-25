@@ -8,12 +8,12 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from pipecairn import intake, metrics, templating
-from pipecairn.api.deps import db, get_ctx, writer
+from pipecairn.api.deps import db, get_ctx, owner, writer
 from pipecairn.api.serializers import deal_row, iso, lead_row, message_row, reply_row
 from pipecairn.context import Ctx
-from pipecairn.inbox import approve_and_send, reject_reply
+from pipecairn.inbox import approve_and_send, dismiss_reply, reject_reply
 from pipecairn.jobs import active_sequence
-from pipecairn.models import DEAL_STAGES, Activity, Company, Contact, Deal, Enrollment, Lead, Meeting, Message, Reply, Sequence, Step
+from pipecairn.models import DEAL_STAGES, Activity, Company, Contact, Deal, Enrollment, Lead, Meeting, Message, Reply, Sequence, Step, UnmatchedMail
 from pipecairn.sender import STOP_STATUSES
 from sendora_core.approvals import ApprovalError, pending
 from sendora_core.audit import record_audit
@@ -29,6 +29,7 @@ def overview(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
     out = metrics.overview(s, now)
     out["pending_approvals"] = len(pending(s))
     out["open_replies"] = int(s.scalar(select(func.count()).select_from(Reply).where(Reply.handled.is_(False))) or 0)
+    out["unmatched_mail"] = int(s.scalar(select(func.count()).select_from(UnmatchedMail).where(UnmatchedMail.handled.is_(False))) or 0)
     out["scheduled"] = int(s.scalar(select(func.count()).select_from(Enrollment).where(Enrollment.status == "active", Enrollment.next_send_at.is_not(None))) or 0)
     out["now"] = iso(now)
     return out
@@ -66,8 +67,8 @@ class ImportBody(BaseModel):
     csv: str = Field(max_length=2_000_000)
 
 
-@router.post("/leads/import", summary="Import leads from CSV text")
-def import_csv(body: ImportBody, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+@router.post("/leads/import", summary="Import leads from CSV text (owner only: in live mode imported leads are enrolled and written to)")
+def import_csv(body: ImportBody, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     try:
         rows = intake.parse_csv(body.csv)
     except ValueError as exc:
@@ -77,8 +78,8 @@ def import_csv(body: ImportBody, s: Session = Depends(db), ctx: Ctx = Depends(ge
     return {"rows": rep.rows, "created": rep.created, "duplicates": rep.duplicates, "flagged": rep.flagged}
 
 
-@router.post("/leads/process", summary="Enrich, score and enrol new leads now")
-def process(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+@router.post("/leads/process", summary="Enrich, score and enrol new leads now (owner only)")
+def process(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     from pipecairn.jobs import job_enrich, job_score
 
     return {**job_enrich(s, ctx), **job_score(s, ctx)}
@@ -138,8 +139,8 @@ def check_steps(steps: list[StepIn]) -> None:
             raise HTTPException(422, f"Unknown field(s) {', '.join(sorted(bad))}. You can use: {', '.join(sorted(templating.KNOWN))}.")
 
 
-@router.put("/sequences/{seq_id}", summary="Replace a sequence's steps")
-def update_sequence(seq_id: int, body: SequenceIn, s: Session = Depends(db), u: dict = Depends(writer)):
+@router.put("/sequences/{seq_id}", summary="Replace a sequence's steps (owner only: in live mode the new text goes out to leads)")
+def update_sequence(seq_id: int, body: SequenceIn, s: Session = Depends(db), u: dict = Depends(owner)):
     q = s.get(Sequence, seq_id)
     if q is None:
         raise HTTPException(404, "That sequence does not exist.")
@@ -184,6 +185,33 @@ def inbox(open: bool = False, s: Session = Depends(db)):
         row.update({"name": lead_row(lead)["name"], "company": lead_row(lead)["company"], "email": lead.contact.email, "score": lead.score})
         out.append(row)
     return out
+
+
+@router.get("/inbox/unmatched", summary="Mail from addresses that are not leads (an alias, a forward, someone else), newest first")
+def unmatched(open: bool = True, s: Session = Depends(db)):
+    stmt = select(UnmatchedMail).order_by(UnmatchedMail.id.desc()).limit(200)
+    if open:
+        stmt = stmt.where(UnmatchedMail.handled.is_(False))
+    return [{"id": m.id, "from": m.from_addr, "to": m.to_addr, "subject": m.subject, "snippet": m.snippet, "handled": m.handled, "created_at": iso(m.created_at)} for m in s.scalars(stmt)]
+
+
+@router.post("/inbox/unmatched/{mail_id}/dismiss", summary="Mark a piece of unmatched mail as read")
+def dismiss_unmatched(mail_id: int, s: Session = Depends(db), u: dict = Depends(writer)):
+    m = s.get(UnmatchedMail, mail_id)
+    if m is None:
+        raise HTTPException(404, "That message does not exist.")
+    m.handled = True
+    record_audit(s, u["user"], "unmatched_mail.dismissed", f"unmatched:{m.id}", {})
+    return {"ok": True}
+
+
+@router.post("/inbox/{reply_id}/dismiss", summary="Mark a reply that needs no answer (for example an unverified bounce notice) as read")
+def dismiss(reply_id: int, s: Session = Depends(db), u: dict = Depends(writer)):
+    try:
+        dismiss_reply(s, reply_id, decided_by=u["user"])
+    except ApprovalError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return {"ok": True}
 
 
 class ApproveIn(BaseModel):

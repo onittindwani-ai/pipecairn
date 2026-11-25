@@ -34,6 +34,13 @@ def create_app(settings: Settings | None = None, ctx: Ctx | None = None) -> Fast
         if not settings.seed_dir and (REPO_DATA / "seed.json").is_file():
             ctx.settings.seed_dir = str(REPO_DATA)  # a source checkout; an installed copy must be told with SEED_DIR
     app = create_base_app(ctx.settings, ctx.factory)
+    # The base /health also names the mode and the kill switch, which a stranger should not learn. Replace it with a bare "ok".
+    app.router.routes = [r for r in app.router.routes if getattr(r, "path", "") != "/health"]
+
+    @app.get("/health", include_in_schema=False)
+    def health():
+        return {"status": "ok"}
+
     app.title, app.version = "Pipecairn API", "1.0.1"
     app.state.ctx = ctx
     # A dashboard page makes several calls at once. This bucket is per client address (set uvicorn --proxy-headers so that is the real visitor, not the web server).
@@ -41,10 +48,8 @@ def create_app(settings: Settings | None = None, ctx: Ctx | None = None) -> Fast
     # Sign in attempts per address and email: a burst of LOGIN_BURST (default 5), then one more every 12 seconds.
     app.state.login_bucket = TokenBucket(capacity=settings.login_burst, refill_per_sec=1 / 12)
     # And a wider limit per address alone, so changing the email in every try does not give a fresh set of tries.
+    # There is no limit on one account across all addresses: a person typing wrong passwords for the owner's email from anywhere would lock the owner out.
     app.state.login_ip_bucket = TokenBucket(capacity=max(30, settings.login_burst * 6), refill_per_sec=1 / 3)
-    # And one per account whatever the address, so guesses spread over many addresses still run out. It is generous and refills every 30 seconds,
-    # so the owner is held up for at most a short while by someone hammering the account, never locked out.
-    app.state.login_account_bucket = TokenBucket(capacity=max(20, settings.login_burst * 4), refill_per_sec=1 / 30)
 
     @app.middleware("http")
     async def require_session(request: Request, call_next):

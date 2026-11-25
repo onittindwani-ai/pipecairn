@@ -14,14 +14,14 @@ import re
 import unicodedata
 
 QUOTE_HEADERS = re.compile(
-    r"^\s*(-{2,}\s*(original message|forwarded message|ursprüngliche nachricht|message d'origine|mensaje original)\s*-{2,}|"
-    r"_{5,}\s*$|begin forwarded message|"
-    r"on [^\n]{4,200}\bwrote:\s*$|on [^\n]{4,200}$\n[^\n]{0,120}\bwrote:\s*$|"
-    r"le [^\n]{4,200}a écrit\s*:|am [^\n]{4,200}schrieb[^\n]{0,80}:|el [^\n]{4,200}escribió:|em [^\n]{4,200}escreveu:|il [^\n]{4,200}ha scritto:|op [^\n]{4,200}schreef[^\n]{0,80}:|"
-    r"from:[^\n]{3,200}\n\s*(sent|date|to|subject):)", re.I | re.M)
+    r"^[ \t]*(-{2,}[ \t]*(original message|forwarded message|ursprüngliche nachricht|message d'origine|mensaje original)[ \t]*-{2,}|"
+    r"_{5,}[ \t]*$|begin forwarded message|"
+    r"on [^\n]{4,200}\bwrote:[ \t]*$|on [^\n]{4,200}$\n[^\n]{0,120}\bwrote:[ \t]*$|"
+    r"le [^\n]{4,200}a écrit[ \t]*:|am [^\n]{4,200}schrieb[^\n]{0,80}:|el [^\n]{4,200}escribió:|em [^\n]{4,200}escreveu:|il [^\n]{4,200}ha scritto:|op [^\n]{4,200}schreef[^\n]{0,80}:|"
+    r"from:[^\n]{3,200}\n[ \t]*(sent|date|to|subject):)", re.I | re.M)
 SIGNATURE_START = re.compile(
     r"^(-- ?|\u2014+ ?|sent from my [^\n]*|sent from (outlook|mail|yahoo|gmail)[^\n]*|get outlook for [^\n]*|sent via [^\n]*|sent with [^\n]*|"
-    r"von meinem [^\n]*gesendet|envoyé de mon [^\n]*|enviado desde mi [^\n]*)\s*$", re.I | re.M)
+    r"von meinem [^\n]*gesendet|envoyé de mon [^\n]*|enviado desde mi [^\n]*)[ \t]*$", re.I | re.M)
 FOOTER_LINE = re.compile(
     r"(confidential|intended (only )?for the (named )?(recipient|addressee)|intended recipient|privileged|if you (have )?received this (e-?mail|message|communication) (in error|by mistake)|"
     r"disclaimer|legally protected|think before you print|please consider the environment|virus[- ]free|"
@@ -55,9 +55,29 @@ def normalize(text: str) -> str:
     return re.sub(r"[ \t]+", " ", t)
 
 
+MAX_TEXT = 20_000  # the inbox stores no more than this of a message, so the reader never needs more
+
+
+def compact(text: str, limit: int = MAX_TEXT) -> str:
+    """The text cut to `limit` characters, with spaces at the end of a line removed and every run of blank lines squeezed to one. Done line by line (no pattern that
+    can be made to run slowly): a message that is 20,000 blank lines used to keep one worker busy for about 15 seconds."""
+    out: list[str] = []
+    blank = False
+    for line in straighten(text)[:limit].splitlines():
+        line = line.rstrip()
+        if not line:
+            if blank:
+                continue
+            blank = True
+        else:
+            blank = False
+        out.append(line)
+    return "\n".join(out)
+
+
 def human_part(text: str) -> str:
     """The words the person wrote: no quoted message, signature, mobile line or legal footer. Falls back to the whole text if nothing is left."""
-    body = straighten(text)
+    body = compact(text)
     lines = [ln for ln in body.splitlines() if not ln.lstrip().startswith(">")]
     body = "\n".join(lines)
     for pattern in (QUOTE_HEADERS, SIGNATURE_START):
@@ -69,4 +89,4 @@ def human_part(text: str) -> str:
         sentences = re.split(r"(?<=[.!?])\s+|\n", para)
         kept.append(" ".join(s for s in sentences if not FOOTER_LINE.search(s)))
     cleaned = "\n".join(p for p in kept if p.strip()).strip()
-    return cleaned if len(cleaned) >= 2 else straighten(text).strip()
+    return cleaned if len(cleaned) >= 2 else straighten(text)[:MAX_TEXT].strip()

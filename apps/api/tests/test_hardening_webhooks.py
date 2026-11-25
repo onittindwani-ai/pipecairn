@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from conftest import DATA, make_settings
+from support import DATA, make_settings
 from pipecairn.api.app import create_app
 from pipecairn.api.routes_webhooks import MAX_BODY, check_shared
 from pipecairn.models import Lead, Meeting, Message, Suppression

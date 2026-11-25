@@ -9,7 +9,7 @@
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter web build",
     "typecheck": "pnpm -r typecheck",
-    "test:ui": "pnpm --filter @sendora/ui-kit test",
+    "test:ui": "pnpm --filter @sendora/ui-kit test && pnpm --filter web test:unit",
     "e2e": "pnpm --filter web e2e"
   }
 }

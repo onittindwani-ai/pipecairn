@@ -41,4 +41,10 @@ All people, companies, numbers and replies are invented. 41 companies, 123 lead 
 - SQLite is for trying out. Use Postgres for real work.
 - English only.
 - Three accounts at most: owner, approver and an optional read only viewer.
+- Sessions cannot be ended one by one: a signed session stays valid until it expires (8 hours). To end all of them change `SESSION_SECRET` (and put the old value in `SESSION_SECRET_PREVIOUS` if you want the unsubscribe links already emailed to keep working).
+- The audit chain is not keyed, so it shows accidental and partial edits, not a rewrite by someone with database access. Keep off machine backups.
+- Reply drafts are asked for by the system, so any owner or approver may approve them; the rule that the person who asked cannot approve never applies to replies.
+- A web form lead is not double opt in: the name is cleaned (links, markup and template fields removed, 60 characters) but the person is written to as soon as the lead is scored. Use the form hook only for people who asked to be contacted.
+- A mail provider that relays mail to the email webhook should pass `references` (the Message-IDs of the mail being answered): that is how a reply from an alias or a forward is matched to its lead. Without it such mail is kept in the Inbox as unmatched mail.
+- An interrupted send is marked unconfirmed and never repeated automatically (see `11`).
 - Four small changes to the shared base were requested and not made (the base is frozen): a search button label, card heading level, keyboard hint glyphs on phones, and sheet settle time. They are only a request to the maintainers of the shared base; they do not affect how the product works.

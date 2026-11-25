@@ -12,6 +12,10 @@ The shared packages in `packages/` (the base) are versioned separately. Do not e
 
 Settings can be added in an update. `.env.example` lists every name (a test fails when a setting is missing from it or from `04`); run `make check-env` to compare it with your `.env`.
 
+## Pinning the Docker base images
+
+The Dockerfiles name a version tag (`python:3.12-slim`, `node:22-slim`) and the compose file `postgres:17.7`. A tag can move. To fix one image for good, find its digest with `docker buildx imagetools inspect python:3.12-slim` (the line `Digest: sha256:...`) and write `FROM python:3.12-slim@sha256:<digest>`; do the same for the other images and update them on purpose, not by accident. This repository does not pin digests because they go stale and would then quietly stop receiving security updates.
+
 ## Pinned packages
 
 `constraints.txt` pins every third party Python package to the version the tests ran against, so an install today gives the same set as the one that was tested (`make install`, the Docker image and CI all use it). After a deliberate upgrade of a package, install the new version, run the tests, then rewrite the file with `tools/make_constraints.py` from the hub repository (`sendora-ai-systems`).

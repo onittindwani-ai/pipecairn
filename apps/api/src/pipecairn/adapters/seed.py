@@ -56,6 +56,9 @@ class SeedEmail:
         box = _locked_update(inbox_path(self.settings), lambda d: ([], d))
         return [InboundEmail(**{**m, "references": tuple(m.get("references", ()))}) for m in box]
 
+    def mark_seen(self, uids: list[str]) -> None:
+        """The offline inbox hands each message over once, so there is nothing to mark."""
+
     def healthcheck(self) -> tuple[bool, str]:
         return True, "Offline seed mailbox. Nothing leaves this machine."
 

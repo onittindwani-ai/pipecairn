@@ -1,6 +1,7 @@
 # Exact versions of every third party Python package the tests ran against.
 # Used by `make install`, the Docker image and CI (pip install -c constraints.txt ...).
-# Refresh after a deliberate upgrade: make constraints
+# Refresh after a deliberate upgrade: run tools/make_constraints.py from the sendora-ai-systems hub repository, or in a clean virtual environment
+# `pip install -e packages/core-py -e "apps/api[dev]"`, run the tests, then `pip freeze --exclude-editable > constraints.txt` and put these header lines back.
 alembic==1.20.1
 annotated-doc==0.0.7
 annotated-types==0.8.0

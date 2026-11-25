@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from pipecairn import clock
@@ -38,12 +39,14 @@ class Ctx:
 
     def effective(self, session: Session) -> Settings:
         """The kill switch can be turned on in the app, and the mode can be pulled back to draft. Neither can go the other way."""
-        kill = session.get(State, "kill_switch")
-        mode = session.get(State, "force_draft")
+        # Read the rows fresh every time (populate_existing): the owner may press Pause all in the API while the worker is part way through a batch, and a row
+        # this session read a minute ago must not hide that.
+        rows = session.execute(select(State.key, State.value).where(State.key.in_(("kill_switch", "force_draft")))).all()
+        flags = {k: v for k, v in rows}
         upd: dict[str, Any] = {}
-        if kill and kill.value == "1":
+        if flags.get("kill_switch") == "1":
             upd["kill_switch"] = True
-        if mode and mode.value == "1":
+        if flags.get("force_draft") == "1":
             upd["mode"] = Mode.DRAFT
         return self.settings.model_copy(update=upd) if upd else self.settings
 

@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from conftest import Adapters, RecordingEmail
+from support import Adapters, RecordingEmail
 from pipecairn import intake
 from pipecairn.api.app import create_app
 from pipecairn.context import Ctx
@@ -31,7 +31,7 @@ SEQUENCE = {"name": "Intro", "steps": [{"channel": "email", "delay_hours": 0, "s
 @pytest.fixture
 def real(tmp_path):
     s = real_settings(tmp_path, mode="live", sender_name="Sam Rivera", company_name="Rivera Works", company_address="12 Main Street, Springfield, IL 62701, USA",
-                      default_timezone="Europe/London", email_adapter="seed")
+                      default_timezone="Europe/London", email_adapter="smtp_imap")  # the test swaps in a recording adapter below, so nothing connects
     engine = make_engine(s.database_url)
     Base.metadata.create_all(engine)
     ctx = Ctx(s, make_session_factory(engine))

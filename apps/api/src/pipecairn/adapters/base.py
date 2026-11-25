@@ -25,6 +25,7 @@ class InboundEmail:
     is_dsn: bool = False
     references: tuple[str, ...] = ()
     auth_results: str = ""  # the Authentication-Results header the receiving server added (SPF, DKIM, DMARC), kept for the audit note
+    uid: str = ""  # the mailbox's own id for the message, so it can be marked as read AFTER it is safely stored (empty for the offline inbox and webhooks)
 
 
 @dataclass
@@ -63,6 +64,7 @@ class HandoffResult:
 class EmailAdapter(Protocol):
     def send(self, *, from_addr: str, to: str, subject: str, body: str) -> str: ...
     def fetch_replies(self) -> list[InboundEmail]: ...
+    def mark_seen(self, uids: list[str]) -> None: ...
     def healthcheck(self) -> tuple[bool, str]: ...
 
 

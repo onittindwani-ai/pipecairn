@@ -10,7 +10,7 @@ from pipecairn.models import Company, Contact, Enrollment, Lead, Mailbox, Messag
 from pipecairn.sender import send_tick
 from pipecairn.suppression import add_suppression
 from pipecairn.util import aware, normalize_email
-from conftest import NOW, make_settings
+from support import NOW, make_settings
 
 
 def prepare(session, enroll=True):

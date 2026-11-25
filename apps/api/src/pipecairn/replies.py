@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from pipecairn.model_tasks import ClassifyOut, Intent, NextStep, read_reply  # noqa: F401  (ClassifyOut and Intent are re-exported)
 from pipecairn.reply_rules import BOUNCE, OOO, UNSUB
-from pipecairn.reply_text import human_part
+from pipecairn.reply_text import compact, human_part
 from sendora_core.llm import LLM, LLMError
 from sendora_core.safety import KillSwitchError
 
@@ -27,11 +27,10 @@ def classify_reply(text: str, llm: LLM | None, subject: str = "") -> Classificat
     The rules read what the person wrote (the quoted message, signature and legal footer are removed first, so our own
     "reply STOP" line or a company footer is never read as their request). The subject helps with delivery notices and auto replies.
     """
-    full = text or ""
-    subject = subject or ""
-    body = human_part(full)
+    subject = compact(subject or "", 300)
+    body = human_part(text or "")
     seen = body + "\n" + subject
-    if BOUNCE.search(full + "\n" + subject):
+    if BOUNCE.search(seen):  # what the person wrote, not the quoted message under it: a reply that quotes an old delivery notice is not a delivery notice
         return Classification(intent="bounce", confidence=0.95, summary="The message could not be delivered.", source="rule")
     if OOO.search(seen) and not UNSUB.search(seen):
         return Classification(intent="out_of_office", confidence=0.9, summary="Automatic away reply.", source="rule")

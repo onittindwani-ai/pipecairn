@@ -148,6 +148,20 @@ class Reply(Base):
     message: Mapped[Message] = relationship()
 
 
+class UnmatchedMail(Base):
+    """Mail that came to the inbox from an address that is not a lead (an alias, a forward, someone else at the company). Kept so it is read, never silently dropped."""
+
+    __tablename__ = "cl_unmatched_mail"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    external_id: Mapped[str] = mapped_column(String(120), default="", index=True)
+    from_addr: Mapped[str] = mapped_column(String(254), default="")
+    to_addr: Mapped[str] = mapped_column(String(254), default="")
+    subject: Mapped[str] = mapped_column(String(300), default="")
+    snippet: Mapped[str] = mapped_column(Text, default="")
+    handled: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+
+
 class Meeting(Base):
     __tablename__ = "cl_meeting"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

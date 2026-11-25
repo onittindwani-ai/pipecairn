@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from conftest import DATA, Adapters, make_settings
+from support import DATA, Adapters, make_settings
 from pipecairn import worker
 from pipecairn.adapters.base import PersonRecord
 from pipecairn.adapters.seed import SeedCrm
@@ -47,7 +47,7 @@ def test_the_in_app_kill_switch_and_force_draft_stop_crm_writes_even_with_mode_l
     ctx.adapters.crm = crm
     from pipecairn import intake
     from pipecairn.seeding import load_seed, read_seed
-    from conftest import NOW
+    from support import NOW
 
     with ctx.factory() as db:
         load_seed(db, read_seed(DATA), NOW)

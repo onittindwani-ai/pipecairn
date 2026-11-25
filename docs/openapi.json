@@ -5,22 +5,6 @@
   "version": "1.0.1"
  },
  "paths": {
-  "/health": {
-   "get": {
-    "summary": "Health",
-    "operationId": "health_health_get",
-    "responses": {
-     "200": {
-      "description": "Successful Response",
-      "content": {
-       "application/json": {
-        "schema": {}
-       }
-      }
-     }
-    }
-   }
-  },
   "/ready": {
    "get": {
     "summary": "Ready",
@@ -295,7 +279,7 @@
     "tags": [
      "data"
     ],
-    "summary": "Import leads from CSV text",
+    "summary": "Import leads from CSV text (owner only: in live mode imported leads are enrolled and written to)",
     "operationId": "import_csv_api_leads_import_post",
     "requestBody": {
      "content": {
@@ -334,7 +318,7 @@
     "tags": [
      "data"
     ],
-    "summary": "Enrich, score and enrol new leads now",
+    "summary": "Enrich, score and enrol new leads now (owner only)",
     "operationId": "process_api_leads_process_post",
     "responses": {
      "200": {
@@ -448,7 +432,7 @@
     "tags": [
      "data"
     ],
-    "summary": "Replace a sequence's steps",
+    "summary": "Replace a sequence's steps (owner only: in live mode the new text goes out to leads)",
     "operationId": "update_sequence_api_sequences__seq_id__put",
     "parameters": [
      {
@@ -548,6 +532,127 @@
        "type": "boolean",
        "default": false,
        "title": "Open"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/inbox/unmatched": {
+   "get": {
+    "tags": [
+     "data"
+    ],
+    "summary": "Mail from addresses that are not leads (an alias, a forward, someone else), newest first",
+    "operationId": "unmatched_api_inbox_unmatched_get",
+    "parameters": [
+     {
+      "name": "open",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": true,
+       "title": "Open"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/inbox/unmatched/{mail_id}/dismiss": {
+   "post": {
+    "tags": [
+     "data"
+    ],
+    "summary": "Mark a piece of unmatched mail as read",
+    "operationId": "dismiss_unmatched_api_inbox_unmatched__mail_id__dismiss_post",
+    "parameters": [
+     {
+      "name": "mail_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Mail Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/inbox/{reply_id}/dismiss": {
+   "post": {
+    "tags": [
+     "data"
+    ],
+    "summary": "Mark a reply that needs no answer (for example an unverified bounce notice) as read",
+    "operationId": "dismiss_api_inbox__reply_id__dismiss_post",
+    "parameters": [
+     {
+      "name": "reply_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Reply Id"
       }
      }
     ],
@@ -1174,14 +1279,38 @@
     "tags": [
      "operations"
     ],
-    "summary": "Check the audit chain has not been edited",
+    "summary": "Check the audit chain has not been edited (the newest rows; limit=0 checks every row)",
     "operationId": "audit_verify_api_audit_verify_get",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 5000000,
+       "minimum": 0,
+       "default": 20000,
+       "title": "Limit"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "description": "Successful Response",
       "content": {
        "application/json": {
         "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
        }
       }
      }
@@ -2322,7 +2451,8 @@
      },
      "scope": {
       "items": {
-       "type": "string"
+       "type": "string",
+       "maxLength": 300
       },
       "type": "array",
       "maxItems": 20,

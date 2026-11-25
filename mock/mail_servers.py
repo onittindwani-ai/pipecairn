@@ -1,7 +1,7 @@
 """A tiny fake SMTP and IMAP server for tests and the demo. Not a real mail server.
 
 SMTP: EHLO, AUTH PLAIN, MAIL, RCPT, DATA, RSET, NOOP, QUIT. Accepted messages land in `MailStore.outbox`.
-IMAP: CAPABILITY, LOGIN, SELECT, UID SEARCH (ALL, UNSEEN), UID FETCH (RFC822), UID STORE (flags), NOOP, LOGOUT.
+IMAP: CAPABILITY, LOGIN, SELECT, UID SEARCH (ALL, UNSEEN), UID FETCH (RFC822 or BODY.PEEK[]; neither marks the message read), UID STORE (flags), NOOP, LOGOUT.
 Messages in `MailStore.inbox` are what the IMAP client sees. It speaks only what Python's smtplib and imaplib send.
 """
 
@@ -118,7 +118,8 @@ class _IMAP(socketserver.StreamRequestHandler):
                         self._w(tag.encode() + b" OK done\r\n")
                     else:
                         body = msg["raw"]
-                        self._w(f"* {uid} FETCH (UID {uid} RFC822 {{{len(body)}}}\r\n".encode() + body + b")\r\n" + tag.encode() + b" OK done\r\n")
+                        label = "BODY[]" if "PEEK" in a2.upper() else "RFC822"
+                        self._w(f"* {uid} FETCH (UID {uid} {label} {{{len(body)}}}\r\n".encode() + body + b")\r\n" + tag.encode() + b" OK done\r\n")
                 elif sub == "STORE":
                     uid = int(a2.split(" ", 1)[0])
                     with self.store.lock:

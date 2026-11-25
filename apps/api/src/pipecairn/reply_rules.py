@@ -20,7 +20,7 @@ BOUNCE = re.compile(
     r"(your )?message (to|could)[^\n]{0,60}(not|never) (be )?(delivered|sent|reach))", re.I)
 
 OOO = re.compile(
-    r"(out of (the )?office|automatic (reply|response)|auto-?(reply|response|generated)|^\s*auto:|autoresponder|away from (my|the) (desk|office|email|computer)|on (holiday|vacation|pto|safari)|on (annual |parental |maternity |paternity |sick |medical |study |bereavement )?leave|"
+    r"(out of (the )?office|automatic (reply|response)|auto-?(reply|response|generated)|^[ \t]*auto:|autoresponder|away from (my|the) (desk|office|email|computer)|on (holiday|vacation|pto|safari)|on (annual |parental |maternity |paternity |sick |medical |study |bereavement )?leave|"
     r"travell?ing (until|till|and|abroad|with|this)|office is closed|(is|are) closed (until|for|on|from)|no access to (my )?email|(limited|restricted|intermittent|no) (email |e-mail |internet |phone )?(access|connectivity)|"
     r"(am|is|i'm|im) (currently |presently |now )?(out|away|travell?ing|abroad|unavailable|offline|off) ?(until|till|from|at|of|on|for|in|the|this|next|and|with|work|sick)|"
     r"out until|away until|off sick|honeymoon|jury duty|sabbatical|vacation responder|trade (fair|show)|summer shutdown|shut ?down until|(will|shall) be (away|out|back|travell?ing|unavailable|off)|"
@@ -33,14 +33,14 @@ OOO = re.compile(
     r"fora do escritório|estou (ausente|fora|de férias)|resposta automática|fuori ufficio|sono (assente|in ferie)|risposta automatica|afwezigheid|buiten kantoor|ben (afwezig|met vakantie)|automatisch antwoord)", re.I | re.M)
 
 UNSUB = re.compile(
-    r"(\bunsubscribe\b|\bunsub\b|\bun-subscribe\b|remove me|remove my (address|email|e-mail|number|details|name|data)|\bremove (both|all|us|this|him|her|them|our|the)\b|^\s*remove\s*[.!]*\s*$|take (me|us|this|my \w+|our \w+) (off|out|away)|^\s*enough\s*[.!]|off (any|all|your|this|the|that) (mailing |email |contact |call )?(lists?|thing|database)|"
+    r"(\bunsubscribe\b|\bunsub\b|\bun-subscribe\b|remove me|remove my (address|email|e-mail|number|details|name|data)|\bremove (both|all|us|this|him|her|them|our|the)\b|^[ \t]*remove[ \t]*[.!]*[ \t]*$|take (me|us|this|my \w+|our \w+) (off|out|away)|^[ \t]*enough[ \t]*[.!]|off (any|all|your|this|the|that) (mailing |email |contact |call )?(lists?|thing|database)|"
     r"\b(stop|quit|cease|halt)\b[^.!?\n]{0,25}\b(emailing|e-?mails?|mailing|writing|texting|contacting|sending|messaging|messages?|spamming|bothering|harass\w*|solicit\w*|calling|phoning|pestering|reaching)\b|"
     r"do not contact|don'?t contact|never contact|do not wish to (receive|hear|be contacted)|(do not|don'?t|dont|never) (want|wish) (to )?(hear|receive|be (contacted|emailed|called|texted))|no more (e-?mails?|messages?|texts?|contact|calls?)|"
     r"(no|any|nor) (further|more|future|additional) (contact|e-?mails?|correspondence|communication|messages?|outreach|solicitation|follow[- ]?ups?)|"
     r"opt(ing)?[- ]?(me |us )?out(?!s)|(report|reporting|reported|marked?|marking|flag(ged|ging)?) (this|you|it|this address|the address|your (e-?mail|message))[^.\n]{0,30}(as )?(spam|junk|abuse|phishing)|this is spam|it'?s spam|\bunsolicited\b|\bcease\b|"
     r"delete (my|our) (data|details|info|information|address|contact|number|record)|erase (my|our)|wipe (my|our)|right to (erasure|be forgotten|object)|article 17|(under|per|pursuant to|violat\w+|breach\w*|in breach of|contrary to) (the )?(gdpr|data protection|ccpa|can-?spam|tcpa)|(this is (a|my)|my|formal|hereby) (gdpr|data protection|privacy) (request|complaint|notice)|(gdpr|data protection|privacy) (complaint|notice)|(data protection|privacy) (authority|commissioner)|complain\w* to (the )?(ico|regulator|authority|ftc|fcc)|do[- ]not[- ]call|"
     r"cease[- ]and[- ]desist|legal action|take legal|my (lawyer|attorney|solicitor)|our (lawyer|attorney|solicitor|legal (team|department|counsel))|report(ing)? you to|\bblock(ed|ing)? (you|this|your|the sender|that)|blacklist|"
-    r"^\s*stop\s*[.!]+|^\s*stop\s*$|do not (e-?mail|text|call|message|write) (me|us)|never (e-?mail|text|write|call|message)|(don'?t|do not) (e-?mail|write|message|text|call|ring|contact|send)( me| us)?( again| anymore| any more| any| more| these| further| another| e-?mails?| messages?| anything)|"
+    r"^[ \t]*stop[ \t]*[.!]+|^[ \t]*stop[ \t]*$|do not (e-?mail|text|call|message|write) (me|us)|never (e-?mail|text|write|call|message)|(don'?t|do not) (e-?mail|write|message|text|call|ring|contact|send)( me| us)?( again| anymore| any more| any| more| these| further| another| e-?mails?| messages?| anything)|"
     r"leave (me|us) alone|lose (my|our|this) (e-?mail|address|number|details|contact)|"
     r"(do not|don'?t) (write|e-?mail|message|text|call) (me )?(again|anymore)|please not message me|"
     r"no me (escriba|escriban|contacte|envíe|envie|molest\w+)|ne m'?[ée]crivez plus|ne (me )?(souhaite|veux|désire) plus|plus recevoir|(retir|supprim)\w+ (moi|me|mon|nous)|de (votre|la) liste|nicht mehr erhalten|von (ihrer|der) liste|(ya )?no (quiero|deseo) (recibir|más)|ne (me )?contactez plus|ne plus me contacter|désabonn\w+|desabonn\w+|désinscri\w+|aus (ihrem|dem|der) (verteiler|liste)|austragen|abmelden|"

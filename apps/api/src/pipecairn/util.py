@@ -67,3 +67,16 @@ def csv_safe(value: object) -> str:
     """A cell that starts with = + - @ tab or return is read as a formula by Excel and Sheets. A leading apostrophe makes it plain text."""
     text = "" if value is None else str(value)
     return "'" + text if text[:1] in {"=", "+", "-", "@", "\t", "\r"} else text
+
+
+_URL = re.compile(r"(?i)\b(?:https?://|www\.)\S*|\b\S+\.(?:com|net|org|io|co|ru|cn|xyz|top|info)\b\S*")
+_NOT_NAME = re.compile(r"[\x00-\x1f\x7f<>{}\[\]|\\`$]")
+
+
+def clean_person_text(value: str, limit: int = 60) -> str:
+    """A name or title typed into a public web form goes into the first email, so a stranger must not be able to put a link, markup or a template field into it.
+    Links, markup characters and control characters are removed, spaces are squeezed and the text is cut to `limit` characters."""
+    text = re.sub(r"<[^<>]{0,200}>", " ", str(value or ""))
+    text = _URL.sub(" ", text)
+    text = _NOT_NAME.sub(" ", text).replace("{{", " ").replace("}}", " ")
+    return re.sub(r"\s+", " ", text).strip()[:limit]
