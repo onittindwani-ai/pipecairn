@@ -6,8 +6,8 @@ Usage: python3 tools/check_env.py [--example .env.example] [--env .env] [--stric
 What it checks, in plain words:
   1. Every variable in .env.example exists in your environment file or your shell (a missing one is listed).
   2. Core variables are not left on a placeholder when DEMO_MODE is off.
-  3. A group of settings whose heading says "all or none" (an adapter's own settings, for example Email) that you started to fill in
-     must be filled in completely. A group you left empty is treated as switched off, which is fine.
+  3. A group of settings (the comment line above them is the group name) that you started to fill in must be filled in completely.
+     A group you left empty is treated as switched off, which is fine.
   4. Names in your file that the example does not know are listed (a typo is the usual reason).
 
 Exit code 0 when nothing is wrong, 1 when there are problems. --strict also fails on unknown names.
@@ -27,24 +27,17 @@ LINE = re.compile(r"^([A-Z][A-Z0-9_]*)=(.*)$")
 
 
 def parse_example(text: str) -> list[tuple[str, str, str]]:
-    """Return (group, name, default) for each variable in the example file.
-
-    A comment that comes after a blank line (or at the top) names a new group. A comment directly above a variable, with no blank line
-    before it, is only a note about that variable and does not start a group.
-    """
-    group, out, blank_before = "Core", [], True
+    """Return (group, name, default) for each variable in the example file."""
+    group, out = "Core", []
     for raw in text.splitlines():
         line = raw.strip()
         if not line:
-            blank_before = True
             continue
         if line.startswith("#"):
             comment = line.lstrip("# ").strip()
-            if blank_before and comment and not comment.lower().startswith(("copy to", "make the hash")):
+            if comment and not comment.lower().startswith(("copy to", "make the hash", "which adapter")):
                 group = comment.split(".")[0][:60]
-            blank_before = False
             continue
-        blank_before = False
         m = LINE.match(line)
         if m:
             out.append((group, m.group(1), m.group(2).strip().strip("'\"")))
@@ -80,8 +73,8 @@ def check(example_text: str, env_text: str | None, shell: dict[str, str] | None 
     for g, n, d in spec:
         groups.setdefault(g, []).append((n, d))
     for g, members in groups.items():
-        if "all or none" not in g.lower():
-            continue  # only a group that says so must be filled in completely (an adapter's own settings)
+        if g == "Core":
+            continue
         no_default = [n for n, d in members if not d]
         started = [n for n, d in members if values.get(n, "") and values.get(n, "") != d]
         if started and no_default:
