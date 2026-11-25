@@ -17,6 +17,7 @@ from pipecairn import timing
 from pipecairn.models import Activity, Deal, Enrollment, Lead, Mailbox, Message
 from pipecairn.suppression import suppression_reason
 from pipecairn.templating import TemplateError, render
+from pipecairn.unsubscribe import with_footer
 from pipecairn.util import aware, is_e164, is_valid_email, normalize_email
 from sendora_core.audit import record_audit
 from sendora_core.events import record_event, record_metric
@@ -58,12 +59,12 @@ def mailbox_health(mb: Mailbox) -> int:
     return max(0, min(100, score))
 
 
-def pick_mailbox(session: Session, now: datetime) -> Mailbox | None:
+def pick_mailbox(session: Session, now: datetime, rate: float = BOUNCE_RATE_PAUSE, min_sends: int = MIN_SENDS_FOR_BOUNCE_CHECK) -> Mailbox | None:
     boxes = list(session.scalars(select(Mailbox).where(Mailbox.is_active.is_(True)).order_by(Mailbox.id)))
     best, best_ratio = None, 2.0
     for mb in boxes:
         reset_mailbox_day(mb, now)
-        if maybe_pause_for_bounces(mb) or not mb.is_active:
+        if maybe_pause_for_bounces(mb, rate, min_sends) or not mb.is_active:
             continue
         if mb.sent_today >= mb.daily_cap:
             continue
@@ -73,9 +74,14 @@ def pick_mailbox(session: Session, now: datetime) -> Mailbox | None:
     return best
 
 
-def maybe_pause_for_bounces(mb: Mailbox) -> bool:
-    if mb.sent_total >= MIN_SENDS_FOR_BOUNCE_CHECK and mb.bounce_count / mb.sent_total > BOUNCE_RATE_PAUSE and mb.is_active:
-        mb.is_active, mb.paused_reason = False, f"Bounce rate above {int(BOUNCE_RATE_PAUSE * 100)} percent. Fix the list, then resume by hand."
+def bounce_limits(settings: BaseAppSettings) -> tuple[float, int]:
+    """(share of bounces that pauses a mailbox, sends before the check starts): BOUNCE_PAUSE_RATE and BOUNCE_MIN_SENDS, with the old values as defaults."""
+    return getattr(settings, "bounce_pause_rate", BOUNCE_RATE_PAUSE), getattr(settings, "bounce_min_sends", MIN_SENDS_FOR_BOUNCE_CHECK)
+
+
+def maybe_pause_for_bounces(mb: Mailbox, rate: float = BOUNCE_RATE_PAUSE, min_sends: int = MIN_SENDS_FOR_BOUNCE_CHECK) -> bool:
+    if mb.sent_total >= min_sends and mb.bounce_count / mb.sent_total > rate and mb.is_active:
+        mb.is_active, mb.paused_reason = False, f"Bounce rate above {rate * 100:g} percent. Fix the list, then resume by hand."
         return True
     return False
 
@@ -87,10 +93,10 @@ def _stop(session: Session, enr: Enrollment, reason: str, report: TickReport, no
     record_event(session, "enrollment.stopped", "enrollment", enr.id, {"reason": reason})
 
 
-def _ctx(lead: Lead) -> dict[str, str]:
+def _ctx(lead: Lead, sender_name: str = "Alex") -> dict[str, str]:
     c = lead.contact
     return {"first_name": c.first_name, "last_name": c.last_name, "company": c.company.name if c.company else "", "industry": c.company.industry if c.company else "",
-            "title": c.title, "sender_name": "Alex"}
+            "title": c.title, "sender_name": sender_name}
 
 
 def _record_block(session: Session, lead: Lead, enr: Enrollment, channel: str, to: str, reason: str, now: datetime) -> None:
@@ -137,9 +143,10 @@ def deliver(
             return "deferred", reason
     mb = None
     if channel == "email":
-        mb = pick_mailbox(session, now)
+        mb = pick_mailbox(session, now, *bounce_limits(settings))
         if mb is None:
             return "deferred", "mailbox_caps_reached"
+    body = with_footer(settings, channel, body)  # who writes, where they are, how to say stop: added here so a draft shows exactly what would go out
     msg = Message(lead_id=lead.id, enrollment_id=enr.id if enr else None, mailbox_id=mb.id if mb else None, channel=channel, direction="out",
                   to_addr=to, subject=subject, body=body, created_at=now)
     session.add(msg)
@@ -163,7 +170,7 @@ def deliver(
     if mb:
         mb.sent_today += 1
         mb.sent_total += 1
-        maybe_pause_for_bounces(mb)
+        maybe_pause_for_bounces(mb, *bounce_limits(settings))
     session.flush()
     record_metric(session, "messages_sent", 1, {"channel": channel})
     record_audit(session, "system", "message.sent", f"message:{msg.id}", {"lead": lead.id, "channel": channel})
@@ -192,8 +199,9 @@ def send_tick(session: Session, settings: BaseAppSettings, adapters: Any, now: d
             continue
         step = steps[enr.current_step]
         try:
-            subject = render(step.subject, _ctx(lead), header=True)
-            body = render(step.body, _ctx(lead))
+            name = getattr(settings, "sender_name", "Alex")
+            subject = render(step.subject, _ctx(lead, name), header=True)
+            body = render(step.body, _ctx(lead, name))
         except TemplateError:
             _stop(session, enr, "template_error", report, now)
             continue

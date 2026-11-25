@@ -18,8 +18,9 @@ from pipecairn.util import email_domain, is_e164, is_role_based, is_valid_email,
 from sendora_core.events import record_event
 from sendora_core.llm import LLM
 
-CSV_COLUMNS = ("first_name", "last_name", "email", "phone", "title", "company", "domain", "timezone", "source", "sms_consent")
+CSV_COLUMNS = ("first_name", "last_name", "email", "phone", "title", "company", "domain", "timezone", "source", "sms_consent", "industry", "size", "country", "is_customer")
 MAX_CSV_BYTES = 2_000_000
+YES = {"1", "true", "yes", "y"}
 
 
 @dataclass
@@ -43,21 +44,76 @@ def parse_csv(text: str) -> list[dict[str, str]]:
     return [{k: (v or "").strip() for k, v in row.items() if k in CSV_COLUMNS} for row in reader]
 
 
+def _int(value: Any) -> int:
+    try:
+        return max(0, int(str(value).strip() or 0))
+    except ValueError:
+        return 0
+
+
+def _truthy(value: Any) -> bool:
+    return value is True or str(value).strip().lower() in YES
+
+
 def _company(session: Session, name: str, domain: str, row: dict[str, Any]) -> Company | None:
     domain = (domain or "").strip().lower()
     if not domain:
         return None
     c = session.scalars(select(Company).where(Company.domain == domain)).first()
     if c is None:
-        c = Company(name=name or domain, domain=domain, industry=str(row.get("industry", "")), size=int(row.get("size", 0) or 0),
-                    country=str(row.get("country", "US")), is_customer=bool(row.get("is_customer", False)))
+        c = Company(name=name or domain, domain=domain, industry=str(row.get("industry", "")).strip().lower()[:80], size=_int(row.get("size", 0)),
+                    country=(str(row.get("country", "")).strip().upper() or "US")[:2], is_customer=_truthy(row.get("is_customer", False)))
         session.add(c)
         session.flush()
+    else:
+        # A company we already know can still learn what a later file says: its industry and size when they were empty, and that it is a customer.
+        if not c.industry and row.get("industry"):
+            c.industry = str(row["industry"]).strip().lower()[:80]
+        if not c.size and row.get("size"):
+            c.size = _int(row["size"])
+        if _truthy(row.get("is_customer", False)) and not c.is_customer:
+            mark_customer(session, c)
     return c
 
 
-def import_leads(session: Session, rows: list[dict[str, Any]], now: datetime, default_source: str = "csv_list") -> ImportReport:
+def mark_customer(session: Session, company: Company) -> int:
+    """This company is already a customer, so it is never prospected. Leads already imported from it stop now. Returns how many leads changed."""
+    company.is_customer = True
+    n = 0
+    for lead in session.scalars(select(Lead).join(Contact, Lead.contact_id == Contact.id).where(Contact.company_id == company.id)):
+        if lead.status in {"won", "lost", "suppressed", "dead"}:
+            continue
+        lead.flags = sorted(set(lead.flags or []) | {"existing_customer"})
+        lead.status = "dead"
+        for e in session.scalars(select(Enrollment).where(Enrollment.lead_id == lead.id, Enrollment.status.in_(("active", "paused")))):
+            e.status, e.stop_reason, e.next_send_at = "stopped", "existing_customer", None
+        n += 1
+    session.flush()
+    return n
+
+
+def mark_customers(session: Session, domains: list[str]) -> dict[str, int]:
+    """Mark every company on a list of domains (or email addresses) as a customer. A domain we have never seen is stored, so a later import is blocked too."""
+    found = changed = 0
+    for raw in domains:
+        d = email_domain(raw) if "@" in raw else raw.strip().lower()
+        if not d or "." not in d:
+            continue
+        c = session.scalars(select(Company).where(Company.domain == d)).first()
+        if c is None:
+            c = Company(name=d, domain=d, is_customer=False)
+            session.add(c)
+            session.flush()
+        else:
+            found += 1
+        changed += mark_customer(session, c)
+    session.flush()
+    return {"domains": len(domains), "already_known": found, "leads_stopped": changed}
+
+
+def import_leads(session: Session, rows: list[dict[str, Any]], now: datetime, default_source: str = "csv_list", default_timezone: str = "") -> ImportReport:
     rep = ImportReport(rows=len(rows))
+    fallback_zone = default_timezone if zone(default_timezone) else ""
     for row in rows:
         email = normalize_email(str(row.get("email", "")))
         if not email:
@@ -69,6 +125,8 @@ def import_leads(session: Session, rows: list[dict[str, Any]], now: datetime, de
             for f in ("first_name", "last_name", "phone", "title", "timezone"):
                 if not getattr(existing, f) and row.get(f):
                     setattr(existing, f, str(row[f]))
+            if _truthy(row.get("is_customer", False)) and existing.company is not None and not existing.company.is_customer:
+                mark_customer(session, existing.company)  # a later file says this person's company is a customer
             continue
         company = _company(session, str(row.get("company", "")), str(row.get("domain", "")) or email_domain(email), row)
         flags: list[str] = []
@@ -76,14 +134,17 @@ def import_leads(session: Session, rows: list[dict[str, Any]], now: datetime, de
             flags.append("invalid_email")
         if is_role_based(email):
             flags.append("role_based")
-        if not zone(str(row.get("timezone", ""))):
+        tz = str(row.get("timezone", ""))
+        if not zone(tz) and fallback_zone:
+            tz = fallback_zone  # DEFAULT_TIMEZONE: the owner chose this for rows that came with no valid zone
+        if not zone(tz):
             flags.append("invalid_timezone")
-        consent = str(row.get("sms_consent", "")).lower() in {"1", "true", "yes", "y"}
+        consent = str(row.get("sms_consent", "")).lower() in YES
         phone = str(row.get("phone", "")).strip()
         if consent and not is_e164(phone):
             flags.append("invalid_phone")
         contact = Contact(company_id=company.id if company else None, first_name=str(row.get("first_name", "")), last_name=str(row.get("last_name", "")), email=email,
-                          phone=phone, title=str(row.get("title", "")), timezone=str(row.get("timezone", "")), sms_consent=consent, created_at=now)
+                          phone=phone, title=str(row.get("title", "")), timezone=tz, sms_consent=consent, created_at=now)
         session.add(contact)
         session.flush()
         status = "new"
@@ -124,12 +185,12 @@ def enrich_pending(session: Session, directory: dict[str, dict]) -> int:
     return n
 
 
-def deal_value_cents(size: int) -> int:
-    """A placeholder estimate by company size, used only to size the pipeline. Replace it with your own price list."""
-    return 150_000 if size <= 10 else 600_000 if size <= 200 else 1_200_000
+def deal_value_cents(size: int, values: tuple[int, int, int] = (150_000, 600_000, 1_200_000)) -> int:
+    """A placeholder estimate by company size, used only to size the pipeline. Set DEAL_VALUE_SMALL_CENTS, DEAL_VALUE_MEDIUM_CENTS and DEAL_VALUE_LARGE_CENTS to your own price list."""
+    return values[0] if size <= 10 else values[1] if size <= 200 else values[2]
 
 
-def score_pending(session: Session, llm: LLM | None, targets: tuple[str, ...] = scoring.TARGET_INDUSTRIES) -> int:
+def score_pending(session: Session, llm: LLM | None, targets: tuple[str, ...] = scoring.TARGET_INDUSTRIES, deal_values: tuple[int, int, int] = (150_000, 600_000, 1_200_000)) -> int:
     n = 0
     for lead in session.scalars(select(Lead).where(Lead.status.in_(("new", "enriched")))):
         c = lead.contact
@@ -140,7 +201,7 @@ def score_pending(session: Session, llm: LLM | None, targets: tuple[str, ...] = 
         if lead.status in {"new", "enriched"}:
             lead.status = "scored"
         if session.scalars(select(Deal).where(Deal.lead_id == lead.id)).first() is None:
-            session.add(Deal(lead_id=lead.id, stage="new", value_cents=deal_value_cents(f.company_size)))
+            session.add(Deal(lead_id=lead.id, stage="new", value_cents=deal_value_cents(f.company_size, deal_values)))
         n += 1
     session.flush()
     return n

@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 import os
-from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from pipecairn.api import routes_auth, routes_data, routes_demo, routes_docs, routes_ops, routes_webhooks
+from pipecairn.api import routes_auth, routes_data, routes_demo, routes_docs, routes_ops, routes_setup, routes_webhooks
 from pipecairn.config import Settings
 from pipecairn.context import Ctx
+from pipecairn.seeding import REPO_DATA
 from sendora_core.app import SESSION_COOKIE, create_base_app
 from sendora_core.auth import read_session_token
 from sendora_core.ratelimit import TokenBucket
@@ -30,15 +31,20 @@ def create_app(settings: Settings | None = None, ctx: Ctx | None = None) -> Fast
         if settings.database_url.startswith("sqlite"):
             Base.metadata.create_all(engine)  # SQLite zero setup path. Postgres uses `alembic upgrade head`.
         ctx = Ctx(settings, make_session_factory(engine))
-        if not settings.seed_dir and (Path(__file__).resolve().parents[5] / "data").exists():
-            ctx.settings.seed_dir = str(Path(__file__).resolve().parents[5] / "data")
+        if not settings.seed_dir and (REPO_DATA / "seed.json").is_file():
+            ctx.settings.seed_dir = str(REPO_DATA)  # a source checkout; an installed copy must be told with SEED_DIR
     app = create_base_app(ctx.settings, ctx.factory)
-    app.title, app.version = "Pipecairn API", "1.0.0"
+    app.title, app.version = "Pipecairn API", "1.0.1"
     app.state.ctx = ctx
     # A dashboard page makes several calls at once. This bucket is per client address (set uvicorn --proxy-headers so that is the real visitor, not the web server).
     app.state.limiter = TokenBucket(capacity=600, refill_per_sec=20.0)
     # Sign in attempts per address and email: a burst of LOGIN_BURST (default 5), then one more every 12 seconds.
     app.state.login_bucket = TokenBucket(capacity=settings.login_burst, refill_per_sec=1 / 12)
+    # And a wider limit per address alone, so changing the email in every try does not give a fresh set of tries.
+    app.state.login_ip_bucket = TokenBucket(capacity=max(30, settings.login_burst * 6), refill_per_sec=1 / 3)
+    # And one per account whatever the address, so guesses spread over many addresses still run out. It is generous and refills every 30 seconds,
+    # so the owner is held up for at most a short while by someone hammering the account, never locked out.
+    app.state.login_account_bucket = TokenBucket(capacity=max(20, settings.login_burst * 4), refill_per_sec=1 / 30)
 
     @app.middleware("http")
     async def require_session(request: Request, call_next):
@@ -51,10 +57,12 @@ def create_app(settings: Settings | None = None, ctx: Ctx | None = None) -> Fast
             request.state.user = data
         return await call_next(request)
 
-    for r in (routes_auth, routes_data, routes_ops, routes_docs, routes_webhooks, routes_demo):
+    for r in (routes_auth, routes_data, routes_setup, routes_ops, routes_docs, routes_webhooks, routes_demo):
         app.include_router(r.router)
     return app
 
 
 def app_from_env() -> FastAPI:  # uvicorn pipecairn.api.app:app_from_env --factory
-    return create_app(Settings(_env_file=os.environ.get("ENV_FILE", ".env")))
+    settings = Settings(_env_file=os.environ.get("ENV_FILE", ".env"))
+    logging.getLogger("pipecairn").setLevel(getattr(logging, settings.log_level))
+    return create_app(settings)

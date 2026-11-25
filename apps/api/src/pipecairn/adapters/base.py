@@ -20,6 +20,11 @@ class InboundEmail:
     subject: str
     body: str
     received_at: datetime | None = None
+    # What the mail itself proves. A delivery failure notice is believed only when it is a real delivery status report (is_dsn) that
+    # names the Message-ID of a message we sent (references). Anyone can type "mail delivery failed" into a From line.
+    is_dsn: bool = False
+    references: tuple[str, ...] = ()
+    auth_results: str = ""  # the Authentication-Results header the receiving server added (SPF, DKIM, DMARC), kept for the audit note
 
 
 @dataclass
@@ -78,11 +83,11 @@ class CrmAdapter(Protocol):
 
 
 class EsignAdapter(Protocol):
-    def prepare(self, *, contract_pdf: bytes, title: str, signers: list[dict]) -> HandoffResult: ...
+    def prepare(self, *, contract_pdf: bytes, title: str, signers: list[dict], open_items: list[str] | None = None, folder_key: str = "") -> HandoffResult: ...
     def healthcheck(self) -> tuple[bool, str]: ...
 
 
-def safe_base_url(url: str, *, allow_http_local: bool = False) -> str:
+def safe_base_url(url: str, *, allow_http_local: bool = False, allow_private: bool = False) -> str:
     """Refuse base URLs that point at the local network or non web schemes (SSRF guard for URLs a user can set).
 
     Only https is accepted. Hosts that resolve to private, loopback, link local or reserved addresses are refused,
@@ -93,15 +98,20 @@ def safe_base_url(url: str, *, allow_http_local: bool = False) -> str:
         raise AdapterError("The URL must start with https:// and include a host name.")
     if u.username or u.password:
         raise AdapterError("Put credentials in the key field, not in the URL.")
-    local_ok = allow_http_local
+    local_ok = allow_http_local or allow_private  # ALLOW_PRIVATE_BASE_URLS: the owner chose a self hosted tool on a private address
     if u.scheme == "http" and not local_ok:
         raise AdapterError("Use an https:// URL.")
     try:
         infos = socket.getaddrinfo(u.hostname, u.port or (443 if u.scheme == "https" else 80), proto=socket.IPPROTO_TCP)
     except socket.gaierror as exc:
         raise AdapterError(f"The host {u.hostname} could not be found.") from exc
+    private = []
     for info in infos:
         ip = ipaddress.ip_address(info[4][0])
-        if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified) and not local_ok:
+        is_private = ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified
+        private.append(is_private)
+        if is_private and not local_ok:
             raise AdapterError("That URL points at a private or local address, which is refused.")
+    if u.scheme == "http" and not allow_http_local and not all(private):
+        raise AdapterError("Plain http is accepted only for an address on a private network. Use an https:// URL for anything on the internet.")
     return url.rstrip("/")

@@ -24,12 +24,12 @@ def world(session, settings, adapters, seeded):
     return {"lead": session.get(Lead, sent[0].lead_id), "llm": LLM(settings, OfflineBackend()), "settings": settings, "adapters": adapters}
 
 
-def inbound(lead, text, ext="x1"):
-    return InboundEmail(external_id=ext, from_addr=lead.contact.email, to_addr="alex@mail.example.test", subject="Re: hi", body=text)
+def inbound(lead, text, ext="x1", **extra):
+    return InboundEmail(external_id=ext, from_addr=lead.contact.email, to_addr="alex@mail.example.test", subject="Re: hi", body=text, **extra)
 
 
-def cap(session, world, text, ext="x1"):
-    r = capture_email(session, world["settings"], world["llm"], world["adapters"].calendar, inbound(world["lead"], text, ext), NOW)
+def cap(session, world, text, ext="x1", **extra):
+    r = capture_email(session, world["settings"], world["llm"], world["adapters"].calendar, inbound(world["lead"], text, ext, **extra), NOW)
     session.commit()
     return r
 
@@ -99,7 +99,8 @@ def test_bounce_suppresses_and_counts_against_the_mailbox(session, world):
     sent_msg = session.scalars(select(Message).where(Message.lead_id == world["lead"].id, Message.status == "sent")).first()
     mb = session.get(Mailbox, sent_msg.mailbox_id)
     before = mb.bounce_count
-    r = cap(session, world, "Delivery Status Notification (Failure). 550 5.1.1 User unknown.")
+    # Changed from the old test: a bounce is believed only as a delivery status report that names a message we sent (the old test sent plain text).
+    r = cap(session, world, "Delivery Status Notification (Failure). 550 5.1.1 User unknown.", is_dsn=True, references=(sent_msg.external_id,))
     assert r.intent == "bounce" and mb.bounce_count == before + 1
     assert session.scalars(select(Suppression).where(Suppression.value == world["lead"].contact.email)).first()
 

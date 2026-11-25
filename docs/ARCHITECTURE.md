@@ -28,7 +28,7 @@ Browser  ->  Web app (Next.js)  ->  API (FastAPI)  ->  Database (SQLite or Postg
 
 ## The send gates, in order
 
-kill switch, lead status stop rules, suppression list (read again from the database every time), address validity, role based address, existing customer, text consent and phone format, quiet hours (08:00 to 18:00 local on weekdays; an unknown time zone stops), a mailbox under its daily cap, then the mode (draft records and advances; live sends). A mailbox over 5 percent bounces on 20 or more sends is paused.
+kill switch, lead status stop rules, suppression list (read again from the database every time), address validity, role based address, existing customer, text consent and phone format, quiet hours (08:00 to 18:00 local on weekdays; an unknown time zone stops), a mailbox under its daily cap, then the mode (draft records and advances; live sends). The footer (company, address, stop line) is added to the body at this step. A mailbox over `BOUNCE_PAUSE_RATE` (5 percent) bounces on `BOUNCE_MIN_SENDS` (20) or more sends is paused. The business rules that are settings are listed in `04`.
 
 ## Safety design
 
@@ -36,8 +36,8 @@ The app can pull toward draft or stop (State keys `kill_switch`, `force_draft`).
 
 ## Data
 
-15 tables prefixed `cl_` plus the base's `core_` tables (events, approvals, audit, jobs, costs). Alembic migrations in `apps/api/alembic`. Migration up, drift check, down and up again pass on SQLite and Postgres 17.7.
+16 tables prefixed `cl_` plus the base's `core_` tables (events, approvals, audit, jobs, costs). Alembic migrations in `apps/api/alembic`. Migration up, drift check, down and up again pass on SQLite and Postgres 17.7.
 
 ## API
 
-46 paths, 48 operations, in `docs/openapi.json`. Live docs at `/docs` on the API.
+52 paths, 57 operations, in `docs/openapi.json`. Live docs at `/docs` on the API, in demo mode only (they are off when `DEMO_MODE=false`).

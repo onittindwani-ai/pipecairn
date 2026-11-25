@@ -265,7 +265,7 @@ What Pipecairn has for each: Vercel: Deploy guide for the web app only (not depl
 - Reliability and upkeep (80): Managed platform; no measurement made.
 - Cost (65): A monthly plan fee plus metered usage for memory, CPU and traffic (docs page fetched 2026-11-23).
 - Data control (50): Data sits with the vendor.
-- Integration depth (55): Guide and Dockerfiles written, docker build never run, never deployed.
+- Integration depth (55): Guide and Dockerfiles written, built and started by the CI workflow, never deployed to Railway.
 - Sources: https://docs.railway.com/reference/pricing/plans (checked 2026-11-23)
 
 **Evidence, Hetzner Cloud server**

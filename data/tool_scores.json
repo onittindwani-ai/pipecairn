@@ -747,7 +747,7 @@
       },
       "integration": {
        "score": 55,
-       "evidence": "Guide and Dockerfiles written, docker build never run, never deployed."
+       "evidence": "Guide and Dockerfiles written, built and started by the CI workflow, never deployed to Railway."
       }
      },
      "sources": [

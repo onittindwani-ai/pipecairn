@@ -8,7 +8,7 @@ Read this before you trust Pipecairn with real customers.
 - Tier B adapters (Google Calendar, HubSpot, Notion) were written from docs and never run.
 - Tier C (SendKit, Documenso) are recipe prompts, not code.
 - Several vendor facts are unverified: see `FACTS-AND-SOURCES.md`.
-- Docker images were not built (no Docker daemon in the build environment). The web app build and the compose file check were run. Deploys to Vercel, Railway and Hetzner were not done.
+- The Docker images are built and the compose stack is started on GitHub by the CI workflow (the API and the web app must answer). I did not run Docker on my own machine for this version. No deploy to a real Vercel, Railway or Hetzner host was done, so the three hosting guides are written from the vendors' docs and not run.
 
 ## The reply reader
 
@@ -31,10 +31,14 @@ All people, companies, numbers and replies are invented. 41 companies, 123 lead 
 
 ## Known gaps
 
-- Lead import is through the API and CSV text; there is no upload button.
+- There is no export button for leads, the audit log or settings. Back up the database (`11`).
+- One mail account (`SMTP_USER`) signs in for every mailbox you add. More than one mail account needs more than one install.
+- A bounce is believed only from a delivery status report that names a message we sent. A mail provider that relays mail to the email webhook must pass `dsn` (true for a delivery status report) and `references` (the Message-IDs it names), or its bounces are shown in the Inbox but change nothing.
+- Still fixed in the code, not settings: the score weights, the role based address list (info@, sales@ and so on), the free mail list, the contract wording apart from the notice days, and the proposal layout. PDFs use a standard font: Western European letters and the euro sign work, other scripts print as `?`.
+- Every email gets the footer from `COMPANY_NAME` and `COMPANY_ADDRESS`, and the seed demo sequence still signs itself "Alex". Real sequences should use `{{sender_name}}`.
 - Time zone handling needs a valid zone per lead; an unknown zone means that lead is not sent to.
 - One worker process. It is built for hundreds to low thousands of leads, not millions.
 - SQLite is for trying out. Use Postgres for real work.
 - English only.
 - Three accounts at most: owner, approver and an optional read only viewer.
-- Four small changes to the shared base were requested and not made (the base is frozen): a search button label, card heading level, keyboard hint glyphs on phones, and sheet settle time. They are listed in the build ledger.
+- Four small changes to the shared base were requested and not made (the base is frozen): a search button label, card heading level, keyboard hint glyphs on phones, and sheet settle time. They are only a request to the maintainers of the shared base; they do not affect how the product works.

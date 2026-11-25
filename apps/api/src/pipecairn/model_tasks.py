@@ -101,11 +101,11 @@ def read_reply(llm: LLM, text: str, subject: str = "") -> ClassifyOut:
     )
 
 
-def write_draft(llm: LLM | None, intent: str, first_name: str, slots: list[str], reply_text: str, fallback: str) -> str:
+def write_draft(llm: LLM | None, intent: str, first_name: str, slots: list[str], reply_text: str, fallback: str, sender_name: str = "Alex") -> str:
     """Draft an answer. Any failure, a link in the answer, or no model at all returns the plain template `fallback`."""
     if llm is None:
         return fallback
-    facts = {"intent": intent, "recipient_first_name": first_name or "there", "sender_first_name": "Alex", "times_you_may_offer": slots}
+    facts = {"intent": intent, "recipient_first_name": first_name or "there", "sender_first_name": sender_name, "times_you_may_offer": slots}
     try:
         out = llm.structured(
             "[task:draft_reply]\nWrite the draft answer to the reply that follows.\nFacts (JSON): " + json.dumps(facts), DraftOut,

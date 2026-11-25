@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Pipecairn API",
-  "version": "1.0.0"
+  "version": "1.0.1"
  },
  "paths": {
   "/health": {
@@ -348,6 +348,45 @@
     }
    }
   },
+  "/api/leads/suppress": {
+   "post": {
+    "tags": [
+     "data"
+    ],
+    "summary": "Never contact these leads again",
+    "operationId": "suppress_api_leads_suppress_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SuppressIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/sequences": {
    "get": {
     "tags": [
@@ -361,6 +400,43 @@
       "content": {
        "application/json": {
         "schema": {}
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "setup"
+    ],
+    "summary": "Create a sequence (owner only). It becomes the active one when there is none yet",
+    "operationId": "create_sequence_api_sequences_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/NewSequenceIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
        }
       }
      }
@@ -723,6 +799,182 @@
        }
       }
      }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/mailboxes": {
+   "post": {
+    "tags": [
+     "setup"
+    ],
+    "summary": "Add a sending mailbox (owner only)",
+    "operationId": "add_mailbox_api_mailboxes_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/MailboxIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/sequences/{seq_id}/activate": {
+   "post": {
+    "tags": [
+     "setup"
+    ],
+    "summary": "Make this the one sequence new leads are enrolled in (owner only)",
+    "operationId": "activate_sequence_api_sequences__seq_id__activate_post",
+    "parameters": [
+     {
+      "name": "seq_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Seq Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/suppressions": {
+   "get": {
+    "tags": [
+     "setup"
+    ],
+    "summary": "How many do not contact entries there are, and the newest ones",
+    "operationId": "list_suppressions_api_suppressions_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "setup"
+    ],
+    "summary": "Never contact these addresses, domains or phone numbers (the old unsubscribe list)",
+    "description": "Takes a list (`values`) or CSV text (`csv`, a column named email, domain, phone or value, optionally `kind`). Leads already imported from them stop at once.",
+    "operationId": "add_suppressions_api_suppressions_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ValuesIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/customers": {
+   "post": {
+    "tags": [
+     "setup"
+    ],
+    "summary": "Mark existing customers so they are never prospected (domains or email addresses)",
+    "description": "Takes a list (`values`) or CSV text (`csv`, a column named domain or email). A lead already imported from a customer company stops at once.",
+    "operationId": "add_customers_api_customers_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ValuesIn"
+       }
+      }
+     },
+     "required": true
     },
     "responses": {
      "200": {
@@ -1467,6 +1719,22 @@
        ],
        "title": "X-Signature"
       }
+     },
+     {
+      "name": "x-timestamp",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Timestamp"
+      }
      }
     ],
     "responses": {
@@ -1513,6 +1781,104 @@
         }
        ],
        "title": "X-Signature"
+      }
+     },
+     {
+      "name": "x-timestamp",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Timestamp"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/webhooks/unsubscribe/{token}": {
+   "get": {
+    "tags": [
+     "webhooks"
+    ],
+    "summary": "The page behind the unsubscribe link in an email (asks for one click to confirm)",
+    "description": "Opening a link must not change anything (mail scanners open links), so this only shows the button.",
+    "operationId": "unsubscribe_page_api_webhooks_unsubscribe__token__get",
+    "parameters": [
+     {
+      "name": "token",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Token"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "webhooks"
+    ],
+    "summary": "One click unsubscribe from the List-Unsubscribe header (signed link, no session)",
+    "description": "A mail program (or the page above) posts here. The signed address is suppressed at once and its leads stop.",
+    "operationId": "unsubscribe_api_webhooks_unsubscribe__token__post",
+    "parameters": [
+     {
+      "name": "token",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Token"
       }
      }
     ],
@@ -1812,10 +2178,12 @@
     "properties": {
      "email": {
       "type": "string",
+      "maxLength": 254,
       "title": "Email"
      },
      "password": {
       "type": "string",
+      "maxLength": 1024,
       "title": "Password"
      }
     },
@@ -1825,6 +2193,49 @@
      "password"
     ],
     "title": "Login"
+   },
+   "MailboxIn": {
+    "properties": {
+     "address": {
+      "type": "string",
+      "maxLength": 254,
+      "title": "Address"
+     },
+     "daily_cap": {
+      "type": "integer",
+      "maximum": 2000.0,
+      "minimum": 1.0,
+      "title": "Daily Cap",
+      "default": 30
+     },
+     "warmup_days": {
+      "type": "integer",
+      "maximum": 730.0,
+      "minimum": 0.0,
+      "title": "Warmup Days",
+      "default": 0
+     },
+     "spf_ok": {
+      "type": "boolean",
+      "title": "Spf Ok",
+      "default": false
+     },
+     "dkim_ok": {
+      "type": "boolean",
+      "title": "Dkim Ok",
+      "default": false
+     },
+     "dmarc_ok": {
+      "type": "boolean",
+      "title": "Dmarc Ok",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "address"
+    ],
+    "title": "MailboxIn"
    },
    "MoveIn": {
     "properties": {
@@ -1844,6 +2255,31 @@
      "stage"
     ],
     "title": "MoveIn"
+   },
+   "NewSequenceIn": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name"
+     },
+     "steps": {
+      "items": {
+       "$ref": "#/components/schemas/StepIn"
+      },
+      "type": "array",
+      "maxItems": 10,
+      "minItems": 1,
+      "title": "Steps"
+     }
+    },
+    "type": "object",
+    "required": [
+     "name",
+     "steps"
+    ],
+    "title": "NewSequenceIn"
    },
    "PreviewIn": {
     "properties": {
@@ -2034,6 +2470,30 @@
     ],
     "title": "StressIn"
    },
+   "SuppressIn": {
+    "properties": {
+     "ids": {
+      "items": {
+       "type": "integer"
+      },
+      "type": "array",
+      "maxItems": 500,
+      "minItems": 1,
+      "title": "Ids"
+     },
+     "reason": {
+      "type": "string",
+      "maxLength": 200,
+      "title": "Reason",
+      "default": "owner choice"
+     }
+    },
+    "type": "object",
+    "required": [
+     "ids"
+    ],
+    "title": "SuppressIn"
+   },
    "ValidationError": {
     "properties": {
      "loc": {
@@ -2073,6 +2533,26 @@
      "type"
     ],
     "title": "ValidationError"
+   },
+   "ValuesIn": {
+    "properties": {
+     "values": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "maxItems": 20000,
+      "title": "Values"
+     },
+     "csv": {
+      "type": "string",
+      "maxLength": 2000000,
+      "title": "Csv",
+      "default": ""
+     }
+    },
+    "type": "object",
+    "title": "ValuesIn"
    }
   }
  }

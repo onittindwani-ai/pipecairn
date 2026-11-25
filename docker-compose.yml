@@ -8,7 +8,7 @@ x-logging: &logging
 
 services:
   db:
-    image: postgres:17
+    image: postgres:17.7  # a minor version, so a pull never upgrades the database by surprise. Change it on purpose and take a backup first.
     restart: unless-stopped
     logging: *logging
     environment:
@@ -57,6 +57,8 @@ services:
       SEED_DIR: /app/data  # set here so an empty SEED_DIR in .env cannot hide the data folder inside the image
       HANDOFF_DIR: /data/handoff
     command: ["python", "-m", "pipecairn.worker"]
+    init: true
+    stop_grace_period: 30s  # lets a job in progress finish when the container is stopped
     volumes:
       - handoff:/data/handoff
     depends_on:
@@ -69,6 +71,13 @@ services:
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
     logging: *logging
+    init: true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then((r)=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     environment:
       API_BASE_URL: http://api:8000
     depends_on:

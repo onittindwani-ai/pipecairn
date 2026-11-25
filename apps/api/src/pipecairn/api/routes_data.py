@@ -72,7 +72,7 @@ def import_csv(body: ImportBody, s: Session = Depends(db), ctx: Ctx = Depends(ge
         rows = intake.parse_csv(body.csv)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
-    rep = intake.import_leads(s, rows, ctx.now(s))
+    rep = intake.import_leads(s, rows, ctx.now(s), default_timezone=ctx.settings.default_timezone)
     record_audit(s, u["user"], "leads.imported", None, {"rows": rep.rows, "created": rep.created, "duplicates": rep.duplicates})
     return {"rows": rep.rows, "created": rep.created, "duplicates": rep.duplicates, "flagged": rep.flagged}
 
@@ -125,20 +125,25 @@ def sequences(s: Session = Depends(db)):
     return [seq_row(q) for q in s.scalars(select(Sequence).order_by(Sequence.id))]
 
 
+def check_steps(steps: list[StepIn]) -> None:
+    """The rules a sequence must meet before it is saved, for a new one and an edited one alike. Raises a 422 that says what to fix."""
+    for i, st in enumerate(steps, 1):
+        if not st.body.strip():
+            raise HTTPException(422, f"Step {i} has no message. Write one before saving.")
+        if i == 1 and st.channel == "email" and not st.subject.strip():
+            raise HTTPException(422, "The first email needs a subject. Add one before saving. Follow ups may leave it empty to stay in the same thread.")
+    for st in steps:
+        bad = (templating.variables_in(st.subject) | templating.variables_in(st.body)) - templating.KNOWN
+        if bad:
+            raise HTTPException(422, f"Unknown field(s) {', '.join(sorted(bad))}. You can use: {', '.join(sorted(templating.KNOWN))}.")
+
+
 @router.put("/sequences/{seq_id}", summary="Replace a sequence's steps")
 def update_sequence(seq_id: int, body: SequenceIn, s: Session = Depends(db), u: dict = Depends(writer)):
     q = s.get(Sequence, seq_id)
     if q is None:
         raise HTTPException(404, "That sequence does not exist.")
-    for i, st in enumerate(body.steps, 1):
-        if not st.body.strip():
-            raise HTTPException(422, f"Step {i} has no message. Write one before saving.")
-        if i == 1 and st.channel == "email" and not st.subject.strip():
-            raise HTTPException(422, "The first email needs a subject. Add one before saving. Follow ups may leave it empty to stay in the same thread.")
-    for st in body.steps:
-        bad = (templating.variables_in(st.subject) | templating.variables_in(st.body)) - templating.KNOWN
-        if bad:
-            raise HTTPException(422, f"Unknown field(s) {', '.join(sorted(bad))}. You can use: {', '.join(sorted(templating.KNOWN))}.")
+    check_steps(body.steps)
     q.name = body.name
     q.steps.clear()
     s.flush()
@@ -156,11 +161,11 @@ class PreviewIn(BaseModel):
 
 
 @router.post("/sequences/preview", summary="Show a step as one real lead would receive it")
-def preview(body: PreviewIn, s: Session = Depends(db)):
+def preview(body: PreviewIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
     lead = s.get(Lead, body.lead_id) if body.lead_id else s.scalars(select(Lead).where(Lead.score.is_not(None)).order_by(Lead.id)).first()
     from pipecairn.sender import _ctx
 
-    ctx_vars = _ctx(lead) if lead else {k: f"[{k}]" for k in templating.KNOWN}
+    ctx_vars = _ctx(lead, ctx.settings.sender_name) if lead else {k: f"[{k}]" for k in templating.KNOWN}
     try:
         return {"subject": templating.render(body.subject, ctx_vars, header=True), "body": templating.render(body.body, ctx_vars), "lead": lead_row(lead)["name"] if lead else None, "error": None}
     except templating.TemplateError as exc:
@@ -221,7 +226,8 @@ def book(reply_id: int, body: BookIn, s: Session = Depends(db), ctx: Ctx = Depen
     if r is None:
         raise HTTPException(404, "That reply does not exist.")
     guard_write(ctx.effective(s), "calendar.book")
-    lead = s.get(Lead, r.lead_id)
+    # Lock the lead's row until this request ends, so two clicks at once cannot both pass the "already booked" check and book two calls (Postgres; SQLite has one writer anyway).
+    lead = s.scalars(select(Lead).where(Lead.id == r.lead_id).with_for_update()).first()
     if lead.status in {"suppressed", "dead"} or r.intent in {"unsubscribe", "bounce"}:
         raise HTTPException(409, "This person asked not to be contacted, so no call can be booked.")
     if s.scalars(select(Meeting).where(Meeting.lead_id == lead.id)).first() is not None:

@@ -25,3 +25,4 @@ handoff/*/
 !.env.example
 *.pem
 *.key
+handoff/.seed_inbox.json

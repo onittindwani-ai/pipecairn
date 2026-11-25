@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button, Card, EmptyState, Field, SegmentedControl, notify } from "@sendora/ui-kit";
 import { ListSkeleton, LoadError, PageHead, Textarea } from "@/components/Parts";
 import { get, post, put } from "@/lib/api";
-import { usePermissions } from "@/lib/hooks";
+import { useMe, usePermissions } from "@/lib/hooks";
 import type { SequenceRow, StepRow } from "@/lib/types";
 
 function useDebounced<T>(v: T, ms = 300): T {
@@ -14,8 +14,22 @@ function useDebounced<T>(v: T, ms = 300): T {
   return d;
 }
 
+const STARTER = {
+  name: "First touch and follow up",
+  steps: [
+    { channel: "email", delay_hours: 0, subject: "Quick idea for {{company}}", body: "Hi {{first_name}},\n\nI help {{industry}} teams answer new enquiries within minutes. Would a short call this week be useful?\n\nBest,\n{{sender_name}}" },
+    { channel: "email", delay_hours: 72, subject: "", body: "Hi {{first_name}}, a short follow up in case my first note got buried. Happy to send a two line summary instead of a call.\n\n{{sender_name}}" },
+  ],
+};
+
 export default function SequencesPage() {
   const qc = useQueryClient();
+  const me = useMe();
+  const createStarter = useMutation({
+    mutationFn: () => post("/sequences", STARTER),
+    onSuccess: () => { notify.success("Starter sequence created. Edit it to say what you do."); qc.invalidateQueries({ queryKey: ["sequences"] }); },
+    onError: (e: Error) => notify.error("Could not create the sequence", e.message),
+  });
   const { canWrite } = usePermissions();
   const q = useQuery({ queryKey: ["sequences"], queryFn: () => get<SequenceRow[]>("/sequences") });
   const [name, setName] = useState("");
@@ -33,7 +47,7 @@ export default function SequencesPage() {
   const patch = (i: number, p: Partial<StepRow>) => setSteps((s) => s.map((x, j) => (j === i ? { ...x, ...p } : x)));
   if (q.isError) return <div className="cl-page"><PageHead title="Sequences" /><LoadError error={q.error} onRetry={() => q.refetch()} what="sequences" /></div>;
   if (!q.data) return <div className="cl-page"><PageHead title="Sequences" /><ListSkeleton /></div>;
-  if (!q.data.length) return <div className="cl-page"><PageHead title="Sequences" /><Card><EmptyState title="No sequence yet" body="Load the demo data from the command palette, or import leads and add a sequence." /></Card></div>;
+  if (!q.data.length) return <div className="cl-page"><PageHead title="Sequences" /><Card><EmptyState title="No sequence yet" body="Nothing is sent until there is a sequence. Create a starter you can edit." />{me.data?.role === "owner" ? <div style={{ marginTop: 13 }}><Button variant="primary" onClick={async () => { await createStarter.mutateAsync(); }}>Create a starter sequence</Button></div> : <p className="cl-mini">Only the owner can create a sequence.</p>}</Card></div>;
   const vars = q.data[0]!.variables;
   const unknownField = (t: string) => [...t.matchAll(/\{\{\s*([\w.]+)\s*\}\}/g)].map((m) => m[1]!).find((f) => !vars.includes(f));
   const badField = steps.findIndex((x) => unknownField(`${x.subject} ${x.body}`));

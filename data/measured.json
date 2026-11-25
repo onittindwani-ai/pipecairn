@@ -1,12 +1,12 @@
 {
- "measured_on": "2026-11-24",
+ "measured_on": "2026-11-25",
  "tests": {
-  "passed": 187,
+  "passed": 263,
   "skipped": 1,
   "failed": 0,
-  "coverage_percent": 91
+  "coverage_percent": 93
  },
- "web_unit_tests": 5,
+ "web_unit_tests": 6,
  "browser_tests": 40,
  "screenshots": 34,
  "adapters_registered": 15,

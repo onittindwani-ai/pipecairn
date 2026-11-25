@@ -61,3 +61,9 @@ def aware(dt: datetime | None) -> datetime | None:
 def clean_header(value: str) -> str:
     """Remove line breaks so a value can never add a mail header."""
     return re.sub(r"[\r\n]+", " ", value or "").strip()
+
+
+def csv_safe(value: object) -> str:
+    """A cell that starts with = + - @ tab or return is read as a formula by Excel and Sheets. A leading apostrophe makes it plain text."""
+    text = "" if value is None else str(value)
+    return "'" + text if text[:1] in {"=", "+", "-", "@", "\t", "\r"} else text

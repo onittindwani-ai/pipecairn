@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { lastHop } from "@/lib/clientIp";
 
 const API = process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
 const HOP = new Set(["connection", "keep-alive", "transfer-encoding", "content-encoding", "content-length"]);
@@ -20,7 +21,7 @@ async function forward(request: Request, ctx: { params: Promise<{ path: string[]
   const ct = request.headers.get("content-type");
   if (ct) headers["content-type"] = ct;
   if (token) headers["x-session"] = token;
-  const ip = request.headers.get("x-forwarded-for");
+  const ip = lastHop(request.headers.get("x-forwarded-for"));
   if (ip) headers["x-forwarded-for"] = ip;
   const body = ["GET", "HEAD"].includes(request.method) ? undefined : await request.arrayBuffer();
   const send = () => fetch(`${API}/api/${joined}${url.search}`, {

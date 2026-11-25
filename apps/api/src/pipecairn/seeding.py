@@ -12,11 +12,27 @@ from pipecairn import intake
 from pipecairn.models import Company, Mailbox, Sequence, Step
 from pipecairn.suppression import add_suppression
 
-DEFAULT_DATA = Path(__file__).resolve().parents[4] / "data"
+# Only a source checkout has the data folder next to the code. An installed copy (the Docker image) does not, so the folder named by
+# SEED_DIR (settings.seed_dir) is always the first choice and this one is only the last resort.
+REPO_DATA = Path(__file__).resolve().parents[4] / "data"
+DEFAULT_DATA = REPO_DATA
 
 
-def read_seed(data_dir: Path | None = None) -> dict:
-    return json.loads(((data_dir or DEFAULT_DATA) / "seed.json").read_text())
+def data_dir(seed_dir: str | Path | None = None) -> Path:
+    """The folder that holds seed.json: SEED_DIR when it is set, otherwise the checkout's data folder when there is one. Says plainly when neither exists."""
+    if seed_dir:
+        found = Path(seed_dir)
+    elif (REPO_DATA / "seed.json").is_file():
+        found = REPO_DATA
+    else:
+        raise FileNotFoundError("The demo data folder was not found. Set SEED_DIR to the folder that holds seed.json.")
+    if not (found / "seed.json").is_file():
+        raise FileNotFoundError(f"There is no seed.json in the demo data folder {found}. Check SEED_DIR.")
+    return found
+
+
+def read_seed(folder: Path | str | None = None) -> dict:
+    return json.loads((data_dir(folder) / "seed.json").read_text())
 
 
 def load_seed(session: Session, seed: dict, now: datetime, with_leads: bool = True) -> dict:

@@ -29,7 +29,8 @@ FOOTER_LINE = re.compile(
     r"(unsubscribe|opt[- ]?out) (from )?our (newsletter|mailing list|bulletin|digest)|"
     r"(reply|text|send) ['\"“]?(stop|remove|unsubscribe)['\"”]? (to|and we|and you) [^\n]{0,60}(our|the) (newsletter|list|updates|alerts)|"
     r"manage (your )?(email )?(preferences|subscriptions?)|view (this )?(email )?in (your )?browser|registered (office|in)|company (no|number|reg)|vat (no|number|id)|"
-    r"you are receiving this (e-?mail|message) because)", re.I)
+    r"you are receiving this (e-?mail|message) because|"
+    r"reply stop to opt out( of these emails)?)", re.I)  # the last one is the footer this system adds to its own messages; a reply that carries it back is not a request to stop
 
 _QUOTES = str.maketrans({"’": "'", "‘": "'", "ʼ": "'", "“": '"', "”": '"', " ": " ", "​": ""})
 _CONTRACTIONS = (

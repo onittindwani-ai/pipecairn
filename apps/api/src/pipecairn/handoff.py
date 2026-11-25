@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 
 from pipecairn.adapters.base import HandoffResult
+from pipecairn.util import csv_safe
 from sendora_core.settings import BaseAppSettings
 
 STEPS = """Send this contract for signature (steps are UNVERIFIED against the live Breezedoc screens, check them once):
@@ -32,8 +33,10 @@ class BreezedocHandoff:
         self.settings = settings
         self.base_dir = (base_dir or Path("handoff")).resolve()
 
-    def prepare(self, *, contract_pdf: bytes, title: str, signers: list[dict], open_items: list[str] | None = None) -> HandoffResult:
-        folder = (self.base_dir / slug(title)).resolve()
+    def prepare(self, *, contract_pdf: bytes, title: str, signers: list[dict], open_items: list[str] | None = None, folder_key: str = "") -> HandoffResult:
+        """folder_key (the contract id) goes in front of the name, so two contracts with the same company and title never share a folder."""
+        key = re.sub(r"[^a-z0-9]+", "", folder_key.lower())[:20]
+        folder = (self.base_dir / (f"{key}-{slug(title)}" if key else slug(title))).resolve()
         if self.base_dir not in folder.parents and folder != self.base_dir:
             raise ValueError("Refused: the folder would be outside the hand off directory.")
         folder.mkdir(parents=True, exist_ok=True)
@@ -42,8 +45,8 @@ class BreezedocHandoff:
         w = csv.writer(buf)
         w.writerow(["order", "name", "email"])
         for i, s in enumerate(signers, 1):
-            w.writerow([i, s.get("name", ""), s.get("email", "")])
-        (folder / "signers.csv").write_text(buf.getvalue())
+            w.writerow([i, csv_safe(s.get("name", "")), csv_safe(s.get("email", ""))])  # a name typed on a web form must not run as a spreadsheet formula
+        (folder / "signers.csv").write_text(buf.getvalue(), newline="")
         (folder / "OPEN-ITEMS.txt").write_text("\n".join(f"- {x}" for x in (open_items or [])) or "None.")
         (folder / "INSTRUCTIONS.txt").write_text(STEPS)
         return HandoffResult(package_path=str(folder), instructions=STEPS, sent=False)

@@ -1,6 +1,6 @@
 # Contributing
 
-1. Fork, branch, make a small change.
+1. Set up first: `docs/05-RUN-LOCALLY.md` (use WSL 2 on Windows). Then fork, branch, make a small change.
 2. Run `make test` and `make seed-check`. Both must pass. For web changes also `pnpm typecheck` and `pnpm e2e`.
 3. Do not edit `packages/core-py` or `packages/ui-kit`; they are a frozen shared base.
 4. Use plain words in docs and UI text. No em or en dashes.

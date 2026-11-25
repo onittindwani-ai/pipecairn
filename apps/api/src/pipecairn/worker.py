@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import signal
 import time
 
@@ -21,9 +22,15 @@ def run_once(ctx: Ctx, worker: Worker) -> int:
     return worker.drain(limit=50)
 
 
+def load_settings() -> Settings:
+    """The worker reads the same environment file as the API (ENV_FILE, default .env), so the two never run on different settings."""
+    return Settings(_env_file=os.environ.get("ENV_FILE", ".env"))
+
+
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    settings = Settings()
+    settings = load_settings()
+    logging.basicConfig(level=getattr(logging, settings.log_level), format="%(asctime)s %(levelname)s %(message)s")
+    settings.check_runtime()  # same refusal as the API: an example secret, a demo on a server database, a placeholder sender on a live install
     engine = make_engine(settings.database_url)
     import pipecairn.models  # noqa: F401
     from sendora_core import models as _c  # noqa: F401

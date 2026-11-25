@@ -10,7 +10,7 @@ Vercel hosts only the **web** part. The API and worker need a server that stays 
 6. Set environment variable `API_BASE_URL` to your API address (no trailing slash).
 7. Do **not** set `INSECURE_COOKIES` or `NEXT_PUBLIC_DEMO_HINT`.
 8. Deploy. Open the address, sign in.
-9. On the API server, make sure uvicorn runs with `--proxy-headers` and `--forwarded-allow-ips` set to your proxy, so rate limits see the real visitor and not Vercel.
+9. On the API server, make sure uvicorn runs with `--proxy-headers` and the environment variable `FORWARDED_ALLOW_IPS` set to your proxy's address (the Docker image reads it, default `127.0.0.1`), so rate limits see the real visitor and not Vercel. The web app passes on only the last address of `x-forwarded-for`, the one its own proxy wrote.
 
 ## Webhooks
 
@@ -18,4 +18,4 @@ Telnyx and Cal.com must call the **API** directly (`https://api.yourdomain.com/a
 
 ## If the build fails
 
-Most common: the ui-kit folder was not included (step 4), or `pnpm-workspace.yaml` does not list `packages/*`. See `15`.
+Most common: the ui-kit folder was not included (step 4), or `pnpm-workspace.yaml` does not list `packages/ui-kit` and `apps/web`. See `15`.
