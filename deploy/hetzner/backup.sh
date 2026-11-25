@@ -3,9 +3,11 @@
 #   BACKUP_DIR       where the files go (default /var/backups/pipecairn)
 #   BACKUP_COPY_TO   optional rsync target on ANOTHER machine, for example user@host:/backups/pipecairn/ (a copy on the same disk is not a backup)
 set -eu
+umask 077  # a dump holds every lead and every reply: the files are readable by the user who runs this and nobody else
 cd "$(dirname "$0")/../.."
 OUT="${BACKUP_DIR:-/var/backups/pipecairn}"
 mkdir -p "$OUT"
+chmod 700 "$OUT"
 STAMP=$(date +%Y%m%d-%H%M)
 DUMP="$OUT/pipecairn-$STAMP.dump"
 HAND="$OUT/handoff-$STAMP.tar"

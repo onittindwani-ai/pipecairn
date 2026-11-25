@@ -40,7 +40,7 @@ An independent review of the version above found more. What changed, in plain wo
 
 **Reading the inbox**
 - Mail is read without marking it read and marked read only after it is stored, one message at a time. A failure part way no longer loses a stop request, and one unreadable message no longer blocks the ones behind it.
-- Mail from an address that is not a lead (an alias, a forward, a colleague) is kept and shown in the Inbox instead of being dropped. A reply from an alias that names one of our messages is matched to its lead. Very long Message-IDs and addresses are shortened to fit.
+- A reply from an alias or a forward that names one of our messages is matched to its lead. Mail from other addresses is left alone unless `KEEP_UNMATCHED_MAIL=true` (see the fourth look below). Very long Message-IDs and addresses are shortened to fit.
 - A reply read as a bounce but not backed by a real delivery report stays open for a person (before, it was hidden as handled). A delivery notice quoted under a normal reply no longer reads as a bounce. New **Mark as read** for replies that need no answer.
 - A message of 20,000 blank lines used to keep the worker (and, for the email webhook, the whole API) busy for about 15 seconds. The text is now cut and squeezed line by line first, and the webhooks run off the event loop.
 
@@ -53,9 +53,35 @@ An independent review of the version above found more. What changed, in plain wo
 **Smaller**
 - `SESSION_SECRET_PREVIOUS` keeps the unsubscribe links already emailed working after the secret is replaced.
 - `/health` says only `ok`. The audit check reads the newest 20,000 rows in batches (`limit=0` for all). A proposal scope item is limited to 300 characters. Names typed into the web form lose links, markup and template fields. The web app refuses sign in and webhook paths written with dots, encoded dots or capitals.
-- New table `cl_unmatched_mail` (migration 0002): run `alembic upgrade head` when you update an install that uses Postgres.
+- New table `cl_unmatched_mail` (migration 0002, and a `flag` column in 0003): run `alembic upgrade head` when you update an install that uses Postgres. SQLite gets the table and the column at start.
 - The base package tests (81) now run with the rest (`make test`, `pytest.ini`), and the web app's unit tests run with `pnpm test:ui` (and `make test-web`). The test helpers moved from `conftest.py` to `support.py` because two files named `conftest` cannot be imported side by side.
 - Documented as known limits: no server side session revocation, an unkeyed audit chain, replies approved by any owner or approver, no double opt in for form leads, base image digests (how to pin them is in `12`).
+
+### A fourth look at the version above (same release)
+
+A third independent review found two serious gaps in the mail code added just before. What changed, in plain words:
+
+**Reading mail**
+- One badly made message can no longer stop the inbox. A message with a character set that does not exist (anyone could send one), broken encoding, a huge header, thousands of nested parts or no parts is read on its own: its text is decoded with replacement characters and flagged, or, if even that fails, the whole message is kept as raw text and shown to a person as "could not be read properly" (nothing is drafted or sent from it, and, as for any reply, that person's follow ups stop). The message behind it, a stop request included, is read as normal. Before, one such message made every poll fail, so the stop request behind it was never stored. A message that cannot be stored three polls in a row is kept as unreadable mail for a person.
+- A request to stop now wins over bounce wording: "Please unsubscribe me, this address is no longer used" or "remove me, this mailbox is no longer monitored" used to be read as a bounce guess and ignored, so the lead stayed in the sequence.
+- A delivery report is read from its own `Action` and `Status` lines: only "failed" with a 5.x.x status is a bounce. "Delayed", "mailbox full" and other 4.x.x reports change nothing (before, they suppressed the address for good, marked the lead dead and counted against the mailbox). The email webhook accepts `dsn_action` and `dsn_status` for relays.
+- HTML only mail is now read (its text is taken out of the markup); before, a stop request in an HTML only message was not seen.
+- Mail from an address that is not a lead is no longer read, copied or marked as read by default: connecting a personal inbox used to copy a snippet of every message into the database. Set `KEEP_UNMATCHED_MAIL=true` to keep it (a short snippet, with a new one click **Never write to this address again**); use a mailbox that is only for this system.
+
+**Sending**
+- A message that was being sent when the worker died is not sent again however late the restart is. Before, a restart more than 10 minutes later marked it unconfirmed but did not move the sequence on, so the person was mailed again. Now the step counts as done (also when the person had meanwhile asked to wait, and for rows an older version left behind) and a person can press **It is not in the Sent folder, send it again** on the lead.
+- A mail server that refuses an address for good (a 5xx answer at RCPT) is a hard bounce at once: the address is suppressed, the lead is dead and the mailbox's bounce count goes up. Before, it was retried every hour for ever.
+- Any other refusal of the message or the address (for now) is tried three times, an hour apart, then the person is stopped for a person to look at. A wrong password, an unreachable mail server or a refused sender address never stops anyone.
+- An error after the server took the message (a broken connection while it closed, or no answer after the message was handed over) no longer counts as failed. It is "sent" or "unconfirmed" and is never sent again.
+
+**Smaller**
+- The live refresh of the web app now works: the server names each event and the page only listened to unnamed ones, and every connection replayed the history from the start. The page now starts after the newest event and listens for each kind (`GET /api/events/latest`). The shared base's stream route is unchanged.
+- The web proxy refuses a path that decodes to `?`, `#` or a control character (`auth/login%3F` used to pass the sign in guard and reach the API as `auth/login?`), and sends every segment encoded again.
+- The sign in request is limited to 4 KB (it accepted 25 MB without a session).
+- CSV import: headers such as `First Name`, `E-mail` or `Job Title` are matched (they were silently dropped), the result lists the columns that were ignored, and a cell that is too long is skipped and counted instead of failing the whole file; a file the reader cannot parse gives a plain message instead of an error.
+- Backups are written readable by their owner only. `PUBLIC_BASE_URL` is in the Hetzner steps and docs `12` has a Docker update path.
+- A save that fails is now an error, not a success: on this FastAPI version a route that took the database session the plain way saved after the answer had gone out, so a failed save still showed success and a webhook sender (which only retries on an error) never sent the message again. Every route now saves before it answers, and the webhooks also save explicitly before they say ok.
+- A test that always passed (`hasattr` on a field that does not exist) now reads the enrolment itself.
 
 ### Also in 1.0.1 (written before this review)
 

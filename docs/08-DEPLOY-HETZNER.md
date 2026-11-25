@@ -15,7 +15,7 @@
    - `OWNER_PASSWORD_HASH`: from `python tools/hash_password.py`, in single quotes
    - `POSTGRES_PASSWORD`: letters and digits only, or percent encoded, because it sits inside the database address: `openssl rand -hex 24`
 
-   Also set `SENDER_NAME`, `COMPANY_NAME` and `COMPANY_ADDRESS` before `MODE=live`. Set the two DNS names in `deploy/hetzner/Caddyfile`.
+   Also set `SENDER_NAME`, `COMPANY_NAME` and `COMPANY_ADDRESS` before `MODE=live`, and `PUBLIC_BASE_URL=https://api.yourdomain.com` (the API's own https address: it switches on the one click unsubscribe link in every email; without it the footer only says to reply STOP). Set the two DNS names in `deploy/hetzner/Caddyfile`.
 7. `docker compose up -d --build`. The API runs the database migrations itself when it starts; `docker compose exec api alembic upgrade head` is only needed to run them by hand.
 8. Copy `deploy/hetzner/Caddyfile` to `/etc/caddy/Caddyfile` and `sudo systemctl reload caddy`.
 9. Open the web address and sign in.

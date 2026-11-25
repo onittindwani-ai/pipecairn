@@ -9,7 +9,10 @@ Run `make check-env` first (it lists missing or half filled settings, names only
 | 429 too many requests | Behind a proxy without `--proxy-headers` | Start uvicorn with `--proxy-headers` and set `FORWARDED_ALLOW_IPS=<proxy address>` (the Docker image reads that variable). |
 | Nothing sends | Draft mode, kill switch, quiet hours, weekend, or mailbox at cap | Check the top strip, then Deliverability. Quiet hours are 18:00 to 08:00 local to the lead. |
 | A lead never gets messages | Flags (invalid, role based, customer, unsubscribed) or no time zone | Open the lead sheet. |
-| Mailbox paused | Over 5 percent bounces in the last 20 or more sends | Fix the list, then **Resume** (owner). |
+| Mailbox paused | Over 5 percent bounces in the last 20 or more sends. A mail server that refuses an address for good also counts as a bounce. | Fix the list, then **Resume** (owner). |
+| A lead shows "A message may not have been sent" | The worker stopped, or the connection broke, while the message was being handed to the mail server | Look in the Sent folder. If it is not there, press the button on the lead. It is never resent on its own. |
+| A lead was stopped with the reason `send_failed_repeatedly` | The mail server refused the message three times | The lead's timeline says so. Check the address and the mailbox (Deliverability). The sequence does not write to that person again by itself; write to them by hand if it matters. |
+| Replies do not appear in the Inbox | The inbox is not the one in `IMAP_HOST`, the sender is not a lead, or it is a personal inbox | Mail that is not from a lead is left alone unless `KEEP_UNMATCHED_MAIL=true`. Use a mailbox just for this system. |
 | Doctor says FAIL for an adapter | Missing variable or wrong host | It names the variable. |
 | Webhook rejected | Wrong secret or old timestamp | Check the secret; check the server clock. |
 | "database is locked" on SQLite | Two heavy writers | Use Postgres. |

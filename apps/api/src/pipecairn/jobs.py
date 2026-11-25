@@ -42,7 +42,8 @@ def job_send_tick(session: Session, ctx: Ctx) -> dict:
 
 def job_reply_poll(session: Session, ctx: Ctx) -> dict:
     """Every message is stored and committed on its own, and only then marked as read in the mailbox. One message that cannot be read does not stop the
-    others (it stays unread and is tried again); a failure part way keeps what was already stored, a stop request included."""
+    others; a message that cannot be stored three polls in a row is kept as unreadable mail for a person; mail that is not from a lead is left alone (not marked
+    as read) unless KEEP_UNMATCHED_MAIL is on. A failure part way keeps what was already stored, a stop request included."""
     log = logging.getLogger("pipecairn.jobs")
     n, failed = 0, 0
     last_error: Exception | None = None
@@ -59,8 +60,10 @@ def job_reply_poll(session: Session, ctx: Ctx) -> dict:
                 session.rollback()
                 failed, last_error = failed + 1, exc
                 log.warning("could not store one inbound message: %s", type(exc).__name__)
+                if _give_up_on(session, inbound, ctx, log) and inbound.uid:
+                    stored.append(inbound.uid)
                 continue
-            if inbound.uid:
+            if inbound.uid and not inbound.skipped:
                 stored.append(inbound.uid)
     finally:
         mark = getattr(email, "mark_seen", None)
@@ -72,6 +75,18 @@ def job_reply_poll(session: Session, ctx: Ctx) -> dict:
     if failed and last_error is not None and n == 0 and not stored:
         raise last_error  # nothing at all could be stored: let the job fail visibly instead of reporting success
     return {"captured": n, "failed": failed, "unmatched": (session.scalar(select(func.count()).select_from(UnmatchedMail)) or 0) - before}
+
+
+def _give_up_on(session: Session, inbound, ctx: Ctx, log: logging.Logger) -> bool:
+    """Count the failure; at the limit keep the message as unreadable mail for a person. True when it was kept (so it can be marked as read)."""
+    try:
+        kept = inbox.note_read_failure(session, inbound, ctx.now(session))
+        session.commit()
+        return kept
+    except Exception as exc:
+        session.rollback()
+        log.warning("could not record the failure of one inbound message: %s", type(exc).__name__)
+        return False
 
 
 def job_crm_sync(session: Session, ctx: Ctx) -> dict:

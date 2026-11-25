@@ -40,4 +40,4 @@ The app can pull toward draft or stop (State keys `kill_switch`, `force_draft`).
 
 ## API
 
-52 paths, 57 operations, in `docs/openapi.json`. Live docs at `/docs` on the API, in demo mode only (they are off when `DEMO_MODE=false`).
+57 paths, 62 operations, in `docs/openapi.json`. Live docs at `/docs` on the API, in demo mode only (they are off when `DEMO_MODE=false`).

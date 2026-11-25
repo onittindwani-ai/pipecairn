@@ -19,6 +19,10 @@ BOUNCE = re.compile(
     r"(message|e-?mail|delivery|mail)[^\n]{0,60}(has been|was|is being) delayed|(will|shall) (keep|continue) (trying|to try|retrying) (to )?(deliver|send)|still trying to deliver|temporary (delivery )?(failure|error)|(address|account|mailbox) (no longer (exists|active|in service)|is no longer)|"
     r"(your )?message (to|could)[^\n]{0,60}(not|never) (be )?(delivered|sent|reach))", re.I)
 
+# Wording of a delivery notice that says the mail is only late. The notice's own Action and Status lines decide a real report; these words decide only when it has none.
+DELAY = re.compile(r"(delivery|message|e-?mail|mail)[^\n]{0,60}(has been|was|is being|is) delayed|delivery (delayed|delay)|(will|shall) (keep|continue) (trying|to try|retrying)|still trying to deliver|temporary (delivery )?(failure|error)|"
+                   r"mailbox (is )?full|over quota|quota exceeded", re.I)
+
 OOO = re.compile(
     r"(out of (the )?office|automatic (reply|response)|auto-?(reply|response|generated)|^[ \t]*auto:|autoresponder|away from (my|the) (desk|office|email|computer)|on (holiday|vacation|pto|safari)|on (annual |parental |maternity |paternity |sick |medical |study |bereavement )?leave|"
     r"travell?ing (until|till|and|abroad|with|this)|office is closed|(is|are) closed (until|for|on|from)|no access to (my )?email|(limited|restricted|intermittent|no) (email |e-mail |internet |phone )?(access|connectivity)|"

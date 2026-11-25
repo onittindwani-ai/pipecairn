@@ -21,7 +21,7 @@ export interface StepRow { position: number; channel: "email" | "sms"; delay_hou
 export interface SequenceRow { id: number; name: string; active: boolean; steps: StepRow[]; variables: string[] }
 export interface Mailbox { id: number; address: string; daily_cap: number; sent_today: number; sent_total: number; bounce_count: number; bounce_rate: number; warmup_days: number; spf_ok: boolean; dkim_ok: boolean; dmarc_ok: boolean; is_active: boolean; paused_reason: string; health: number }
 export interface ApprovalRow { id: number; action: string; summary: string; risk: string; status: string; requested_by: string; decided_by: string | null; note: string | null; created_at: string; payload: Record<string, unknown>; draft: string; reply_id: number | null; reply_open: boolean }
-export interface UnmatchedMail { id: number; from: string; to: string; subject: string; snippet: string; handled: boolean; created_at: string }
+export interface UnmatchedMail { id: number; from: string; to: string; subject: string; snippet: string; flag: string; handled: boolean; created_at: string }
 export interface AuditRow { id: number; actor: string; action: string; target: string | null; detail: Record<string, unknown>; at: string }
 export interface AdapterRow { category: string; name: string; tier: string; live_verified: boolean; notes: string; selected: boolean; env_vars: string[]; configured: boolean }
 export interface Integrations { categories: string[]; adapters: AdapterRow[]; demo_mode: boolean }

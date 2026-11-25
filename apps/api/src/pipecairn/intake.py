@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -34,14 +35,42 @@ class ImportReport:
         self.flagged[name] = self.flagged.get(name, 0) + 1
 
 
-def parse_csv(text: str) -> list[dict[str, str]]:
+HEADER_ALIASES = {
+    "e_mail": "email", "email_address": "email", "mail": "email", "firstname": "first_name", "first": "first_name", "given_name": "first_name", "lastname": "last_name",
+    "last": "last_name", "surname": "last_name", "family_name": "last_name", "phone_number": "phone", "mobile": "phone", "telephone": "phone", "job_title": "title",
+    "position": "title", "company_name": "company", "organisation": "company", "organization": "company", "website": "domain", "time_zone": "timezone", "tz": "timezone",
+    "sms_opt_in": "sms_consent", "customer": "is_customer", "employees": "size", "company_size": "size",
+}
+# The width of the column each field is stored in. A cell longer than this is not cut and not stored: the row is skipped and counted, so a database that enforces
+# the width (Postgres) never turns one bad cell into an error for the whole file.
+FIELD_LIMITS = {"first_name": 80, "last_name": 80, "email": 254, "phone": 32, "title": 120, "company": 200, "domain": 200, "timezone": 64, "source": 40, "industry": 80}
+
+
+def normalise_header(name: str) -> str:
+    """"First Name", " E-mail ", "first-name" and "FIRST_NAME" are all first_name or email: case, spaces, hyphens and a byte order mark do not matter."""
+    key = re.sub(r"[\s\-.]+", "_", (name or "").replace("\ufeff", "").strip().lower()).strip("_")
+    return HEADER_ALIASES.get(key, key)
+
+
+def parse_csv_report(text: str) -> tuple[list[dict[str, str]], list[str]]:
+    """(rows, the headers that were not recognised and so were ignored). Raises ValueError with a plain message for a file that cannot be read."""
     if len(text.encode()) > MAX_CSV_BYTES:
         raise ValueError("The CSV is larger than 2 MB. Split it into smaller files.")
-    reader = csv.DictReader(io.StringIO(text))
-    missing = {"email"} - set(reader.fieldnames or [])
-    if missing:
-        raise ValueError("The CSV needs at least an email column. Columns found: " + ", ".join(reader.fieldnames or ["none"]))
-    return [{k: (v or "").strip() for k, v in row.items() if k in CSV_COLUMNS} for row in reader]
+    try:
+        reader = csv.DictReader(io.StringIO(text.replace("\x00", "")))
+        names = list(reader.fieldnames or [])
+        mapping = {raw: normalise_header(raw) for raw in names}
+        if "email" not in mapping.values():
+            raise ValueError("The CSV needs at least an email column. Columns found: " + (", ".join(n.strip() for n in names if n and n.strip()) or "none"))
+        ignored = [raw.strip() for raw, norm in mapping.items() if norm not in CSV_COLUMNS and raw and raw.strip()]
+        rows = [{mapping[k]: (v or "").strip() for k, v in row.items() if k in mapping and mapping[k] in CSV_COLUMNS and isinstance(v, str | None)} for row in reader]
+    except csv.Error as exc:  # for example "field larger than field limit", or a stray quote that runs to the end of the file
+        raise ValueError(f"The CSV could not be read ({exc}). Check for a cell that is far too long or a quote mark that is never closed.") from exc
+    return rows, ignored
+
+
+def parse_csv(text: str) -> list[dict[str, str]]:
+    return parse_csv_report(text)[0]
 
 
 def _int(value: Any) -> int:
@@ -115,6 +144,9 @@ def import_leads(session: Session, rows: list[dict[str, Any]], now: datetime, de
     rep = ImportReport(rows=len(rows))
     fallback_zone = default_timezone if zone(default_timezone) else ""
     for row in rows:
+        if any(len(str(row.get(f, ""))) > limit for f, limit in FIELD_LIMITS.items()):
+            rep.flag("cell_too_long")  # skipped, not cut: a name or an address that long is a broken file, and the row would not fit its column
+            continue
         email = normalize_email(str(row.get("email", "")))
         if not email:
             rep.flag("missing_email")

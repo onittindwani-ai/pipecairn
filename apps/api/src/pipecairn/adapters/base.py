@@ -26,6 +26,13 @@ class InboundEmail:
     references: tuple[str, ...] = ()
     auth_results: str = ""  # the Authentication-Results header the receiving server added (SPF, DKIM, DMARC), kept for the audit note
     uid: str = ""  # the mailbox's own id for the message, so it can be marked as read AFTER it is safely stored (empty for the offline inbox and webhooks)
+    # What the delivery status report says, read from its own Action and Status lines (never from the words around them). Empty when it has none.
+    dsn_action: str = ""  # failed, delayed, delivered, relayed, expanded
+    dsn_status: str = ""  # for example 5.1.1 (permanent) or 4.4.1 (temporary)
+    # Mail that could not be read cleanly. parse_problem says what was wrong ("parse: unknown charset foo-bar"); unreadable means the whole message was kept as raw text.
+    parse_problem: str = ""
+    unreadable: bool = False
+    skipped: bool = False  # set by the inbox when it deliberately left the message alone (not from a lead): the poller then does not mark it as read
 
 
 @dataclass
@@ -59,6 +66,18 @@ class HandoffResult:
     package_path: str
     instructions: str
     sent: bool = False
+
+
+class RecipientRefused(AdapterError):
+    """The mail server refused this recipient for good (a 5xx answer at RCPT TO): the address is not deliverable."""
+
+    external_id = ""
+
+
+class SendUnconfirmed(AdapterError):
+    """The message was handed to the mail server but the answer never came, so it may or may not have been accepted. It must not be sent again."""
+
+    external_id = ""  # the Message-ID the message went out with, so a delivery report that arrives later can still be matched to it
 
 
 class EmailAdapter(Protocol):

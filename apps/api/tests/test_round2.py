@@ -75,8 +75,8 @@ def test_a_crash_in_the_middle_of_a_batch_loses_nothing_and_sends_nothing_twice(
     unconfirmed = out_messages(session, status=("unconfirmed",))
     assert [m.to_addr for m in unconfirmed] == [died.value.to]  # kept, flagged, and the sequence moved on
     assert not out_messages(session, status=("sending",))
-    enr = session.scalars(select(Enrollment).join(Lead).where(Lead.contact_id == unconfirmed[0].lead.contact_id)).first() if hasattr(unconfirmed[0], "lead") else None
-    assert enr is None or enr.current_step >= 1
+    enr = session.get(Enrollment, unconfirmed[0].enrollment_id)
+    assert enr is not None and enr.current_step >= 1  # the unconfirmed step counts as done, so the sequence moved on and nothing was resent
 
 
 def test_a_message_left_sending_by_a_dead_process_is_marked_unconfirmed_after_ten_minutes(session, settings, adapters, seeded):
@@ -203,8 +203,9 @@ def test_mail_from_an_address_that_is_not_a_lead_is_kept_where_the_owner_can_rea
     from pipecairn.models import UnmatchedMail
 
     stranger = InboundEmail(external_id="u1", from_addr="boss@their-company.example.test", to_addr="alex@mail.example.test", subject="Re: hi", body="Please call my assistant on Monday.\n\n> quoted")
-    assert capture_email(session, world["settings"], world["llm"], world["adapters"].calendar, stranger, NOW) is None
-    assert capture_email(session, world["settings"], world["llm"], world["adapters"].calendar, stranger, NOW) is None  # polled twice, kept once
+    keeping = world["settings"].model_copy(update={"keep_unmatched_mail": True})  # round 3: the default leaves such mail alone; this is the opt in
+    assert capture_email(session, keeping, world["llm"], world["adapters"].calendar, stranger, NOW) is None
+    assert capture_email(session, keeping, world["llm"], world["adapters"].calendar, stranger, NOW) is None  # polled twice, kept once
     session.commit()
     rows = list(session.scalars(select(UnmatchedMail)))
     assert len(rows) == 1 and rows[0].from_addr == "boss@their-company.example.test" and "assistant" in rows[0].snippet and "quoted" not in rows[0].snippet

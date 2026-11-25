@@ -11,12 +11,13 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import or_, select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import Session
 
 from pipecairn import timing
+from pipecairn.adapters.base import RecipientRefused, SendUnconfirmed
 from pipecairn.models import Activity, Deal, Enrollment, Lead, Mailbox, Message
-from pipecairn.suppression import suppression_reason
+from pipecairn.suppression import add_suppression, suppression_reason
 from pipecairn.templating import TemplateError, render
 from pipecairn.unsubscribe import with_footer
 from pipecairn.util import aware, is_e164, is_valid_email, normalize_email
@@ -28,6 +29,9 @@ from sendora_core.settings import BaseAppSettings
 STOP_STATUSES = {"replied", "meeting", "proposal", "won", "lost", "suppressed", "dead"}
 BOUNCE_RATE_PAUSE = 0.05
 MIN_SENDS_FOR_BOUNCE_CHECK = 20
+MAX_SEND_ATTEMPTS = 3  # one step is tried this many times (an hour apart) when the mail server refuses the message itself; then the lead is stopped for a person to look at
+STEP_COUNTED = ";step_counted"  # added to an unconfirmed message's blocked_reason once its sequence step has been counted as done, so that happens exactly once
+SERVER_PROBLEM = "server:"  # blocked_reason prefix for a failure that is the mail server's or the mailbox's (login, certificate, connection): it is retried, but never counts toward the limit
 
 
 @dataclass
@@ -173,8 +177,16 @@ def deliver(
     except SafetyError:
         msg.status = "drafted"
         return "drafted", ""
-    except Exception as exc:  # the vendor failed, we keep the message and retry later
-        msg.status, msg.blocked_reason = "failed", f"{type(exc).__name__}"[:120]
+    except RecipientRefused:
+        return _refused(session, settings, lead, msg, mb, now)
+    except SendUnconfirmed as exc:
+        # The server was handed the message and then the connection broke before it answered. It may have been accepted, so it is never sent again.
+        msg.status, msg.blocked_reason, msg.external_id = "unconfirmed", "send_unconfirmed" + (STEP_COUNTED if enr is not None else ""), (getattr(exc, "external_id", "") or "")[:120]  # the caller advances the step
+        record_event(session, "message.unconfirmed", "message", None, {"lead": lead.id, "channel": channel})
+        return "unconfirmed", "send_unconfirmed"
+    except Exception as exc:  # the vendor failed, we keep the message and retry later (a limited number of times)
+        counts = getattr(exc, "message_specific", True)
+        msg.status, msg.blocked_reason = "failed", ("" if counts else SERVER_PROBLEM) + f"{type(exc).__name__}"[:100]
         record_event(session, "message.failed", "message", None, {"lead": lead.id, "error": type(exc).__name__})
         return "failed", type(exc).__name__
     msg.status, msg.sent_at = "sent", now
@@ -188,31 +200,111 @@ def deliver(
     return "sent", ""
 
 
+def _refused(session: Session, settings: BaseAppSettings, lead: Lead, msg: Message, mb: Mailbox | None, now: datetime) -> tuple[str, str]:
+    """The mail server refused this address for good before it took the message. That is a hard bounce: the address is suppressed, the lead is dead and the
+    mailbox's bounce count goes up, exactly as for a delivery report that arrives later."""
+    msg.status, msg.blocked_reason = "failed", "recipient_refused"
+    add_suppression(session, "email", lead.contact.email, "refused by the mail server when sending", "send")
+    lead.status = "dead"
+    if mb is not None:
+        mb.sent_total += 1  # the attempt counts as a send, otherwise a mailbox that only ever gets refusals would show a rate of nothing
+        mb.bounce_count += 1
+        maybe_pause_for_bounces(mb, *bounce_limits(settings))
+    record_audit(session, "system", "bounce.refused_at_send", f"lead:{lead.id}", {})
+    record_event(session, "message.failed", "message", None, {"lead": lead.id, "error": "recipient_refused"})
+    return "stop", "recipient_refused"
+
+
+def failed_attempts(session: Session, enr: Enrollment) -> int:
+    """How many times in a row the mail server refused the message of the step that is current: failed messages after the last one that was not a failure,
+    not counting problems that are the mail server's own (login, certificate, connection)."""
+    last_ok = session.scalar(select(func.max(Message.id)).where(Message.enrollment_id == enr.id, Message.direction == "out", Message.status != "failed")) or 0
+    return int(session.scalar(select(func.count(Message.id)).where(
+        Message.enrollment_id == enr.id, Message.direction == "out", Message.status == "failed", Message.id > last_ok, Message.blocked_reason.notlike(SERVER_PROBLEM + "%"))) or 0)
+
+
 STALE_SENDING_MINUTES = 10
 
 
+def _count_step(enr: Enrollment | None, messages: list[Message], now: datetime) -> None:
+    """The step these unconfirmed messages belonged to counts as done and is NOT repeated: the vendor may or may not have sent it, and a second copy to a real
+    person is worse than a missing one. The enrolment moves on once however many messages were left behind, and each message is marked so that it is never counted
+    twice. A stopped enrolment does not move (it is stopped)."""
+    todo = [m for m in messages if STEP_COUNTED not in m.blocked_reason]
+    if not todo:
+        return
+    for m in todo:
+        m.blocked_reason = (m.blocked_reason + STEP_COUNTED)[:120]
+    if enr is not None and enr.status in {"active", "paused"}:
+        _advance(enr, enr.sequence.steps, now)
+
+
+def _mark_unconfirmed(session: Session, m: Message) -> None:
+    m.status, m.blocked_reason = "unconfirmed", "worker_stopped_during_send"
+    record_event(session, "message.unconfirmed", "message", m.id, {"lead": m.lead_id})
+
+
 def sweep_stale_sends(session: Session, now: datetime) -> int:
-    """A message left at "sending" for a long time belongs to a process that died. It is marked unconfirmed so nobody waits on it and nothing sends it again."""
+    """A message left at "sending" for a long time belongs to a process that died. It is marked unconfirmed so nobody waits on it. Its sequence step is counted as
+    done right here when the enrolment is running; for a paused one (a reply asked to wait) it is counted when the enrolment wakes, in _finish_unconfirmed_send.
+    Either way nothing sends it again, however late the restart is (a killed worker keeps its job for the 30 minute lease)."""
     cutoff = aware(now) - timedelta(minutes=STALE_SENDING_MINUTES)
-    res = session.execute(
-        update(Message).where(Message.direction == "out", Message.status == "sending", Message.created_at < cutoff)
-        .values(status="unconfirmed", blocked_reason="worker_stopped_during_send").execution_options(synchronize_session=False)
-    )
-    return res.rowcount or 0
+    stale = list(session.scalars(select(Message).where(Message.direction == "out", Message.status == "sending", Message.created_at < cutoff).order_by(Message.id)))
+    by_enrollment: dict[int, list[Message]] = {}
+    for m in stale:
+        _mark_unconfirmed(session, m)
+        if m.enrollment_id:
+            by_enrollment.setdefault(m.enrollment_id, []).append(m)
+    for enr_id, rows in by_enrollment.items():
+        enr = session.get(Enrollment, enr_id)
+        if enr is not None and enr.status == "active":
+            _count_step(enr, rows, now)
+    return len(stale)
 
 
 def _finish_unconfirmed_send(session: Session, enr: Enrollment, steps: list, now: datetime, report: TickReport) -> bool:
-    """When the last run died while sending this enrollment's step, the vendor may or may not have sent it. A second copy to a real person is worse
-    than a missing one, so the step counts as done and is NOT repeated; the message row says "unconfirmed" so the owner can look in the Sent folder."""
-    marker = session.scalars(select(Message).where(Message.enrollment_id == enr.id, Message.direction == "out", Message.status == "sending").order_by(Message.id)).first()
-    if marker is None:
+    """Before this enrolment sends anything, settle every message of it that is still "sending" (the last run died less than ten minutes ago, so the sweep has not
+    reached it) or "unconfirmed" and not yet counted (the enrolment was paused when the sweep ran, or the row is from an older version): the step counts as done."""
+    rows = list(session.scalars(select(Message).where(Message.enrollment_id == enr.id, Message.direction == "out", or_(
+        Message.status == "sending", (Message.status == "unconfirmed") & Message.blocked_reason.notlike("%" + STEP_COUNTED))).order_by(Message.id)))
+    if not rows:
         return False
-    for m in session.scalars(select(Message).where(Message.enrollment_id == enr.id, Message.direction == "out", Message.status == "sending")):
-        m.status, m.blocked_reason = "unconfirmed", "worker_stopped_during_send"
+    for m in rows:
+        if m.status == "sending":
+            _mark_unconfirmed(session, m)
     report.why("send_unconfirmed")
-    record_event(session, "message.unconfirmed", "message", marker.id, {"lead": enr.lead_id})
-    _advance(enr, steps, now)
+    _count_step(enr, rows, now)
     return True
+
+
+def mark_not_sent(session: Session, message_id: int, *, decided_by: str, now: datetime) -> str:
+    """A person looked in the Sent folder and the message is not there: it becomes "not sent" and its step is tried again (at the next run, or when the pause
+    ends). Only the newest outgoing message of an enrolment can be reopened, so a step that later messages already followed is never repeated by mistake.
+    Returns "retry" (the enrolment is running), "paused" (it tries again when the pause ends) or "stopped" (the person was stopped meanwhile: nothing is sent)."""
+    m = session.get(Message, message_id)
+    if m is None or m.direction != "out":
+        raise ValueError("That message does not exist.")
+    if m.status != "unconfirmed":
+        raise ValueError("Only a message that is marked unconfirmed can be marked as not sent.")
+    enr = session.get(Enrollment, m.enrollment_id) if m.enrollment_id else None
+    if enr is None:
+        raise ValueError("This message was not part of a sequence, so there is no step to try again. Send it by hand.")
+    counted = STEP_COUNTED in m.blocked_reason
+    later = session.scalar(select(func.count(Message.id)).where(Message.enrollment_id == enr.id, Message.direction == "out", Message.id > m.id, Message.status.in_(("sent", "drafted", "unconfirmed", "sending")))) or 0
+    if later or (counted and enr.current_step < 1):
+        raise ValueError("Later steps were already sent to this person, so this one is not tried again. Send it by hand if it matters.")
+    m.status, m.blocked_reason = "not_sent", f"marked not sent by {decided_by}"[:120]
+    if enr.lead.status not in STOP_STATUSES:
+        if counted and enr.status in {"active", "paused", "done"}:
+            enr.current_step -= 1  # the step had been counted as done: it is open again
+        if enr.status == "done":
+            enr.status = "active"
+        if enr.status == "active":
+            enr.next_send_at = aware(now)
+    record_audit(session, decided_by, "message.marked_not_sent", f"message:{m.id}", {"enrollment": enr.id})
+    if enr.lead.status in STOP_STATUSES or enr.status not in {"active", "paused"}:
+        return "stopped"
+    return "retry" if enr.status == "active" else "paused"
 
 
 def _advance(enr: Enrollment, steps: list, now: datetime) -> None:
@@ -289,8 +381,17 @@ def _tick_enrollment(session: Session, settings: BaseAppSettings, adapters: Any,
             enr.next_send_at = timing.next_window(now, lead.contact.timezone, settings.quiet_start_hour, settings.quiet_end_hour, settings.send_weekends) or now + timedelta(days=1)  # type: ignore[attr-defined]
         return
     if status == "failed":
-        enr.next_send_at = now + timedelta(hours=1)
         report.why("send_failed")
+        if failed_attempts(session, enr) >= MAX_SEND_ATTEMPTS:
+            session.add(Activity(lead_id=lead.id, kind="message", summary=f"The mail server refused step {enr.current_step + 1} {MAX_SEND_ATTEMPTS} times. The sequence for this person is stopped: check the address and the mailbox.", created_at=now))
+            _stop(session, enr, "send_failed_repeatedly", report, now)  # the server keeps refusing this message: a person decides, it is not retried for ever
+            return
+        enr.next_send_at = now + timedelta(hours=1)
+        return
+    if status == "unconfirmed":  # deliver() already marked the message as counted
+        report.why("send_unconfirmed")
+        session.add(Activity(lead_id=lead.id, kind="message", summary=f"Step {enr.current_step + 1} may or may not have been sent (the connection broke). It will not be sent again; check the Sent folder.", created_at=now))
+        _advance(enr, steps, now)
         return
     if status == "blocked":
         _record_block(session, lead, enr, step.channel, lead.contact.phone, reason, now)

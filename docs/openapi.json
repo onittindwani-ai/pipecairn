@@ -638,6 +638,86 @@
     }
    }
   },
+  "/api/inbox/unmatched/{mail_id}/suppress": {
+   "post": {
+    "tags": [
+     "data"
+    ],
+    "summary": "Never write to the sender of this unmatched mail again (a person read it and it is a request to stop)",
+    "operationId": "suppress_unmatched_api_inbox_unmatched__mail_id__suppress_post",
+    "parameters": [
+     {
+      "name": "mail_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Mail Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/messages/{message_id}/not-sent": {
+   "post": {
+    "tags": [
+     "data"
+    ],
+    "summary": "This message is marked unconfirmed and a person checked the Sent folder: it never left, so try the step again",
+    "operationId": "message_not_sent_api_messages__message_id__not_sent_post",
+    "parameters": [
+     {
+      "name": "message_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Message Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/inbox/{reply_id}/dismiss": {
    "post": {
     "tags": [
@@ -1225,6 +1305,25 @@
         "schema": {
          "$ref": "#/components/schemas/HTTPValidationError"
         }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/events/latest": {
+   "get": {
+    "tags": [
+     "operations"
+    ],
+    "summary": "The id of the newest event, so the live stream can start after it instead of replaying the history",
+    "operationId": "latest_event_api_events_latest_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
        }
       }
      }

@@ -21,15 +21,20 @@ class Classification(BaseModel):
     next_step: NextStep = "none"  # advice from the reader. The inbox decides actions from the intent, never from this.
 
 
-def classify_reply(text: str, llm: LLM | None, subject: str = "") -> Classification:
+def classify_reply(text: str, llm: LLM | None, subject: str = "", *, is_dsn: bool = False) -> Classification:
     """Bounce, out of office and unsubscribe are rules, so a clever reply cannot talk the system out of an opt out.
 
     The rules read what the person wrote (the quoted message, signature and legal footer are removed first, so our own
     "reply STOP" line or a company footer is never read as their request). The subject helps with delivery notices and auto replies.
+
+    A request to stop always wins over a guess that the mail bounced: "please unsubscribe me, this address is no longer used" is an opt out. Only a real
+    delivery status report (is_dsn) is read as a bounce first, and even then the report's own Action and Status lines decide what it means (see inbox.dsn_outcome).
     """
     subject = compact(subject or "", 300)
     body = human_part(text or "")
     seen = body + "\n" + subject
+    if not is_dsn and UNSUB.search(seen):  # a request to stop always wins, whatever else the text says
+        return Classification(intent="unsubscribe", confidence=0.95, summary="Asked not to be contacted.", source="rule")
     if BOUNCE.search(seen):  # what the person wrote, not the quoted message under it: a reply that quotes an old delivery notice is not a delivery notice
         return Classification(intent="bounce", confidence=0.95, summary="The message could not be delivered.", source="rule")
     if OOO.search(seen) and not UNSUB.search(seen):

@@ -23,8 +23,8 @@ export default function LeadsPage() {
   const [toSuppress, setToSuppress] = useState<{ rows: LeadRow[]; clear: () => void } | null>(null);
   const q = useQuery({ queryKey: ["leads", search, status], queryFn: () => get<LeadList>(`/leads?limit=5000&q=${encodeURIComponent(search)}&status=${status}`) });
   const importer = useMutation({
-    mutationFn: () => post<{ rows: number; created: number; duplicates: number; flagged: Record<string, number> }>("/leads/import", { csv }),
-    onSuccess: (r) => { const f = Object.entries(r.flagged).map(([k, v]) => `${v} ${flagLabel(k)}`).join(", "); notify.success(`Imported ${r.created} of ${r.rows} rows. ${r.duplicates} duplicates skipped${f ? `. Flagged: ${f}` : ""}.`); setImp(false); qc.invalidateQueries({ predicate: (x) => x.queryKey[0] !== "me" }); },
+    mutationFn: () => post<{ rows: number; created: number; duplicates: number; flagged: Record<string, number>; ignored_columns: string[] }>("/leads/import", { csv }),
+    onSuccess: (r) => { const f = Object.entries(r.flagged).map(([k, v]) => `${v} ${flagLabel(k)}`).join(", "); notify.success(`Imported ${r.created} of ${r.rows} rows. ${r.duplicates} duplicates skipped${f ? `. Flagged: ${f}` : ""}.${r.ignored_columns.length ? ` Columns not used: ${r.ignored_columns.join(", ")}.` : ""}`); setImp(false); qc.invalidateQueries({ predicate: (x) => x.queryKey[0] !== "me" }); },
     onError: (e: Error) => notify.error("Import failed", e.message),
   });
   const suppress = useMutation({

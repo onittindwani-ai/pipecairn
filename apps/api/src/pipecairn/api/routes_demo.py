@@ -19,12 +19,12 @@ router = APIRouter(prefix="/api/demo", tags=["demo"], dependencies=[Depends(demo
 
 
 @router.get("/state", summary="The demo clock")
-def state(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
+def state(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     return {"now": ctx.now(s).isoformat()}
 
 
 @router.post("/reset", summary="Reset to the seed data and a fresh clock")
-def reset(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
+def reset(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     try:
         return demo.reset(s, ctx)
     except FileNotFoundError as exc:
@@ -32,7 +32,7 @@ def reset(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depen
 
 
 @router.post("/tick", summary="Run every job once, now")
-def tick(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def tick(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     return run_cycle(s, ctx)
 
 
@@ -41,7 +41,7 @@ class AdvanceIn(BaseModel):
 
 
 @router.post("/advance", summary="Move the demo clock forward")
-def advance(b: AdvanceIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def advance(b: AdvanceIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     return {"now": clock.advance(s, b.hours).isoformat()}
 
 
@@ -51,7 +51,7 @@ class ReplyIn(BaseModel):
 
 
 @router.post("/simulate-reply", summary="Drop a reply into the seed inbox")
-def simulate_reply(b: ReplyIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def simulate_reply(b: ReplyIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     lead = s.get(Lead, b.lead_id)
     if lead is None:
         raise HTTPException(404, "That lead does not exist.")
@@ -66,7 +66,7 @@ class StressIn(BaseModel):
 
 
 @router.post("/stress-leads", summary="Add many fictional leads, to test the table with thousands of rows")
-def stress(b: StressIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
+def stress(b: StressIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     from pipecairn import intake
 
     rows = [{"first_name": f"Test{i}", "last_name": "Person", "email": f"stress{i}@stress.example.test", "title": "Manager", "company": "Stress Co", "domain": "stress.example.test", "timezone": "America/New_York", "source": "csv_list"} for i in range(b.n)]

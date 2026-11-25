@@ -8,14 +8,16 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from pipecairn.api.limits import LimitLoginBody
 from pipecairn.api import routes_auth, routes_data, routes_demo, routes_docs, routes_ops, routes_setup, routes_webhooks
 from pipecairn.config import Settings
 from pipecairn.context import Ctx
+from pipecairn.dbupgrade import create_and_upgrade
 from pipecairn.seeding import REPO_DATA
 from sendora_core.app import SESSION_COOKIE, create_base_app
 from sendora_core.auth import read_session_token
 from sendora_core.ratelimit import TokenBucket
-from sendora_core.db import Base, make_engine, make_session_factory
+from sendora_core.db import make_engine, make_session_factory
 
 PUBLIC = {"/api/auth/login", "/api/auth/logout"}
 PUBLIC_PREFIX = ("/api/webhooks/",)
@@ -29,11 +31,12 @@ def create_app(settings: Settings | None = None, ctx: Ctx | None = None) -> Fast
         import pipecairn.models  # noqa: F401
 
         if settings.database_url.startswith("sqlite"):
-            Base.metadata.create_all(engine)  # SQLite zero setup path. Postgres uses `alembic upgrade head`.
+            create_and_upgrade(engine)  # SQLite zero setup path: missing tables and columns are added. Postgres uses `alembic upgrade head`.
         ctx = Ctx(settings, make_session_factory(engine))
         if not settings.seed_dir and (REPO_DATA / "seed.json").is_file():
             ctx.settings.seed_dir = str(REPO_DATA)  # a source checkout; an installed copy must be told with SEED_DIR
     app = create_base_app(ctx.settings, ctx.factory)
+    app.add_middleware(LimitLoginBody)  # sign in is the one route open to everyone: a few kilobytes at most, not the shared 25 MB
     # The base /health also names the mode and the kill switch, which a stranger should not learn. Replace it with a bare "ok".
     app.router.routes = [r for r in app.router.routes if getattr(r, "path", "") != "/health"]
 

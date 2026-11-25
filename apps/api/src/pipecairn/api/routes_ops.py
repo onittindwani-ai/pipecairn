@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from pipecairn import metrics
@@ -14,18 +14,18 @@ from pipecairn.models import Mailbox, Reply
 from pipecairn.registry import CATEGORIES, ENV_VARS
 from sendora_core.approvals import ApprovalError, decide
 from sendora_core.audit import record_audit
-from sendora_core.models import Approval, AuditEntry
+from sendora_core.models import Approval, AuditEntry, Event
 
 router = APIRouter(prefix="/api", tags=["operations"])
 
 
 @router.get("/deliverability", summary="Mailbox health, caps and bounce rates")
-def deliverability(s: Session = Depends(db)):
+def deliverability(s: Session = Depends(db, scope="function")):
     return metrics.deliverability(s)
 
 
 @router.post("/deliverability/{mailbox_id}/resume", summary="Resume a paused mailbox (owner only)")
-def resume(mailbox_id: int, s: Session = Depends(db), u: dict = Depends(owner)):
+def resume(mailbox_id: int, s: Session = Depends(db, scope="function"), u: dict = Depends(owner)):
     mb = s.get(Mailbox, mailbox_id)
     if mb is None:
         raise HTTPException(404, "That mailbox does not exist.")
@@ -43,7 +43,7 @@ def approval_row(a: Approval, reply: Reply | None = None) -> dict:
 
 
 @router.get("/approvals", summary="Pending and recent approvals")
-def approvals(s: Session = Depends(db)):
+def approvals(s: Session = Depends(db, scope="function")):
     rows = list(s.scalars(select(Approval).order_by(Approval.id.desc()).limit(100)))
     by_approval = {r.approval_id: r for r in s.scalars(select(Reply).where(Reply.approval_id.in_([a.id for a in rows if a.action == "reply.send"] or [0])))}
     return [approval_row(a, by_approval.get(a.id)) for a in rows]
@@ -55,7 +55,7 @@ class DecideIn(BaseModel):
 
 
 @router.post("/approvals/{approval_id}/decide", summary="Approve or reject")
-def decide_approval(approval_id: int, body: DecideIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def decide_approval(approval_id: int, body: DecideIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     from pipecairn.inbox import approve_and_send, reject_reply
 
     a = s.get(Approval, approval_id)
@@ -75,14 +75,19 @@ def decide_approval(approval_id: int, body: DecideIn, s: Session = Depends(db), 
     return {"status": "approved" if body.approve else "rejected"}
 
 
+@router.get("/events/latest", summary="The id of the newest event, so the live stream can start after it instead of replaying the history")
+def latest_event(s: Session = Depends(db, scope="function")):
+    return {"id": int(s.scalar(select(func.max(Event.id))) or 0)}
+
+
 @router.get("/audit", summary="Audit log, newest first")
-def audit(limit: int = Query(100, ge=1, le=1000), s: Session = Depends(db)):
+def audit(limit: int = Query(100, ge=1, le=1000), s: Session = Depends(db, scope="function")):
     rows = s.scalars(select(AuditEntry).order_by(AuditEntry.id.desc()).limit(limit))
     return [{"id": e.id, "actor": e.actor, "action": e.action, "target": e.target, "detail": e.detail, "at": e.created_at} for e in rows]
 
 
 @router.get("/audit/verify", summary="Check the audit chain has not been edited (the newest rows; limit=0 checks every row)")
-def audit_verify(limit: int = Query(DEFAULT_LIMIT, ge=0, le=5_000_000), s: Session = Depends(db)):
+def audit_verify(limit: int = Query(DEFAULT_LIMIT, ge=0, le=5_000_000), s: Session = Depends(db, scope="function")):
     ok, bad, checked = verify_recent(s, limit)
     return {"ok": ok, "first_bad_id": bad, "checked": checked}
 
@@ -108,7 +113,7 @@ def test_integration(category: str, ctx: Ctx = Depends(get_ctx), u: dict = Depen
 
 
 @router.get("/settings", summary="Mode, kill switch and config problems")
-def get_settings(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
+def get_settings(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     eff = ctx.effective(s)
     return {"mode": ctx.settings.mode.value, "effective_mode": eff.mode.value, "kill_switch": eff.kill_switch, "demo_mode": ctx.settings.demo_mode, "problems": ctx.settings.problems(),
             "quiet_hours": f"{ctx.settings.quiet_end_hour:02d}:00 to {ctx.settings.quiet_start_hour:02d}:00 local", "weekends": ctx.settings.send_weekends}
@@ -120,7 +125,7 @@ class SettingsIn(BaseModel):
 
 
 @router.post("/settings", summary="Turn the kill switch or draft mode on or off (owner only). The app can never switch live sending on.")
-def post_settings(body: SettingsIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
+def post_settings(body: SettingsIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     if body.kill_switch is not None:
         set_state(s, "kill_switch", "1" if body.kill_switch else "0")
         record_audit(s, u["user"], "settings.kill_switch", None, {"on": body.kill_switch})

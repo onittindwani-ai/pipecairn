@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { lastHop } from "@/lib/clientIp";
-import { isBlockedProxyPath, normalizeProxyPath } from "@/lib/proxyPath";
+import { encodeProxyPath, isBlockedProxyPath } from "@/lib/proxyPath";
 
 const API = process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
 const HOP = new Set(["connection", "keep-alive", "transfer-encoding", "content-encoding", "content-length"]);
@@ -10,7 +10,7 @@ const HOP = new Set(["connection", "keep-alive", "transfer-encoding", "content-e
 async function forward(request: Request, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
   if (isBlockedProxyPath(path)) return NextResponse.json({ error: { message: "Not found." } }, { status: 404 });
-  const joined = (normalizeProxyPath(path) ?? []).join("/");  // forward the cleaned path, the one that was checked
+  const joined = encodeProxyPath(path) ?? "";  // forward the cleaned path, the one that was checked, with every segment encoded again
   if (!["GET", "HEAD"].includes(request.method) && request.headers.get("x-pipecairn") !== "1") {
     return NextResponse.json({ error: { message: "Missing request header." } }, { status: 400 });
   }

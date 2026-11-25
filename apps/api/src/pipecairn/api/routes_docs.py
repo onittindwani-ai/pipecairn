@@ -36,7 +36,7 @@ def row(p: Proposal) -> dict:
 
 
 @router.post("/proposals/preview", summary="Build the proposal text without saving")
-def preview(b: ProposalIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
+def preview(b: ProposalIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     lead = s.get(Lead, b.lead_id)
     if lead is None:
         raise HTTPException(404, "That lead does not exist.")
@@ -44,7 +44,7 @@ def preview(b: ProposalIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)
 
 
 @router.post("/proposals", summary="Save a proposal")
-def create(b: ProposalIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def create(b: ProposalIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     lead = s.get(Lead, b.lead_id)
     if lead is None:
         raise HTTPException(404, "That lead does not exist.")
@@ -61,7 +61,7 @@ def create(b: ProposalIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx),
 
 
 @router.get("/proposals", summary="List proposals")
-def listing(lead_id: int | None = None, s: Session = Depends(db)):
+def listing(lead_id: int | None = None, s: Session = Depends(db, scope="function")):
     stmt = select(Proposal).order_by(Proposal.id.desc())
     if lead_id:
         stmt = stmt.where(Proposal.lead_id == lead_id)
@@ -69,7 +69,7 @@ def listing(lead_id: int | None = None, s: Session = Depends(db)):
 
 
 @router.get("/proposals/{pid}/pdf", summary="The proposal as a PDF")
-def pdf(pid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
+def pdf(pid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     p = s.get(Proposal, pid)
     if p is None:
         raise HTTPException(404, "That proposal does not exist.")
@@ -77,7 +77,7 @@ def pdf(pid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
 
 
 @router.post("/proposals/{pid}/contract", summary="Create the contract text from a proposal")
-def make_contract(pid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def make_contract(pid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     p = s.get(Proposal, pid)
     if p is None:
         raise HTTPException(404, "That proposal does not exist.")
@@ -94,7 +94,7 @@ def make_contract(pid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx
 
 
 @router.get("/contracts/{cid}/pdf", summary="The contract as a PDF")
-def contract_pdf(cid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
+def contract_pdf(cid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     c = s.get(Contract, cid)
     if c is None:
         raise HTTPException(404, "That contract does not exist.")
@@ -102,7 +102,7 @@ def contract_pdf(cid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)
 
 
 @router.post("/contracts/{cid}/handoff", summary="Prepare the signing package (nothing is sent)")
-def handoff(cid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def handoff(cid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     c = s.get(Contract, cid)
     if c is None:
         raise HTTPException(404, "That contract does not exist.")

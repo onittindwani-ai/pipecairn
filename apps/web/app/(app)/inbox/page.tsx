@@ -7,7 +7,7 @@ import { get, post } from "@/lib/api";
 import { usePermissions } from "@/lib/hooks";
 import type { ReplyRow, UnmatchedMail } from "@/lib/types";
 
-const ACTION_TEXT: Record<string, string> = { book_call: "Offer times and book a call", answer_question: "Answer their question", ask_referral: "Ask who the right person is", snooze: "Come back on the date below", wait: "Wait until they are back", suppressed: "Stopped and never contacted again", unverified_bounce: "Read it: it says the mail bounced, but it is not a real delivery report, so nothing was changed" };
+const ACTION_TEXT: Record<string, string> = { book_call: "Offer times and book a call", answer_question: "Answer their question", ask_referral: "Ask who the right person is", snooze: "Come back on the date below", wait: "Wait until they are back", suppressed: "Stopped and never contacted again", unverified_bounce: "Read it: it says the mail bounced, but it is not a real delivery report, so nothing was changed", unreadable_mail: "This message could not be read properly here. Open it in your mailbox and decide. The follow ups to this person are stopped, as for any reply" };
 
 function Detail({ r }: { r: ReplyRow }) {
   const qc = useQueryClient();
@@ -20,7 +20,7 @@ function Detail({ r }: { r: ReplyRow }) {
   const refresh = () => qc.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "me" });
   const approve = useMutation({
     mutationFn: () => post<{ status: string; reason: string }>(`/inbox/${r.id}/approve`, { body: draft }),
-    onSuccess: (x) => { try { sessionStorage.removeItem(key); } catch { /* ignore */ } x.status === "sent" ? notify.success("Reply sent.") : x.status === "drafted" ? notify.info("Saved as a draft. Draft mode is on, so nothing was sent.") : x.status === "deferred" ? notify.info(`Not sent yet. It is waiting: ${x.reason.replaceAll("_", " ")}.`) : notify.error("Not sent", `Stopped by a safety check: ${x.reason.replaceAll("_", " ")}.`); refresh(); },
+    onSuccess: (x) => { try { sessionStorage.removeItem(key); } catch { /* ignore */ } x.status === "sent" ? notify.success("Reply sent.") : x.status === "drafted" ? notify.info("Saved as a draft. Draft mode is on, so nothing was sent.") : x.status === "deferred" ? notify.info(`Not sent yet. It is waiting: ${x.reason.replaceAll("_", " ")}.`) : x.status === "unconfirmed" ? notify.info("The connection broke while it was being sent, so it may or may not have gone. It will not be sent again. Check the Sent folder.") : notify.error("Not sent", `Stopped by a safety check: ${x.reason.replaceAll("_", " ")}.`); refresh(); },
     onError: (e: Error) => notify.error("Could not send", e.message),
   });
   const reject = useMutation({ mutationFn: () => post(`/inbox/${r.id}/reject`), onSuccess: () => { notify.info("Draft rejected."); refresh(); } });
@@ -71,16 +71,21 @@ function UnmatchedCard() {
   const { canWrite } = usePermissions();
   const q = useQuery({ queryKey: ["inbox-unmatched"], queryFn: () => get<UnmatchedMail[]>("/inbox/unmatched") });
   const dismiss = useMutation({ mutationFn: (id: number) => post(`/inbox/unmatched/${id}/dismiss`), onSuccess: () => { qc.invalidateQueries({ queryKey: ["inbox-unmatched"] }); }, onError: (e: Error) => notify.error("Could not mark it", e.message) });
+  const stop = useMutation({
+    mutationFn: (id: number) => post(`/inbox/unmatched/${id}/suppress`),
+    onSuccess: () => { notify.success("That address will never be written to again."); qc.invalidateQueries({ predicate: (x) => x.queryKey[0] !== "me" }); },
+    onError: (e: Error) => notify.error("Could not stop it", e.message),
+  });
   if (!q.data?.length) return null;
   return (
     <Card title={`Mail from addresses that are not leads (${q.data.length})`}>
-      <p className="cl-mini" style={{ marginTop: 0 }}>An alias, a forward, a colleague or a stranger wrote to the inbox. Nothing was done with these. Read them, and write back yourself if it matters.</p>
+      <p className="cl-mini" style={{ marginTop: 0 }}>An alias, a forward, a colleague or a stranger wrote to the inbox, or a message could not be read. Nothing was done with these. Read them, and write back yourself if it matters. If someone asks you to stop writing to them, use the stop button: it never writes to that address again.</p>
       <ul className="cl-list">{q.data.map((m) => (
         <li key={m.id} className="cl-item" style={{ cursor: "default" }}>
           <span className="cl-item__top"><strong>{m.from || "unknown sender"}</strong><span className="cl-mini">{formatWhen(new Date(m.created_at))}</span></span>
           <span className="cl-item__line">{m.subject || "(no subject)"}</span>
-          <blockquote className="cl-quote cl-pre" style={{ margin: 0 }}>{m.snippet}</blockquote>
-          {canWrite ? <span className="sx-row"><Button size="sm" variant="ghost" onClick={async () => { await dismiss.mutateAsync(m.id); }}>Mark as read</Button></span> : null}
+          {m.flag === "unreadable" ? <span className="cl-mini">This message could not be read properly here, so only the sender and subject are kept. Open it in your mailbox.</span> : <blockquote className="cl-quote cl-pre" style={{ margin: 0 }}>{m.snippet}</blockquote>}
+          {canWrite ? <span className="sx-row"><Button size="sm" variant="ghost" onClick={async () => { await dismiss.mutateAsync(m.id); }}>Mark as read</Button><Button size="sm" variant="ghost" disabled={!m.from} disabledReason="There is no sender address to stop" onClick={async () => { await stop.mutateAsync(m.id); }}>Never write to this address again</Button></span> : null}
         </li>))}</ul>
     </Card>
   );

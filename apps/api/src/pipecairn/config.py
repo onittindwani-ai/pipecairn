@@ -82,6 +82,7 @@ class Settings(BaseAppSettings):
     company_address: str = Field(default="", max_length=300)  # COMPANY_ADDRESS: physical postal address, printed in every email footer
     reply_to: str = Field(default="", max_length=254)  # REPLY_TO: optional Reply-To address for outgoing email
     public_base_url: str = ""  # PUBLIC_BASE_URL: where this API is reachable from the internet; turns on the one click unsubscribe link in email headers
+    keep_unmatched_mail: bool = False  # KEEP_UNMATCHED_MAIL: also keep (a 600 character snippet of) mail from addresses that are not leads. Off by default: the inbox may be a person's own
     allow_private_base_urls: bool = False  # ALLOW_PRIVATE_BASE_URLS: let CRM, calendar and texting URLs point at a private address (a self hosted Twenty or Cal.com)
 
     # Business rules that used to be code constants. The defaults are the old values.

@@ -36,7 +36,7 @@ class MailboxIn(BaseModel):
 
 
 @router.post("/mailboxes", summary="Add a sending mailbox (owner only)")
-def add_mailbox(body: MailboxIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
+def add_mailbox(body: MailboxIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     address = normalize_email(body.address)
     if not is_valid_email(address):
         raise HTTPException(422, "That is not an email address.")
@@ -55,7 +55,7 @@ class NewSequenceIn(SequenceIn):
 
 
 @router.post("/sequences", summary="Create a sequence (owner only). It becomes the active one when there is none yet")
-def create_sequence(body: NewSequenceIn, s: Session = Depends(db), u: dict = Depends(owner)):
+def create_sequence(body: NewSequenceIn, s: Session = Depends(db, scope="function"), u: dict = Depends(owner)):
     check_steps(body.steps)
     has_active = s.scalars(select(Sequence).where(Sequence.active.is_(True))).first() is not None
     q = Sequence(name=body.name, active=not has_active)
@@ -68,7 +68,7 @@ def create_sequence(body: NewSequenceIn, s: Session = Depends(db), u: dict = Dep
 
 
 @router.post("/sequences/{seq_id}/activate", summary="Make this the one sequence new leads are enrolled in (owner only)")
-def activate_sequence(seq_id: int, s: Session = Depends(db), u: dict = Depends(owner)):
+def activate_sequence(seq_id: int, s: Session = Depends(db, scope="function"), u: dict = Depends(owner)):
     q = s.get(Sequence, seq_id)
     if q is None:
         raise HTTPException(404, "That sequence does not exist.")
@@ -114,7 +114,7 @@ def _kind(value: str, hint: str) -> str | None:
 
 
 @router.post("/suppressions", summary="Never contact these addresses, domains or phone numbers (the old unsubscribe list)")
-def add_suppressions(body: ValuesIn, s: Session = Depends(db), u: dict = Depends(writer)):
+def add_suppressions(body: ValuesIn, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
     """Takes a list (`values`) or CSV text (`csv`, a column named email, domain, phone or value, optionally `kind`). Leads already imported from them stop at once."""
     added = stopped = skipped = 0
     for hint, value in _values(body, ("email", "domain", "phone", "value")):
@@ -130,14 +130,14 @@ def add_suppressions(body: ValuesIn, s: Session = Depends(db), u: dict = Depends
 
 
 @router.get("/suppressions", summary="How many do not contact entries there are, and the newest ones")
-def list_suppressions(s: Session = Depends(db)):
+def list_suppressions(s: Session = Depends(db, scope="function")):
     rows = list(s.scalars(select(Suppression).order_by(Suppression.id.desc()).limit(200)))
     total = int(s.scalar(select(func.count()).select_from(Suppression)) or 0)
     return {"total": total, "rows": [{"kind": r.kind, "value": r.value, "reason": r.reason, "source": r.source} for r in rows]}
 
 
 @router.post("/customers", summary="Mark existing customers so they are never prospected (domains or email addresses)")
-def add_customers(body: ValuesIn, s: Session = Depends(db), u: dict = Depends(writer)):
+def add_customers(body: ValuesIn, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
     """Takes a list (`values`) or CSV text (`csv`, a column named domain or email). A lead already imported from a customer company stops at once."""
     values = [v for _, v in _values(body, ("domain", "email", "value"))]
     if not values:

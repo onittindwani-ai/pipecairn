@@ -90,6 +90,7 @@ Base URLs are checked so a setting cannot point the app at your private network.
 | `QUIET_START_HOUR`, `QUIET_END_HOUR` | No sends from 18:00 until 08:00 the lead's local time. | 18, 8 |
 | `SEND_WEEKENDS` | Allow weekend sends. | `false` |
 | `ALLOW_PRIVATE_BASE_URLS` | See above. | `false` |
+| `KEEP_UNMATCHED_MAIL` | Also keep a 600 character snippet of mail from addresses that are not leads (an alias, a forward, a stranger), shown in the Inbox with a "never write to this address again" button. Off by default: mail that is not from a lead is then left completely alone (not read, not copied, not marked as read). Turn it on only for a mailbox that is used for nothing else. | `false` |
 
 ## Business rules
 

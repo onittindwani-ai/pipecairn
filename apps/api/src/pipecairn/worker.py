@@ -9,8 +9,9 @@ import time
 
 from pipecairn.config import Settings
 from pipecairn.context import Ctx
+from pipecairn.dbupgrade import create_and_upgrade
 from pipecairn.jobs import make_handlers, schedule_due
-from sendora_core.db import Base, make_engine, make_session_factory, session_scope
+from sendora_core.db import make_engine, make_session_factory, session_scope
 from sendora_core.jobs import Worker
 
 log = logging.getLogger("pipecairn.worker")
@@ -36,7 +37,7 @@ def main() -> None:
     from sendora_core import models as _c  # noqa: F401
 
     if settings.database_url.startswith("sqlite"):
-        Base.metadata.create_all(engine)
+        create_and_upgrade(engine)
     ctx = Ctx(settings, make_session_factory(engine))
     worker = Worker(ctx.factory, make_handlers(ctx))
     stop = {"now": False}

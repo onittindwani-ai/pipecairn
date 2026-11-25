@@ -74,7 +74,7 @@ def check_shared(ctx: Ctx, raw: bytes, sig: str | None, timestamp: str | None = 
 
 
 @router.post("/telnyx", summary="Inbound text from Telnyx (Ed25519 signed)")
-def telnyx(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), telnyx_signature_ed25519: str | None = Header(default=None), telnyx_timestamp: str | None = Header(default=None)):
+def telnyx(raw: bytes = Depends(raw_body), s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), telnyx_signature_ed25519: str | None = Header(default=None), telnyx_timestamp: str | None = Header(default=None)):
     if not (telnyx_signature_ed25519 and telnyx_timestamp and verify_telnyx_webhook(ctx.settings.telnyx_public_key, raw, telnyx_signature_ed25519, telnyx_timestamp)):
         raise HTTPException(401, "Bad signature.")
     try:
@@ -82,11 +82,12 @@ def telnyx(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = 
     except (AdapterError, KeyError, ValueError) as exc:
         return {"ok": True, "ignored": True}
     r = inbox.capture_sms(s, ctx.effective(s), ctx.llm(s), ctx.adapters.calendar, sms, ctx.now(s))
+    s.commit()
     return {"ok": True, "captured": r is not None}
 
 
 @router.post("/calcom", summary="Booking events from Cal.com (HMAC signed)")
-def calcom(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), x_cal_signature_256: str | None = Header(default=None)):
+def calcom(raw: bytes = Depends(raw_body), s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), x_cal_signature_256: str | None = Header(default=None)):
     if not verify_calcom_webhook(ctx.settings.calcom_webhook_secret, raw, x_cal_signature_256 or ""):
         raise HTTPException(401, "Bad signature.")
     try:
@@ -116,21 +117,23 @@ def calcom(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = 
 
 
 @router.post("/email", summary="Inbound email relayed by your mail provider (HMAC signed)")
-def email(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), x_signature: str | None = Header(default=None), x_timestamp: str | None = Header(default=None)):
+def email(raw: bytes = Depends(raw_body), s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), x_signature: str | None = Header(default=None), x_timestamp: str | None = Header(default=None)):
     check_shared(ctx, raw, x_signature, x_timestamp)
     try:
         d = json.loads(raw)
         refs = d.get("references") or []
         inb = InboundEmail(external_id=str(d.get("message_id") or ""), from_addr=str(d["from"]), to_addr=str(d.get("to", "")), subject=str(d.get("subject", "")), body=str(d.get("text", "")),
-                           is_dsn=d.get("dsn") is True, references=tuple(str(r) for r in refs[:20]) if isinstance(refs, list) else (), auth_results=str(d.get("authentication_results", ""))[:300])
+                           is_dsn=d.get("dsn") is True, references=tuple(str(r) for r in refs[:20]) if isinstance(refs, list) else (), auth_results=str(d.get("authentication_results", ""))[:300],
+                           dsn_action=str(d.get("dsn_action", ""))[:20], dsn_status=str(d.get("dsn_status", ""))[:20])
     except (KeyError, ValueError, AttributeError, TypeError):
         raise HTTPException(422, "Expected JSON with from, to, subject, text and message_id.") from None
     r = inbox.capture_email(s, ctx.effective(s), ctx.llm(s), ctx.adapters.calendar, inb, ctx.now(s))
+    s.commit()  # saved before the answer: a sender that is told "ok" does not send it again, so a failed save must be an error
     return {"ok": True, "captured": r is not None}
 
 
 @router.post("/form", summary="A web form lead (HMAC signed)")
-def form(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), x_signature: str | None = Header(default=None), x_timestamp: str | None = Header(default=None)):
+def form(raw: bytes = Depends(raw_body), s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), x_signature: str | None = Header(default=None), x_timestamp: str | None = Header(default=None)):
     check_shared(ctx, raw, x_signature, x_timestamp)
     try:
         d = json.loads(raw)
@@ -147,6 +150,7 @@ def form(raw: bytes = Depends(raw_body), s: Session = Depends(db), ctx: Ctx = De
     from pipecairn.jobs import job_enrich, job_score
 
     job_enrich(s, ctx), job_score(s, ctx)
+    s.commit()
     return {"ok": True, "created": rep.created, "duplicates": rep.duplicates}
 
 
@@ -162,7 +166,7 @@ def unsubscribe_page(token: str, ctx: Ctx = Depends(get_ctx)):
 
 
 @router.post("/unsubscribe/{token}", summary="One click unsubscribe from the List-Unsubscribe header (signed link, no session)")
-def unsubscribe(token: str, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
+def unsubscribe(token: str, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     """A mail program (or the page above) posts here. The signed address is suppressed at once and its leads stop."""
     addr = read_token(ctx.settings.session_secret, token, ctx.settings.session_secret_previous)
     if addr is None:

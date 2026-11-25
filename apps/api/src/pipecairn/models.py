@@ -158,6 +158,7 @@ class UnmatchedMail(Base):
     to_addr: Mapped[str] = mapped_column(String(254), default="")
     subject: Mapped[str] = mapped_column(String(300), default="")
     snippet: Mapped[str] = mapped_column(Text, default="")
+    flag: Mapped[str] = mapped_column(String(20), default="", server_default="")  # "" or "unreadable" (the message could not be read; only sender and subject are kept)
     handled: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
