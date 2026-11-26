@@ -1,5 +1,5 @@
 # Build from the repository root:  docker build -f apps/web/Dockerfile -t pipecairn-web .
-FROM node:22-slim AS build
+FROM node:25-slim AS build
 RUN corepack enable
 WORKDIR /repo
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -8,7 +8,7 @@ COPY apps/web apps/web
 ENV NEXT_STANDALONE=1
 RUN pnpm install --frozen-lockfile && pnpm --filter web build
 
-FROM node:22-slim
+FROM node:25-slim
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 WORKDIR /srv
 # Next standalone output keeps the monorepo folder layout.
