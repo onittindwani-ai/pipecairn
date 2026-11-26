@@ -15,15 +15,15 @@ from pipecairn.adapters.telnyx import TelnyxSms, parse_inbound, verify_telnyx_we
 from pipecairn.registry import build_adapters, build_registry
 from support import make_settings
 from mock.calcom_mock import CalcomMock
-from mock.mail_servers import FakeMailServers
+from mock.mail_servers import StubMailServers
 from mock.telnyx_mock import TelnyxMock
 from mock.twenty_mock import TwentyMock
 from sendora_core.adapters import AdapterError
 from sendora_core.safety import DraftModeError
 
 
-def test_smtp_imap_send_and_fetch_against_fake_servers(tmp_path):
-    with FakeMailServers() as srv:
+def test_smtp_imap_send_and_fetch_against_stub_servers(tmp_path):
+    with StubMailServers() as srv:
         s = make_settings(tmp_path, smtp_host=srv.host, smtp_port=srv.smtp_port, smtp_use_tls=False, smtp_user="demo", smtp_password="demo-password",
                           imap_host=srv.host, imap_port=srv.imap_port, imap_use_ssl=False)
         a = SmtpImapEmail(s)

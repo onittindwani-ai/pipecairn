@@ -6,4 +6,4 @@ What the files hold:
   send_message.json  the documented request fields of POST /v2/messages, the response data fields used here and the error shape.
   inbound_webhook.json  the documented field paths of the message.received webhook and the signature scheme.
 The send page states the examples live in a machine readable spec (a published OpenAPI repository exists); the fetch tool could not return that file, so these are field lists read from the page, not the vendor's spec file.
-The response id example is invented to match the documented type (UUID). Never run against the real service.
+The response id example is a sample value chosen to match the documented type (UUID). Never run against the real service.

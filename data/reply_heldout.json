@@ -1,5 +1,5 @@
 {
- "label": "Held out set. All text is invented and fictional.",
+ "label": "Held out set. All text is sample text.",
  "written": "2026-11-23",
  "cases": [
   {
@@ -22,7 +22,7 @@
   },
   {
    "id": "h003",
-   "text": "Hi Alex,\n\nTiming is actually perfect, our current setup is a mess. Could you walk my partner and me through it on a video call? We are free most mornings.\n\nRegards,\nJo Marsh\nOperations Lead | Fictional Dental Group\nSent from my iPhone",
+   "text": "Hi Alex,\n\nTiming is actually perfect, our current setup is a mess. Could you walk my partner and me through it on a video call? We are free most mornings.\n\nRegards,\nJo Marsh\nOperations Lead | Sample Dental Group\nSent from my iPhone",
    "intent": "interested",
    "adversarial": false,
    "tags": [
@@ -482,7 +482,7 @@
   },
   {
    "id": "h061",
-   "text": "I'm not the right contact for this, I look after facilities. Try procurement@fictionalco.example.",
+   "text": "I'm not the right contact for this, I look after facilities. Try procurement@sampleco.example.",
    "intent": "wrong_person",
    "adversarial": false,
    "tags": []
@@ -496,7 +496,7 @@
   },
   {
    "id": "h063",
-   "text": "We outsource all of that to an external agency. Their contact: Fern at Bright Fictional Media.",
+   "text": "We outsource all of that to an external agency. Their contact: Fern at Bright Sample Media.",
    "intent": "wrong_person",
    "adversarial": false,
    "tags": []
@@ -610,7 +610,7 @@
   },
   {
    "id": "h078",
-   "text": "I'm no longer with the company. Please contact my replacement, sarah.fictional@example.test.",
+   "text": "I'm no longer with the company. Please contact my replacement, sarah.sample@example.test.",
    "intent": "wrong_person",
    "adversarial": false,
    "tags": []
@@ -914,7 +914,7 @@
   },
   {
    "id": "h116",
-   "text": "Your message wasn't delivered to hello@fictionalco.example because the address couldn't be found, or is unable to receive email.",
+   "text": "Your message wasn't delivered to hello@sampleco.example because the address couldn't be found, or is unable to receive email.",
    "intent": "bounce",
    "adversarial": false,
    "tags": []
@@ -928,7 +928,7 @@
   },
   {
    "id": "h118",
-   "text": "MAILER-DAEMON: host mx.fictionalco.example said: 554 5.7.1 Service unavailable; Client host blocked using spam blocklist",
+   "text": "MAILER-DAEMON: host mx.sampleco.example said: 554 5.7.1 Service unavailable; Client host blocked using spam blocklist",
    "intent": "bounce",
    "adversarial": false,
    "tags": []
@@ -942,7 +942,7 @@
   },
   {
    "id": "h120",
-   "text": "Action required: delivery to the following recipient failed permanently: j.doe@fictional.example. Technical details: 5.4.1 recipient address rejected: access denied",
+   "text": "Action required: delivery to the following recipient failed permanently: j.doe@sample.example. Technical details: 5.4.1 recipient address rejected: access denied",
    "intent": "bounce",
    "adversarial": false,
    "tags": []

@@ -1,6 +1,6 @@
 # What Pipecairn does (with pictures)
 
-All screens show fictional demo data. Desktop and phone versions of each are in `docs/screenshots/`.
+All screens show demo data. Desktop and phone versions of each are in `docs/screenshots/`.
 
 ## Overview: speed to lead and the funnel
 ![Overview](screenshots/desktop-01-overview-default.png)
@@ -50,7 +50,7 @@ The owner now also sees an "Add a sending mailbox" card above the mailboxes (add
 | Merges 10 duplicate pairs, flags 6 role based, 5 invalid emails, 3 bad time zones, 5 bad phones, 8 customer leads | `tools/score_seed.py` |
 | Scores perfect fit leads at 70 or more and poor fit at 30 or less | 12 of 12 each, on the demo data, where industry and size are filled in. Real imports score the same way only when the CSV has `industry` and `size` columns (without them the most a lead can score is 55) |
 | Pauses a bouncing mailbox, honours a mailbox cap | tests and seed check |
-| Sorts invented replies | Offline stand in (rules, not a model): **<!--n:reader.set_b_first.strict-->114<!--/n--> of <!--n:reader.set_b_first.total-->170<!--/n--> (<!--n:reader.set_b_first.strict_percent-->67.1<!--/n--> percent) on independent set B**, run once. A live model path exists and is UNVERIFIED. See `REPLY-READER-EVAL.md` |
+| Sorts sample replies | Offline stand in (rules, not a model): **<!--n:reader.set_b_first.strict-->114<!--/n--> of <!--n:reader.set_b_first.total-->170<!--/n--> (<!--n:reader.set_b_first.strict_percent-->67.1<!--/n--> percent) on independent set B**, run once. A live model path exists and is UNVERIFIED. See `REPLY-READER-EVAL.md` |
 | Dashboard works on desktop and phone, keyboard, light and dark, reduced motion | <!--n:browser_tests-->40<!--/n--> browser tests; accessibility scan of 10 pages in 2 themes found 0 serious or critical problems |
 | 5,000 row table stays smooth | layout shift under 0.1 (desktop) |
 | A real (not demo) install can add a mailbox and a sequence, mark customers, import a do not contact list, import leads and send one draft | `apps/api/tests/test_hardening_install.py` (a fresh database, through the API) |

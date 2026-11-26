@@ -1,4 +1,4 @@
-"""Score the reply reader on an independent held out set (written by someone who never saw the code).
+"""Score the reply reader on an independent held out set (written by a separate AI test author who never saw the code).
 
 Each set folder holds `input.json` (a list of messages: id, from_name, from_address, subject, body) and `key.json` (one entry per id:
 label, acceptable, ambiguous, tags). The tool reads the reply the way the product does (the message body, and the subject for delivery notices) and reports:

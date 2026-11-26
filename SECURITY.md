@@ -6,7 +6,7 @@ Please do not post security problems in a public issue. Open the repository's **
 
 ## Two risks to know before you deploy
 
-- **Demo mode.** `DEMO_MODE=true` switches on a public demo password, made up approver and viewer accounts and a button that erases the database. They turn off the moment `OWNER_PASSWORD_HASH` is set, and the app refuses demo mode on Postgres, but a real install should always run with `DEMO_MODE=false`.
+- **Demo mode.** `DEMO_MODE=true` switches on a public demo password, built in approver and viewer accounts and a button that erases the database. They turn off the moment `OWNER_PASSWORD_HASH` is set, and the app refuses demo mode on Postgres, but a real install should always run with `DEMO_MODE=false`.
 - **Secrets.** `SESSION_SECRET` signs every login. With `DEMO_MODE=false`, or whenever an owner password is set, the app refuses to start on a short or example value. Anyone who learns it can sign in as the owner, so keep `.env` out of git and change it if it may have leaked.
 
 ## What was checked
@@ -17,7 +17,7 @@ Please do not post security problems in a public issue. Open the repository's **
 - Prompt injection: lead text is wrapped as untrusted and cannot trigger sending.
 - Hostile email: the mail reader has size, header and time limits, tested with inputs that took minutes to read before (unterminated tags, headers made of quotation marks, thousands of nested parts).
 - Wrong stops: only a complete request to stop suppresses an address; wording that only might be one stops the follow ups and goes to a person, and the owner can lift a stop that was read wrongly (audited).
-- Secret scan of tracked files (`python tools/scan_secrets.py`): nothing found, with a test that it does catch fake looking keys.
+- Secret scan of tracked files (`python tools/scan_secrets.py`): nothing found, with a test that it does catch sample looking keys.
 - Dependency audit on 2026-11-22: `pip-audit` over the 39 installed Python packages and `pnpm audit` over all JavaScript packages both reported no known vulnerabilities. This only covers known, published problems on that date.
 - A prompt injection test (a reply that tries to make the app send or skip approval) and a server side request forgery test.
 

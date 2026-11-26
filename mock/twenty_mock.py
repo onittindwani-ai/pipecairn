@@ -1,4 +1,4 @@
-"""Fake Twenty CRM GraphQL endpoint. It answers the operations Pipecairn sends, by operationName.
+"""Mock Twenty CRM GraphQL endpoint. It answers the operations Pipecairn sends, by operationName.
 
 The exact field names of a real Twenty workspace are UNVERIFIED (docs did not show the schema, and an API key can see a
 different schema than a session). The mock only proves the adapter builds requests and reads replies consistently.

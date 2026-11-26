@@ -1,5 +1,5 @@
 {
- "label": "Second set, written after tuning. Only partly held out. All text is invented and fictional.",
+ "label": "Second set, written after tuning. Only partly held out. All text is sample text.",
  "written": "2026-11-23",
  "cases": [
   {
@@ -284,7 +284,7 @@
   },
   {
    "id": "k041",
-   "text": "Failure notice. Hi. This is the mail program at mail.fictional.example. I'm afraid I wasn't able to deliver your message.",
+   "text": "Failure notice. Hi. This is the mail program at mail.sample.example. I'm afraid I wasn't able to deliver your message.",
    "intent": "bounce",
    "adversarial": false,
    "tags": []

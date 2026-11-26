@@ -247,7 +247,7 @@
    "id": "k041",
    "expected": "bounce",
    "got": "question",
-   "text": "Failure notice. Hi. This is the mail program at mail.fictional.example. I'm afraid I wasn'"
+   "text": "Failure notice. Hi. This is the mail program at mail.sample.example. I'm afraid I wasn'"
   },
   {
    "id": "k042",

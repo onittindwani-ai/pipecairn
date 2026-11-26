@@ -1,6 +1,6 @@
 # Quick demo (about 10 minutes)
 
-You will run the whole product on your own computer with fictional data. Nothing is sent anywhere. No accounts, no keys.
+You will run the whole product on your own computer with demo data. Nothing is sent anywhere. No accounts, no keys.
 
 ## Before you start
 
@@ -15,12 +15,12 @@ You need: Python 3.12 or newer (or uv), Node 22 or newer, pnpm (`corepack enable
 3. Install the web part: `pnpm install`, then `NEXT_PUBLIC_DEMO_HINT=1 pnpm build` (that variable is built into the page, so it must be set here, not at start).
 4. Start the API in demo mode. In one terminal run:
    `MODE=live DEMO_MODE=true DATABASE_URL=sqlite:///./demo.sqlite3 SESSION_SECRET=demo-secret-not-for-real-use-1234 .venv/bin/python -m uvicorn pipecairn.api.app:app_from_env --factory --port 8000 --proxy-headers`
-   (Demo mode only builds fake adapters, so MODE=live here still cannot send anything.)
+   (Demo mode only builds offline adapters, so MODE=live here still cannot send anything.)
 5. Start the web app in a second terminal: `API_BASE_URL=http://127.0.0.1:8000 INSECURE_COOKIES=1 pnpm --filter web start`.
 6. Open http://localhost:3000. Sign in with `owner@example.test` and the demo password `demo-password-1`. This password works only while `DEMO_MODE=true` and no `OWNER_PASSWORD_HASH` is set.
-7. Press Cmd+K (Ctrl+K on Windows or Linux) to open the command palette, choose **Reset the demo data**, and confirm. This loads 41 fictional companies and 113 unique leads.
-8. In the blue demo strip press **Run now**, then **+1 day**, then **Run now** again, a few times. Replies from fictional people arrive.
-9. Open **Inbox**, pick an interested reply, and press **Approve and send**. In demo mode it goes to the fake outbox.
+7. Press Cmd+K (Ctrl+K on Windows or Linux) to open the command palette, choose **Reset the demo data**, and confirm. This loads 41 sample companies and 113 unique leads.
+8. In the blue demo strip press **Run now**, then **+1 day**, then **Run now** again, a few times. Replies from sample people arrive.
+9. Open **Inbox**, pick an interested reply, and press **Approve and send**. In demo mode it goes to the demo outbox.
 10. Open **Proposals**, make one for that lead, save it, open the PDF, then press **Prepare for signature**. A folder appears for you to upload by hand.
 11. Open **Audit** and press **Verify the chain**. It should say the log is intact.
 12. Try the kill switch: press **Pause all**. Everything stops. Press **Turn it off** to resume.

@@ -42,7 +42,7 @@ intake (CSV, form, webhook, CRM sync) then dedupe and enrich, score with a rubri
 | CRM | seed (CSV and seed), twenty | hubspot, notion | none |
 | E-signature | seed, breezedoc_handoff | none | documenso |
 
-Every category has an offline `seed` adapter. A tier A adapter has a fake vendor server in `mock/` written from the vendor's public docs and tests that run against it. Nothing is `live_verified`.
+Every category has an offline `seed` adapter. A tier A adapter has a mock vendor server in `mock/` written from the vendor's public docs and tests that run against it. Nothing is `live_verified`.
 
 ## Evals
 

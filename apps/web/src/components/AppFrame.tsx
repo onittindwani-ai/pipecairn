@@ -93,7 +93,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
       ) : s?.effective_mode === "draft" ? (
         <div className="cl-banner" role="status"><strong>Draft mode.</strong> <span className="cl-hide-sm">Messages are saved as drafts. Nothing is sent.</span></div>
       ) : s && demo ? (
-        <div className="cl-banner cl-banner--info" role="status"><strong>Demo mode.</strong> <span className="cl-grow cl-hide-sm">Fictional data. Nothing leaves this machine.</span><span className="cl-grow show-sm-only" />
+        <div className="cl-banner cl-banner--info" role="status"><strong>Demo mode.</strong> <span className="cl-grow cl-hide-sm">Demo data. Nothing leaves this machine.</span><span className="cl-grow show-sm-only" />
           {canWrite ? <><Button size="sm" variant="primary" onClick={async () => { await run.mutateAsync(); }}>Run now</Button>
           <Button size="sm" onClick={async () => { await advance.mutateAsync(24); }}>+1 day</Button></> : <span className="cl-mini">Read only: the {me.data?.role ?? "viewer"} role cannot run jobs.</span>}</div>
       ) : s ? (
@@ -120,7 +120,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
       </AppShell>
       <CommandPalette items={items} open={palette} onOpenChange={setPalette} />
       <ConfirmDialog open={confirmKill} onOpenChange={setConfirmKill} title="Pause everything?" description="The kill switch stops all sending and approving at once. You can turn it off again from the banner." confirmLabel="Pause all" destructive onConfirm={() => void toggleKill.mutateAsync(true)} />
-      <ConfirmDialog open={confirmReset} onOpenChange={setConfirmReset} title="Reset the demo?" description="This puts the fictional seed data back and clears everything you did in the demo." confirmLabel="Reset" destructive onConfirm={() => void reset.mutateAsync()} />
+      <ConfirmDialog open={confirmReset} onOpenChange={setConfirmReset} title="Reset the demo?" description="This puts the sample seed data back and clears everything you did in the demo." confirmLabel="Reset" destructive onConfirm={() => void reset.mutateAsync()} />
     </>
   );
 }

@@ -30,7 +30,7 @@ def build_registry(settings, handoff_dir: Path | None = None) -> AdapterRegistry
     reg = AdapterRegistry(settings)
     add = lambda c, n, t, f, notes="": reg.register(AdapterSpec(c, n, t, f, False, notes))  # noqa: E731
     add("email", "seed", "A", seed.SeedEmail, "Offline. Nothing leaves this machine.")
-    add("email", "smtp_imap", "A", SmtpImapEmail, "Tested against a fake SMTP and IMAP server, not a real mail host.")
+    add("email", "smtp_imap", "A", SmtpImapEmail, "Tested against a stub SMTP and IMAP server, not a real mail host.")
     add("email", "sendkit", "C", lambda s: (_ for _ in ()).throw(AdapterError("SendKit is a recipe only. See prompts/recipe-sendkit.md.")), "Recipe prompt, not built.")
     add("sms", "seed", "A", seed.SeedSms, "Offline.")
     add("sms", "telnyx", "A", TelnyxSms, "Tested against a mock written from the public docs, not the real service.")

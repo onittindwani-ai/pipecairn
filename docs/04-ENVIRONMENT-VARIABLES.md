@@ -19,7 +19,7 @@ Check your setup any time. `make check-env` (same as `python3 tools/check_env.py
 | `SESSION_SECRET` | A long random string that signs logins. Make one: `python3 -c "import secrets; print(secrets.token_urlsafe(48))"`. With `DEMO_MODE=false`, or whenever `OWNER_PASSWORD_HASH` is set (even with `DEMO_MODE=true`), the app refuses to start when it is shorter than 32 characters or still looks like an example. Change it and everyone is signed out, and the unsubscribe links already emailed stop working unless the old value goes into `SESSION_SECRET_PREVIOUS`. | a dev only value |
 | `SESSION_SECRET_PREVIOUS` | The `SESSION_SECRET` you replaced. The one click unsubscribe links in emails already sent were signed with it, so it keeps them valid. It signs nothing new and does not sign anyone in. Empty it once old emails no longer matter. | empty |
 | `MODE` | `draft` (nothing leaves) or `live` (really sends). Live also needs the sender name, company name and address below. | `draft` |
-| `DEMO_MODE` | `true` builds only fake adapters, moves the clock, and allows the public demo password until an owner password is set. Set `false` for real use. | `true` in code, `false` in `.env.example` |
+| `DEMO_MODE` | `true` builds only offline adapters, moves the clock, and allows the public demo password until an owner password is set. Set `false` for real use. | `true` in code, `false` in `.env.example` |
 | `ALLOW_DEMO_SERVER` | The app refuses `DEMO_MODE=true` on a Postgres database, because a demo has a reset button that erases the data. `true` allows it for a throw away trial. | `false` |
 | `KILL_SWITCH` | `true` stops everything at start. The owner can also press the switch in the app. | `false` |
 | `MAX_BODY_BYTES` | The largest request the API reads. | `26214400` (25 MB) |
@@ -35,7 +35,7 @@ Check your setup any time. `make check-env` (same as `python3 tools/check_env.py
 2. It prints a line like `OWNER_PASSWORD_HASH='...'`. Put that line in `.env`. The quotes matter, because the hash contains `$` characters.
 3. Set `OWNER_EMAIL` to your email.
 4. Optionally make a second person who can approve: repeat with `APPROVER_EMAIL` and `APPROVER_PASSWORD_HASH`. An approver approves or rejects replies, books calls from the Inbox, moves deals, writes proposals and can stop contacting someone. An approver cannot import leads, enrol them, edit or create a sequence, add a mailbox, change the switches or resume a mailbox: those change what goes out to people and are owner only.
-5. Set `DEMO_MODE=false`. The demo password and the made up approver and viewer accounts stop working the moment an owner hash is set, even if `DEMO_MODE` is still `true`.
+5. Set `DEMO_MODE=false`. The demo password and the built in approver and viewer accounts stop working the moment an owner hash is set, even if `DEMO_MODE` is still `true`.
 
 | Name | What it is | Default |
 |---|---|---|

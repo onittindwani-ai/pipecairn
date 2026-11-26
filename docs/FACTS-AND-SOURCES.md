@@ -41,7 +41,7 @@ Tool comparison sources (pricing pages, licences, 2026-11-23): see `facts/compar
 
 | Fact | Source | Status |
 |---|---|---|
-| The live reader, drafter, score explainer and week summary call the shared wrapper (`sendora_core.llm`, Anthropic Messages API: `POST /v1/messages`, headers `x-api-key`, `anthropic-version: 2026-10-21`, `output_config.format` json_schema, no temperature or tools) | Anthropic public API documentation read 2026-11-23 (the page addresses are in the facts file of the shared base, which is not part of this repository) | Request shape VERIFIED against the docs and a local fake server; **live behaviour UNVERIFIED** (no real key was used) |
+| The live reader, drafter, score explainer and week summary call the shared wrapper (`sendora_core.llm`, Anthropic Messages API: `POST /v1/messages`, headers `x-api-key`, `anthropic-version: 2026-10-21`, `output_config.format` json_schema, no temperature or tools) | Anthropic public API documentation read 2026-11-23 (the page addresses are in the facts file of the shared base, which is not part of this repository) | Request shape VERIFIED against the docs and a local mock server; **live behaviour UNVERIFIED** (no real key was used) |
 | Reply reading uses `claude-haiku-5-5`, drafts use `claude-sonnet-5-5` (the base defaults for bulk and hard) | Anthropic public models overview, read 2026-11-23 | VERIFIED (docs) that the ids exist; their quality on replies here is UNVERIFIED |
-| Recorded fixtures in `data/llm_fixtures/` | made by `tools/record_llm_fixtures.py` | Recorded from a local fake server that answers like the offline stand in. They are **not** answers of a real model |
+| Recorded fixtures in `data/llm_fixtures/` | made by `tools/record_llm_fixtures.py` | Recorded from a local mock server that answers like the offline stand in. They are **not** answers of a real model |
 

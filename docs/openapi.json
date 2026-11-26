@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Pipecairn API",
-  "version": "1.0.1"
+  "version": "1.0.2"
  },
  "paths": {
   "/ready": {
@@ -2322,7 +2322,7 @@
     "tags": [
      "demo"
     ],
-    "summary": "Add many fictional leads, to test the table with thousands of rows",
+    "summary": "Add many sample leads, to test the table with thousands of rows",
     "operationId": "stress_api_demo_stress_leads_post",
     "requestBody": {
      "content": {

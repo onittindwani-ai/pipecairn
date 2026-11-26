@@ -44,7 +44,7 @@ def create_app(settings: Settings | None = None, ctx: Ctx | None = None) -> Fast
     def health():
         return {"status": "ok"}
 
-    app.title, app.version = "Pipecairn API", "1.0.1"
+    app.title, app.version = "Pipecairn API", "1.0.2"
     app.state.ctx = ctx
     # A dashboard page makes several calls at once. This bucket is per client address (set uvicorn --proxy-headers so that is the real visitor, not the web server).
     app.state.limiter = TokenBucket(capacity=600, refill_per_sec=20.0)

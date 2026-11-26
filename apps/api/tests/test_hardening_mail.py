@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy import select
 
 from support import NOW, make_settings
-from mock.mail_servers import FakeMailServers
+from mock.mail_servers import StubMailServers
 from pipecairn.adapters.base import InboundEmail
 from pipecairn.adapters.smtp_imap import SmtpImapEmail, delivery_report_facts
 from pipecairn.inbox import capture_email
@@ -98,7 +98,7 @@ def test_plain_text_mail_is_refused_for_any_host_but_this_computer(tmp_path):
 
 
 def test_outgoing_mail_carries_the_opt_out_headers_and_reply_to(tmp_path):
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         s = make_settings(tmp_path, smtp_host=srv.host, smtp_port=srv.smtp_port, smtp_use_tls=False, smtp_user="demo", smtp_password="demo-password", reply_to="sam@rivera.example.test",
                           public_base_url="https://api.rivera.example.test", session_secret="test-only-session-secret-for-unsubscribe-1")
         SmtpImapEmail(s).send(from_addr="sam@rivera.example.test", to="ava@acme.example.test", subject="Hi", body="Hello")
@@ -138,7 +138,7 @@ def test_a_delivery_report_is_recognised_by_its_shape_and_names_our_message_id(t
            b"Content-Type: multipart/report; report-type=delivery-status; boundary=B\r\n\r\n--B\r\nContent-Type: text/plain\r\n\r\nCould not deliver.\r\n"
            b"--B\r\nContent-Type: message/delivery-status\r\n\r\nFinal-Recipient: rfc822; ava@acme.example.test\r\nAction: failed\r\nStatus: 5.1.1\r\n\r\n"
            b"--B\r\nContent-Type: text/rfc822-headers\r\n\r\nMessage-ID: <sent-1@rivera.example.test>\r\nSubject: Hi\r\n\r\n--B--\r\n")
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         srv.store.deliver(raw)
         srv.store.deliver(b"From: MAILER-DAEMON@evil.example.test\r\nTo: sam@rivera.example.test\r\nSubject: Mail delivery failed\r\nMessage-ID: <x@evil>\r\n\r\nMail delivery failed. 550 5.1.1 User unknown for ava@acme.example.test\r\n")
         s = make_settings(tmp_path, smtp_host=srv.host, imap_host=srv.host, imap_port=srv.imap_port, imap_use_ssl=False, smtp_user="demo", smtp_password="demo-password")
@@ -164,7 +164,7 @@ def test_a_forged_bounce_changes_nothing(session, world):  # noqa: F811
     # from the lead's own address, plain text: the words are not proof
     r = cap(session, world, "Delivery Status Notification (Failure). 550 5.1.1 User unknown.", ext="plain-1")
     assert r.intent == "bounce" and r.suggested_action == "unverified_bounce" and not r.handled  # kept open: a person reads it
-    # from a made up mail system address: the old code looked the lead up from the address written in the text
+    # from a sample mail system address: the old code looked the lead up from the address written in the text
     assert capture_email(session, world["settings"], world["llm"], world["adapters"].calendar, forged_bounce(world), NOW) is None
     # a report shaped like a real one but naming a message we never sent
     assert capture_email(session, world["settings"], world["llm"], world["adapters"].calendar, forged_bounce(world, is_dsn=True, references=("<not-ours@x>",)), NOW) is None

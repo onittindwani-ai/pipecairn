@@ -16,7 +16,7 @@ Pipecairn answers new leads fast, follows up politely, books calls, and gets a p
 - A sending engine with a chain of safety checks that run before every message.
 - A reply reader that sorts replies into interested, question, not now, wrong person, unsubscribe, out of office and bounce.
 - Proposal and PDF making, and a handoff folder for e-signature.
-- A fake company's worth of practice data with planted traps, so you can see the safety gates work.
+- A sample company's worth of practice data with planted traps, so you can see the safety gates work.
 
 ## What it is not
 

@@ -1,4 +1,4 @@
-"""Write data/reply_heldout.json: the held out test set for the reply reader. Every sender and company is invented.
+"""Write data/reply_heldout.json: the held out test set for the reply reader. Every sender and company is a sample name.
 
 Written on 2026-11-23 BEFORE the rules of the reply reader (replies.py, offline_llm.py) were read for this
 purpose, and in wording, tone and structure that differs from data/reply_testset.json. The first score on this
@@ -22,7 +22,7 @@ CASES: list[tuple[str, str, tuple[str, ...]]] = [
     # interested
     ("interested", "Ok you've got my attention. Thurs 2pm my time works, invite me.", ("terse",)),
     ("interested", "yep pls send times", ("terse",)),
-    ("interested", "Hi Alex,\n\nTiming is actually perfect, our current setup is a mess. Could you walk my partner and me through it on a video call? We are free most mornings.\n\nRegards,\nJo Marsh\nOperations Lead | Fictional Dental Group\nSent from my iPhone", ("signature", "rambling")),
+    ("interested", "Hi Alex,\n\nTiming is actually perfect, our current setup is a mess. Could you walk my partner and me through it on a video call? We are free most mornings.\n\nRegards,\nJo Marsh\nOperations Lead | Sample Dental Group\nSent from my iPhone", ("signature", "rambling")),
     ("interested", "Loved the case study you linked. Where do I sign up for a trial?", ()),
     ("interested", "We were literally about to start searching for this. Who do I speak to on your side?", ()),
     ("interested", "go ahead and put something in my calendar next week, any day after lunch", ("terse",)),
@@ -83,9 +83,9 @@ CASES: list[tuple[str, str, tuple[str, ...]]] = [
     ("not_now", "Our budget cycle starts in September, ask then.", ()),
     ("not_now", "Let's park this until the new CFO starts.", ()),
     # wrong_person
-    ("wrong_person", "I'm not the right contact for this, I look after facilities. Try procurement@fictionalco.example.", ()),
+    ("wrong_person", "I'm not the right contact for this, I look after facilities. Try procurement@sampleco.example.", ()),
     ("wrong_person", "Hi, you want Marcus Bell in operations. I've looped him in.", ()),
-    ("wrong_person", "We outsource all of that to an external agency. Their contact: Fern at Bright Fictional Media.", ()),
+    ("wrong_person", "We outsource all of that to an external agency. Their contact: Fern at Bright Sample Media.", ()),
     ("wrong_person", "That would be a question for the practice owner. I'm just the hygienist.", ()),
     ("wrong_person", "Sorry, I changed jobs in the summer. Amy Chen covers my old accounts now.", ()),
     ("wrong_person", "wrong dept. try sales ops", ("terse",)),
@@ -100,7 +100,7 @@ CASES: list[tuple[str, str, tuple[str, ...]]] = [
     ("wrong_person", "This email reached me by mistake, I'm a customer of this company, not an employee.", ()),
     ("wrong_person", "I handle accounts, our shop manager Dev decides on software.", ()),
     ("wrong_person", "Try info@ and ask for whoever handles operations; I'm just the intern, sorry.", ()),
-    ("wrong_person", "I'm no longer with the company. Please contact my replacement, sarah.fictional@example.test.", ()),
+    ("wrong_person", "I'm no longer with the company. Please contact my replacement, sarah.sample@example.test.", ()),
     # unsubscribe
     ("unsubscribe", "Stop. Now.", ("terse",)),
     ("unsubscribe", "I'm going to make a complaint to the data protection office if this continues. Delete my details.", ()),
@@ -141,11 +141,11 @@ CASES: list[tuple[str, str, tuple[str, ...]]] = [
     ("out_of_office", "I am out of the country with intermittent connectivity until next Friday.", ()),
     # bounce
     ("bounce", "550 5.1.1 The email account that you tried to reach does not exist.", ("terse",)),
-    ("bounce", "Your message wasn't delivered to hello@fictionalco.example because the address couldn't be found, or is unable to receive email.", ()),
+    ("bounce", "Your message wasn't delivered to hello@sampleco.example because the address couldn't be found, or is unable to receive email.", ()),
     ("bounce", "Delivery incomplete. There was a temporary problem delivering your message. The recipient's inbox is over quota.", ()),
-    ("bounce", "MAILER-DAEMON: host mx.fictionalco.example said: 554 5.7.1 Service unavailable; Client host blocked using spam blocklist", ()),
+    ("bounce", "MAILER-DAEMON: host mx.sampleco.example said: 554 5.7.1 Service unavailable; Client host blocked using spam blocklist", ()),
     ("bounce", "Undeliverable message. Your message couldn't be delivered because the recipient's server rejected it.", ()),
-    ("bounce", "Action required: delivery to the following recipient failed permanently: j.doe@fictional.example. Technical details: 5.4.1 recipient address rejected: access denied", ()),
+    ("bounce", "Action required: delivery to the following recipient failed permanently: j.doe@sample.example. Technical details: 5.4.1 recipient address rejected: access denied", ()),
     ("bounce", "Returned mail: see transcript for details. Reason: user has moved, no forwarding address.", ()),
     ("bounce", "This message was created automatically by mail delivery software. A message that you sent could not be delivered to one or more of its recipients.", ()),
     ("bounce", "Status: 5.2.2 Quota exceeded. The mailbox cannot accept your message.", ()),
@@ -177,7 +177,7 @@ def main() -> None:
         row["id"] = f"h{i:03d}"
     ordered = [{"id": r["id"], "text": r["text"], "intent": r["intent"], "adversarial": r["adversarial"], "tags": r["tags"]} for r in rows]
     out = Path(__file__).resolve().parent.parent / "data" / "reply_heldout.json"
-    payload = {"label": "Held out set. All text is invented and fictional.", "written": "2026-11-23", "cases": ordered}
+    payload = {"label": "Held out set. All text is sample text.", "written": "2026-11-23", "cases": ordered}
     out.write_text(json.dumps(payload, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     by: dict[str, int] = {}
     for r in ordered:

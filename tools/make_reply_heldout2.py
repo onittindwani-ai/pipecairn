@@ -1,6 +1,6 @@
 """Write data/reply_heldout2.json: a SECOND small set, written 2026-11-23 AFTER the rules were tuned on the first held out set.
 
-It shows how the tuned rules do on fresh wording. It is only partly held out: its author had read the tuned rules. Every sender is invented.
+It shows how the tuned rules do on fresh wording. It is only partly held out: its author had read the tuned rules. Every sender is a sample name.
 Run: python tools/make_reply_heldout2.py
 """
 
@@ -50,14 +50,14 @@ CASES: list[tuple[str, str]] = [
     ("bounce", "Sorry, we were unable to deliver your message. Error code 550. Host unknown."),
     ("bounce", "Your message to info@closedshop.example could not be sent: that user's account has been disabled."),
     ("bounce", "SMTP error from remote mail server after RCPT TO: 550 user not found"),
-    ("bounce", "Failure notice. Hi. This is the mail program at mail.fictional.example. I'm afraid I wasn't able to deliver your message."),
+    ("bounce", "Failure notice. Hi. This is the mail program at mail.sample.example. I'm afraid I wasn't able to deliver your message."),
     ("bounce", "Your mail was refused by the receiving server. Recipient address does not exist."),
 ]
 
 
 def main() -> None:
     rows = [{"id": f"k{i:03d}", "text": t, "intent": intent, "adversarial": False, "tags": []} for i, (intent, t) in enumerate(CASES, 1)]
-    payload = {"label": "Second set, written after tuning. Only partly held out. All text is invented and fictional.", "written": "2026-11-23", "cases": rows}
+    payload = {"label": "Second set, written after tuning. Only partly held out. All text is sample text.", "written": "2026-11-23", "cases": rows}
     out = Path(__file__).resolve().parent.parent / "data" / "reply_heldout2.json"
     out.write_text(json.dumps(payload, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(len(rows), "cases")

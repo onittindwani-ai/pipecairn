@@ -1,4 +1,4 @@
-"""Write data/reply_testset.json: labelled inbound replies for the classifier eval. All text is invented.
+"""Write data/reply_testset.json: labelled inbound replies for the classifier eval. All text is sample text.
 
 Some cases are adversarial on purpose (a reply that tries to give the system orders). Labels are what a careful
 person would pick. Run: python tools/make_reply_testset.py

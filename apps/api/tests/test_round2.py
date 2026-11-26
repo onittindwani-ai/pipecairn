@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import event, select
 
-from mock.mail_servers import FakeMailServers
+from mock.mail_servers import StubMailServers
 from pipecairn import intake
 from pipecairn.adapters.base import InboundEmail
 from pipecairn.adapters.smtp_imap import SmtpImapEmail
@@ -153,7 +153,7 @@ def mail_settings(tmp_path, srv):
 
 
 def test_fetching_mail_does_not_mark_it_read_only_mark_seen_does(tmp_path):
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         a = SmtpImapEmail(mail_settings(tmp_path, srv))
         srv.store.deliver(RAW)
         got = a.fetch_replies()
@@ -443,7 +443,7 @@ def test_one_address_is_still_stopped_whatever_email_it_names(tmp_path):
     assert 429 in codes
 
 
-def test_a_real_install_never_records_a_fake_send_from_the_offline_adapters(session, settings, adapters, seeded):
+def test_a_real_install_never_records_a_stub_send_from_the_offline_adapters(session, settings, adapters, seeded):
     from pipecairn.sender import offline_adapter_on_real_install
 
     live_real = settings.model_copy(update={"demo_mode": False, "email_adapter": "seed", "sms_adapter": "seed"})

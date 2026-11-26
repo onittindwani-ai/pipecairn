@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 (2026-11-27)
+
+- Documentation and demo label updates.
+
 ## 1.0.1 (2026-11-25)
 
 A second, stricter review found real gaps. What changed, in plain words:
@@ -12,7 +16,7 @@ A second, stricter review found real gaps. What changed, in plain words:
 - `ESIGN_ADAPTER` is honoured. Signing folders carry the contract number, so two contracts never share a folder. Cells that start with `=`, `+`, `-` or `@` are made plain text in `signers.csv`.
 
 **Security**
-- The public demo password, the made up approver and viewer accounts and the demo reset exist only while `DEMO_MODE=true` and no owner password is set.
+- The public demo password, the built in approver and viewer accounts and the demo reset exist only while `DEMO_MODE=true` and no owner password is set.
 - Sign in: one cleaned email for the limit and the lookup, size limits, an extra limit per address, and the same work for an unknown account.
 - A forged "mail delivery failed" can no longer suppress a lead or pause a mailbox: a bounce counts only from a real delivery status report that names a message this system sent. A request to stop still acts at once, and the audit log notes how it was authenticated.
 - Mail connections check the server certificate; plain text is allowed only to this same computer.
@@ -35,7 +39,7 @@ An independent review of the version above found more. What changed, in plain wo
 **Sending**
 - A crash or a kill in the middle of a send batch no longer throws away what was already sent, and no longer sends the same people the same email again. Each message is saved on its own: it is written down as "sending" before the mail server is called and finished afterwards. A message that was being sent when the process died is marked **unconfirmed** and is never repeated by itself.
 - Pause all and "force draft" are read again before every send, so pressing them stops a batch that is already running.
-- The offline `seed` adapters can no longer make a real install record a fake "sent": a live real install refuses to start with `EMAIL_ADAPTER=seed`, and texts through the offline adapter stay drafts.
+- The offline `seed` adapters can no longer make a real install record a placeholder "sent": a live real install refuses to start with `EMAIL_ADAPTER=seed`, and texts through the offline adapter stay drafts.
 - The daily numbers on the Overview read only the 90 days the chart shows, not every message ever sent.
 
 **Reading the inbox**
@@ -108,7 +112,7 @@ A fourth independent review found two serious and five medium gaps. What changed
 - Interface and API fixes from walking every screen as a first time owner (two passes): a blank reply can no longer be approved (the server refuses it, the button is disabled); the Proposals lead list includes leads who replied or booked; G then 1 to 9 goes to a page as the palette says; signing in returns to the page you asked for; Pause all and Sign out stay reachable on a phone and the top button says it turns the kill switch off; every audit row opens with its detail; Approvals reads in plain words and links to the draft; the Integrations tier text no longer repeats itself; the pipeline shows all seven columns on a laptop and long columns scroll inside themselves; score explanations read as words; load errors show on Proposals. Browser tests for each fix are in `apps/web/e2e/round5-ui.spec.ts` and `round5-pass2.spec.ts`.
 - Base 1.2.1: counting numbers step at the precision of their target.
 - Reply reader: reads only what the person wrote (quoted mail, signature, phone line and legal footer removed), reads the subject for delivery notices and auto replies, handles plain refusals, timing words, named referrals and common phrases in other languages. New `tools/eval_independent.py` and two independent held out sets: set B (run once) 114 of 170 exactly right, set A first run 103 of 174. See `docs/REPLY-READER-EVAL.md`.
-- Live model path (`LLM_BACKEND=anthropic`, UNVERIFIED live): reader with a system prompt and a strict JSON schema, draft writer, score explainer and week summary in `model_tasks.py`; a local fake server (`mock/anthropic_mock.py`), recorded fixtures (`data/llm_fixtures/`) and tests that a hostile reply cannot change the output fields or send anything.
+- Live model path (`LLM_BACKEND=anthropic`, UNVERIFIED live): reader with a system prompt and a strict JSON schema, draft writer, score explainer and week summary in `model_tasks.py`; a local mock server (`mock/anthropic_mock.py`), recorded fixtures (`data/llm_fixtures/`) and tests that a hostile reply cannot change the output fields or send anything.
 - Contract tests for Cal.com and Telnyx against saved excerpts of the vendors' public docs (`mock/contracts/`), notes for Twenty and the mail protocols where no spec exists.
 - `tools/make_counts.py` and `tools/check_docs.py`: the numbers in README and docs come from `data/measured.json`.
 - Renamed from Closeline to Pipecairn after a public name check. The Python package, environment variable prefix, interface text, documents, prompts, templates and screenshots all use the new name.

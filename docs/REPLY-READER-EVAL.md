@@ -1,6 +1,6 @@
 # How well does the reply reader read replies? (honest numbers)
 
-All replies in every test set are invented and fictional. Numbers below come from `python3 tools/eval_replies.py` and are saved in `data/eval/`.
+All replies in every test set are sample text. Numbers below come from `python3 tools/eval_replies.py` and are saved in `data/eval/`.
 
 ## The short version
 
@@ -12,7 +12,7 @@ All replies in every test set are invented and fictional. Numbers below come fro
 
 ## Independent held out sets A and B (the numbers to quote)
 
-Two further sets were written by separate authors who **never saw the code, the rules or the earlier sets** (174 replies in set A, 170 in set B; 7 intents; 13 to 14 percent marked ambiguous by their author). Their README and keys are saved unchanged in `data/eval/independent/set_a/` and `set_b/`. The scoring tool is `tools/eval_independent.py`. The protocol was followed in this order: tool written from the sets' README only; set A run once on the reader as it was and saved untouched; the reader improved using only general language knowledge (nothing copied from set A or set B, and neither set was read in detail); set B run once and saved untouched; set A run again.
+Two further sets were written by separate AI test authors who **never saw the code, the rules or the earlier sets** (174 replies in set A, 170 in set B; 7 intents; 13 to 14 percent marked ambiguous by their author). Their README and keys are saved unchanged in `data/eval/independent/set_a/` and `set_b/`. The scoring tool is `tools/eval_independent.py`. The protocol was followed in this order: tool written from the sets' README only; set A run once on the reader as it was and saved untouched; the reader improved using only general language knowledge (nothing copied from set A or set B, and neither set was read in detail); set B run once and saved untouched; set A run again.
 
 | Run | Replies | Strict (the key's main label) | Lenient (any label the key accepts) | Status |
 |---|---|---|---|---|
@@ -39,7 +39,7 @@ What the improvements were (all general, none taken from either set):
 - wider wording for stop requests (including legal and privacy wording and common phrases in German, French, Spanish, Portuguese, Italian, Dutch, Polish, Turkish, Swedish and Hindi written in Latin letters), delivery failures, away and ticket acknowledgement replies, someone else handles this, ask me later, yes and scheduling phrases (`reply_rules.py`, `offline_lexicon.py`);
 - the subject line is read too, for delivery notices and automatic replies ("Undeliverable:", "Automatic reply:").
 
-Honest limits of these two sets: each key is one author's reading of a short spec (a flat "no" is "unsubscribe" with "not now" accepted; a referral is "wrong person"; an auto reply ticket is "out of office"), non English text was written by a model, the sets are small, and the improved rules were also tuned against the project's own older sets (`reply_testset`, `reply_heldout`, `reply_heldout2`), which therefore no longer count as held out at all (they read 70, 134 and 42 correct of the same totals). Set B is still held out for the reader as it is now, as long as nobody tunes on it.
+Honest limits of these two sets: each key is one AI test author's reading of a short spec (a flat "no" is "unsubscribe" with "not now" accepted; a referral is "wrong person"; an auto reply ticket is "out of office"), non English text was written by a model, the sets are small, and the improved rules were also tuned against the project's own older sets (`reply_testset`, `reply_heldout`, `reply_heldout2`), which therefore no longer count as held out at all (they read 70, 134 and 42 correct of the same totals). Set B is still held out for the reader as it is now, as long as nobody tunes on it.
 
 ## The four numbers
 
@@ -100,4 +100,4 @@ This took the same 134 replies to 100 percent, which proves nothing about new wo
 
 - The labels were chosen by one person. Two hard cases follow a stated policy (a polite decline with no request to stop is "not now"; a pure question is "question" even when it hints at interest). A different policy would change a few scores.
 - 134 and 42 replies are small samples. Do not read decimals into the percentages.
-- Names, companies and addresses are invented. Languages other than English are few.
+- Names, companies and addresses are sample names. Languages other than English are few.

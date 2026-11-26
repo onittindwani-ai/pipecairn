@@ -181,18 +181,18 @@ def test_env_example_loads_as_it_is():
 
 # ---- the backup script ----
 
-def fake_docker(tmp_path, dump: str):
+def stub_docker(tmp_path, dump: str):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     d = bin_dir / "docker"
-    d.write_text("#!/bin/sh\ncase \"$*\" in\n  *pg_dump*) printf '%s' \"$FAKE_DUMP\" ;;\n  *tar*) printf 'tarbytes' ;;\nesac\n")
+    d.write_text("#!/bin/sh\ncase \"$*\" in\n  *pg_dump*) printf '%s' \"$STUB_DUMP\" ;;\n  *tar*) printf 'tarbytes' ;;\nesac\n")
     d.chmod(d.stat().st_mode | stat.S_IEXEC)
     return bin_dir
 
 
 def run_backup(tmp_path, dump):
     out = tmp_path / "out"
-    env = {"PATH": f"{fake_docker(tmp_path, dump)}:/usr/bin:/bin", "BACKUP_DIR": str(out), "FAKE_DUMP": dump, "HOME": str(tmp_path)}
+    env = {"PATH": f"{stub_docker(tmp_path, dump)}:/usr/bin:/bin", "BACKUP_DIR": str(out), "STUB_DUMP": dump, "HOME": str(tmp_path)}
     r = subprocess.run(["sh", str(ROOT / "deploy" / "hetzner" / "backup.sh")], cwd="/", env=env, capture_output=True, text=True)  # cwd is not the repo, as under cron
     return r, out
 

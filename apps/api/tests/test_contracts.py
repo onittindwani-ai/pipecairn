@@ -111,10 +111,10 @@ def test_telnyx_inbound_webhook_and_signature_follow_the_documented_scheme():
 
 
 def test_a_built_email_has_the_rfc_5322_header_fields(tmp_path):
-    from mock.mail_servers import FakeMailServers
+    from mock.mail_servers import StubMailServers
     from pipecairn.adapters.smtp_imap import SmtpImapEmail
 
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         s = make_settings(tmp_path, smtp_host=srv.host, smtp_port=srv.smtp_port, smtp_use_tls=False, smtp_user="u", smtp_password="p",
                           imap_host=srv.host, imap_port=srv.imap_port, imap_use_ssl=False)
         SmtpImapEmail(s).send(from_addr="alex@mail.example.test", to="ava@x.example.test", subject="Hi", body="Hello")

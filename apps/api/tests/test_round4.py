@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from support import DATA, NOW, make_settings
-from mock.mail_servers import FakeMailServers
+from mock.mail_servers import StubMailServers
 from pipecairn import intake, sender
 from pipecairn.adapters import mailparse
 from pipecairn.adapters.base import InboundEmail, RecipientRefused
@@ -109,7 +109,7 @@ def imap_settings(tmp_path, srv):
 def test_the_inbox_fetch_is_capped_and_a_hostile_message_does_not_stall_it(tmp_path):
     hostile = HEAD + b"Content-Type: text/html\r\n\r\n" + b"<script " * 40_000  # 320 KB
     big = HEAD + b"\r\n" + b"I am interested, send times. " + b"x" * 900_000
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         srv.store.deliver(hostile)
         srv.store.deliver(big)
         got, took = timed(SmtpImapEmail(imap_settings(tmp_path, srv)).fetch_replies)
@@ -297,13 +297,13 @@ def send_to(tmp_path, srv, reply):
 
 @pytest.mark.parametrize("reply", [550, "550 5.1.1 <ava@acme.example.test>: User unknown", "553 5.1.3 Bad address syntax", "551 User not local"])
 def test_a_bad_address_refusal_is_a_hard_bounce(tmp_path, reply):
-    with FakeMailServers() as srv, pytest.raises(RecipientRefused):
+    with StubMailServers() as srv, pytest.raises(RecipientRefused):
         send_to(tmp_path, srv, reply)
 
 
 @pytest.mark.parametrize("reply", ["554 5.7.1 <ava@acme.example.test>: Relay access denied", "550 5.7.1 Service unavailable; client host blocked using rbl.example.test", "554 Transaction failed", "450 4.2.0 Try again later"])
 def test_a_policy_or_server_refusal_is_not_a_bad_address(tmp_path, reply):
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         with pytest.raises(AdapterError) as e:
             send_to(tmp_path, srv, reply)
     assert not isinstance(e.value, RecipientRefused)
@@ -314,7 +314,7 @@ def test_a_policy_refusal_suppresses_nobody_and_counts_no_bounce(session, world,
     lead = world["lead"]
     mb = session.scalars(select(Mailbox).where(Mailbox.is_active.is_(True))).first()
     before = (mb.bounce_count, lead.status)
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         srv.store.refuse_rcpt[lead.contact.email] = "554 5.7.1 Relay access denied"
         s = make_settings(tmp_path, smtp_host=srv.host, smtp_port=srv.smtp_port, smtp_use_tls=False, smtp_user="demo", smtp_password="demo-password")
         world["adapters"].email = SmtpImapEmail(s)
@@ -327,7 +327,7 @@ def test_a_policy_refusal_suppresses_nobody_and_counts_no_bounce(session, world,
 
 def test_a_bad_address_refusal_still_suppresses_and_counts(session, world, tmp_path):  # noqa: F811
     lead = world["lead"]
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         srv.store.refuse_rcpt[lead.contact.email] = "550 5.1.1 User unknown"
         s = make_settings(tmp_path, smtp_host=srv.host, smtp_port=srv.smtp_port, smtp_use_tls=False, smtp_user="demo", smtp_password="demo-password")
         world["adapters"].email = SmtpImapEmail(s)

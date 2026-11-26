@@ -332,7 +332,7 @@
    "id": "h063",
    "expected": "wrong_person",
    "got": "question",
-   "text": "We outsource all of that to an external agency. Their contact: Fern at Bright Fictional Me"
+   "text": "We outsource all of that to an external agency. Their contact: Fern at Bright Sample Me"
   },
   {
    "id": "h064",
@@ -416,7 +416,7 @@
    "id": "h078",
    "expected": "wrong_person",
    "got": "question",
-   "text": "I'm no longer with the company. Please contact my replacement, sarah.fictional@example.tes"
+   "text": "I'm no longer with the company. Please contact my replacement, sarah.sample@example.tes"
   },
   {
    "id": "h080",
@@ -584,7 +584,7 @@
    "id": "h116",
    "expected": "bounce",
    "got": "question",
-   "text": "Your message wasn't delivered to hello@fictionalco.example because the address couldn't be"
+   "text": "Your message wasn't delivered to hello@sampleco.example because the address couldn't be"
   },
   {
    "id": "h117",
@@ -596,7 +596,7 @@
    "id": "h120",
    "expected": "bounce",
    "got": "question",
-   "text": "Action required: delivery to the following recipient failed permanently: j.doe@fictional.e"
+   "text": "Action required: delivery to the following recipient failed permanently: j.doe@sample.e"
   },
   {
    "id": "h121",

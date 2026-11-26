@@ -30,7 +30,7 @@ This guide gives no price figures. It gives the shape of the offer, so you can p
 - **Setup, once.** Business basics check (`02`), accounts and domains, install and hosting, sequence writing, list cleaning, a week in draft mode with the client reading every message. Charge for the hours and the care, not for the software, which is free.
 - **Running it, monthly.** Watching deliverability, reading the Approvals page on the days it needs a person, tuning sequences, a short report. State plainly how many hours a month that includes.
 - **Costs that pass through, at cost.** Hosting, the sending mailboxes and domains, the texting number and carrier fees, the calendar and CRM seats, and any model usage. Show the client these as their own accounts, not as your markup.
-- **Never charge for** a promised number of meetings or deals. This system drafts, sends within safety limits and reads replies. It cannot promise results, and the demo numbers are fictional.
+- **Never charge for** a promised number of meetings or deals. This system drafts, sends within safety limits and reads replies. It cannot promise results, and the demo numbers come from sample data.
 
 ## Onboarding checklist
 
@@ -53,7 +53,7 @@ Plain wording, checked by your own lawyer: what is included in setup and in the 
 
 ## Reporting
 
-The Overview page shows the speed to lead ring and the funnel. Numbers there are counts from the database, not promises. Do not quote results to a client from the demo data; it is fictional.
+The Overview page shows the speed to lead ring and the funnel. Numbers there are counts from the database, not promises. Do not quote results to a client from the demo data; it is sample data.
 
 ## When the client leaves
 

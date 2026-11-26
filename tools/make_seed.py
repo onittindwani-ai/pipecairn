@@ -1,6 +1,6 @@
 """Build the seed data, the reply test set and the answer key. Deterministic: same output every run.
 
-Everything is fictional. Domains end in example.test. Run: python tools/make_seed.py
+Everything is sample data. Domains end in example.test. Run: python tools/make_seed.py
 The answer key lists every planted problem, so tools/score_seed.py can check the system found them all.
 """
 

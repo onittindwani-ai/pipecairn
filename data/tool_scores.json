@@ -493,8 +493,8 @@
      "id": "smtp_imap",
      "name": "Your own mailboxes over SMTP and IMAP (Google Workspace, Gmail, Outlook)",
      "kind": "open source",
-     "supported_in_pipecairn": "Adapter tested on a fake mail server",
-     "run": "run on a fake server only",
+     "supported_in_pipecairn": "Adapter tested on a local mock mail server",
+     "run": "run on a local mock server only",
      "scores": {
       "fit": {
        "score": 78,
@@ -518,7 +518,7 @@
       },
       "integration": {
        "score": 80,
-       "evidence": "Tested against a fake SMTP and IMAP server; never a real mail host."
+       "evidence": "Tested against a local mock SMTP and IMAP server; never a real mail host."
       }
      },
      "sources": [
@@ -839,7 +839,7 @@
       },
       "integration": {
        "score": 45,
-       "evidence": "The model backend is wired and tested with fakes; never called live."
+       "evidence": "The model backend is wired and tested with stubs; never called live."
       }
      },
      "sources": [

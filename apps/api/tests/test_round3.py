@@ -1,12 +1,12 @@
 """Round 3 review: mail that cannot be read, an opt out worded like a bounce, a send that was cut off, a relay that refuses, delay notices, and the smaller findings.
-Every mail here is real bytes read by the real parser and the real classifier through the fake IMAP server, not a scripted adapter."""
+Every mail here is real bytes read by the real parser and the real classifier through the stub IMAP server, not a scripted adapter."""
 
 import base64
 
 import pytest
 from sqlalchemy import select
 
-from mock.mail_servers import FakeMailServers
+from mock.mail_servers import StubMailServers
 from pipecairn.adapters.smtp_imap import SmtpImapEmail
 from pipecairn.context import Ctx
 from pipecairn.jobs import job_reply_poll
@@ -29,7 +29,7 @@ def raw_mail(sender, body, *, headers="", ctype="text/plain; charset=utf-8", enc
 
 
 class Polled:
-    """A real IMAP poll: the real adapter against the fake server, the real job, the real database."""
+    """A real IMAP poll: the real adapter against the stub server, the real job, the real database."""
 
     def __init__(self, session, factory, world, tmp_path, srv):
         self.session, self.world, self.srv = session, world, srv
@@ -49,7 +49,7 @@ class Polled:
 
 @pytest.fixture
 def polled(session, factory, world, tmp_path):  # noqa: F811
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         yield Polled(session, factory, world, tmp_path, srv)
 
 
@@ -389,10 +389,10 @@ def one_enrollment(session) -> Enrollment:
 
 @pytest.fixture
 def relay(session, tmp_path, seeded):
-    """The real SMTP adapter against the fake server. Only one lead is left in the sequence."""
+    """The real SMTP adapter against the stub server. Only one lead is left in the sequence."""
     prepare(session)
     enr = one_enrollment(session)
-    with FakeMailServers() as srv:
+    with StubMailServers() as srv:
         s = mail_settings(tmp_path, srv)
         adapters = Adapters(s)
         adapters.email = SmtpImapEmail(s)

@@ -131,7 +131,7 @@ class Settings(BaseAppSettings):
         if self.mode is Mode.LIVE and not self.demo_mode:
             out += self.identity_problems()
             if self.email_adapter == "seed":
-                out.append("MODE is live but EMAIL_ADAPTER is seed, the offline stand in that sends nothing and records a fake \"sent\". Set EMAIL_ADAPTER=smtp_imap.")
+                out.append("MODE is live but EMAIL_ADAPTER is seed, the offline stand in that sends nothing and records a stub \"sent\". Set EMAIL_ADAPTER=smtp_imap.")
         return list(dict.fromkeys(out))
 
     def problems(self) -> list[str]:

@@ -133,7 +133,7 @@ def _touch(session: Session, lead: Lead, now: datetime, summary: str) -> None:
 
 
 def offline_adapter_on_real_install(settings: BaseAppSettings, channel: str) -> bool:
-    """The offline `seed` adapters record a fake "sent". On a real install (DEMO_MODE=false) they must never be taken for a real send, so such a message stays a draft."""
+    """The offline `seed` adapters record a stub "sent". On a real install (DEMO_MODE=false) they must never be taken for a real send, so such a message stays a draft."""
     name = getattr(settings, "email_adapter" if channel == "email" else "sms_adapter", "")
     return (not settings.demo_mode) and name == "seed"
 

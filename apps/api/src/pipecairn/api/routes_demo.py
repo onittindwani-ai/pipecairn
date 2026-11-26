@@ -65,7 +65,7 @@ class StressIn(BaseModel):
     n: int = Field(ge=1, le=6000)
 
 
-@router.post("/stress-leads", summary="Add many fictional leads, to test the table with thousands of rows")
+@router.post("/stress-leads", summary="Add many sample leads, to test the table with thousands of rows")
 def stress(b: StressIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     from pipecairn import intake
 
