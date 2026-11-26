@@ -8,13 +8,15 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from pipecairn import intake, metrics, templating
-from pipecairn.api.deps import db, get_ctx, writer
+from pipecairn.api.deps import db, get_ctx, owner, writer
 from pipecairn.api.serializers import deal_row, iso, lead_row, message_row, reply_row
 from pipecairn.context import Ctx
-from pipecairn.inbox import approve_and_send, reject_reply
+from pipecairn.inbox import approve_and_send, dismiss_reply, reject_reply
 from pipecairn.jobs import active_sequence
-from pipecairn.models import DEAL_STAGES, Activity, Company, Contact, Deal, Enrollment, Lead, Meeting, Message, Reply, Sequence, Step
-from pipecairn.sender import STOP_STATUSES
+from pipecairn.models import DEAL_STAGES, Activity, Company, Contact, Deal, Enrollment, Lead, Meeting, Message, Reply, Sequence, Step, UnmatchedMail
+from pipecairn.sender import STOP_STATUSES, mark_not_sent
+from pipecairn.suppression import lift_suppression, suppress_everywhere
+from pipecairn.util import is_valid_email, normalize_email
 from sendora_core.approvals import ApprovalError, pending
 from sendora_core.audit import record_audit
 from sendora_core.events import record_event
@@ -24,18 +26,19 @@ router = APIRouter(prefix="/api", tags=["data"])
 
 
 @router.get("/overview", summary="Numbers for the Overview page")
-def overview(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
+def overview(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     now = ctx.now(s)
     out = metrics.overview(s, now)
     out["pending_approvals"] = len(pending(s))
     out["open_replies"] = int(s.scalar(select(func.count()).select_from(Reply).where(Reply.handled.is_(False))) or 0)
+    out["unmatched_mail"] = int(s.scalar(select(func.count()).select_from(UnmatchedMail).where(UnmatchedMail.handled.is_(False))) or 0)
     out["scheduled"] = int(s.scalar(select(func.count()).select_from(Enrollment).where(Enrollment.status == "active", Enrollment.next_send_at.is_not(None))) or 0)
     out["now"] = iso(now)
     return out
 
 
 @router.get("/leads", summary="List leads")
-def leads(limit: int = Query(200, ge=1, le=5000), q: str = "", status: str = "", s: Session = Depends(db)):
+def leads(limit: int = Query(200, ge=1, le=5000), q: str = "", status: str = "", s: Session = Depends(db, scope="function")):
     stmt = select(Lead).join(Contact).outerjoin(Company, Contact.company_id == Company.id).order_by(Lead.id.desc()).limit(limit)
     if q:
         like = f"%{q.lower()}%"
@@ -48,7 +51,7 @@ def leads(limit: int = Query(200, ge=1, le=5000), q: str = "", status: str = "",
 
 
 @router.get("/leads/{lead_id}", summary="One lead with everything about it")
-def lead_detail(lead_id: int, s: Session = Depends(db)):
+def lead_detail(lead_id: int, s: Session = Depends(db, scope="function")):
     l = s.get(Lead, lead_id)
     if l is None:
         raise HTTPException(404, "That lead does not exist.")
@@ -66,19 +69,19 @@ class ImportBody(BaseModel):
     csv: str = Field(max_length=2_000_000)
 
 
-@router.post("/leads/import", summary="Import leads from CSV text")
-def import_csv(body: ImportBody, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+@router.post("/leads/import", summary="Import leads from CSV text (owner only: in live mode imported leads are enrolled and written to)")
+def import_csv(body: ImportBody, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     try:
-        rows = intake.parse_csv(body.csv)
+        rows, ignored = intake.parse_csv_report(body.csv)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
-    rep = intake.import_leads(s, rows, ctx.now(s))
-    record_audit(s, u["user"], "leads.imported", None, {"rows": rep.rows, "created": rep.created, "duplicates": rep.duplicates})
-    return {"rows": rep.rows, "created": rep.created, "duplicates": rep.duplicates, "flagged": rep.flagged}
+    rep = intake.import_leads(s, rows, ctx.now(s), default_timezone=ctx.settings.default_timezone)
+    record_audit(s, u["user"], "leads.imported", None, {"rows": rep.rows, "created": rep.created, "duplicates": rep.duplicates, "ignored_columns": ignored[:20]})
+    return {"rows": rep.rows, "created": rep.created, "duplicates": rep.duplicates, "flagged": rep.flagged, "ignored_columns": ignored}
 
 
-@router.post("/leads/process", summary="Enrich, score and enrol new leads now")
-def process(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+@router.post("/leads/process", summary="Enrich, score and enrol new leads now (owner only)")
+def process(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     from pipecairn.jobs import job_enrich, job_score
 
     return {**job_enrich(s, ctx), **job_score(s, ctx)}
@@ -90,7 +93,7 @@ class SuppressIn(BaseModel):
 
 
 @router.post("/leads/suppress", summary="Never contact these leads again")
-def suppress(body: SuppressIn, s: Session = Depends(db), u: dict = Depends(writer)):
+def suppress(body: SuppressIn, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
     from pipecairn.suppression import add_suppression
 
     n = 0
@@ -101,6 +104,22 @@ def suppress(body: SuppressIn, s: Session = Depends(db), u: dict = Depends(write
             e.status, e.stop_reason, e.next_send_at = "stopped", "manual_suppress", None
         n += 1
     return {"suppressed": n}
+
+
+class LiftIn(BaseModel):
+    reason: str = Field(default="lifted by the owner", min_length=3, max_length=300)
+
+
+@router.post("/leads/{lead_id}/lift-suppression", summary="Undo a stop for one lead, for example one set by a reply that was read wrongly (owner only, audited)")
+def lift(lead_id: int, body: LiftIn, s: Session = Depends(db, scope="function"), u: dict = Depends(owner)):
+    lead = s.get(Lead, lead_id)
+    if lead is None:
+        raise HTTPException(404, "That lead does not exist.")
+    try:
+        out = lift_suppression(s, lead, u["user"], body.reason)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return {"ok": True, **out}
 
 
 class StepIn(BaseModel):
@@ -121,24 +140,29 @@ def seq_row(q: Sequence) -> dict:
 
 
 @router.get("/sequences", summary="List sequences")
-def sequences(s: Session = Depends(db)):
+def sequences(s: Session = Depends(db, scope="function")):
     return [seq_row(q) for q in s.scalars(select(Sequence).order_by(Sequence.id))]
 
 
-@router.put("/sequences/{seq_id}", summary="Replace a sequence's steps")
-def update_sequence(seq_id: int, body: SequenceIn, s: Session = Depends(db), u: dict = Depends(writer)):
-    q = s.get(Sequence, seq_id)
-    if q is None:
-        raise HTTPException(404, "That sequence does not exist.")
-    for i, st in enumerate(body.steps, 1):
+def check_steps(steps: list[StepIn]) -> None:
+    """The rules a sequence must meet before it is saved, for a new one and an edited one alike. Raises a 422 that says what to fix."""
+    for i, st in enumerate(steps, 1):
         if not st.body.strip():
             raise HTTPException(422, f"Step {i} has no message. Write one before saving.")
         if i == 1 and st.channel == "email" and not st.subject.strip():
             raise HTTPException(422, "The first email needs a subject. Add one before saving. Follow ups may leave it empty to stay in the same thread.")
-    for st in body.steps:
+    for st in steps:
         bad = (templating.variables_in(st.subject) | templating.variables_in(st.body)) - templating.KNOWN
         if bad:
             raise HTTPException(422, f"Unknown field(s) {', '.join(sorted(bad))}. You can use: {', '.join(sorted(templating.KNOWN))}.")
+
+
+@router.put("/sequences/{seq_id}", summary="Replace a sequence's steps (owner only: in live mode the new text goes out to leads)")
+def update_sequence(seq_id: int, body: SequenceIn, s: Session = Depends(db, scope="function"), u: dict = Depends(owner)):
+    q = s.get(Sequence, seq_id)
+    if q is None:
+        raise HTTPException(404, "That sequence does not exist.")
+    check_steps(body.steps)
     q.name = body.name
     q.steps.clear()
     s.flush()
@@ -156,11 +180,11 @@ class PreviewIn(BaseModel):
 
 
 @router.post("/sequences/preview", summary="Show a step as one real lead would receive it")
-def preview(body: PreviewIn, s: Session = Depends(db)):
+def preview(body: PreviewIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     lead = s.get(Lead, body.lead_id) if body.lead_id else s.scalars(select(Lead).where(Lead.score.is_not(None)).order_by(Lead.id)).first()
     from pipecairn.sender import _ctx
 
-    ctx_vars = _ctx(lead) if lead else {k: f"[{k}]" for k in templating.KNOWN}
+    ctx_vars = _ctx(lead, ctx.settings.sender_name) if lead else {k: f"[{k}]" for k in templating.KNOWN}
     try:
         return {"subject": templating.render(body.subject, ctx_vars, header=True), "body": templating.render(body.body, ctx_vars), "lead": lead_row(lead)["name"] if lead else None, "error": None}
     except templating.TemplateError as exc:
@@ -168,7 +192,7 @@ def preview(body: PreviewIn, s: Session = Depends(db)):
 
 
 @router.get("/inbox", summary="Replies, newest first")
-def inbox(open: bool = False, s: Session = Depends(db)):
+def inbox(open: bool = False, s: Session = Depends(db, scope="function")):
     stmt = select(Reply).order_by(Reply.id.desc()).limit(200)
     if open:
         stmt = stmt.where(Reply.handled.is_(False))
@@ -176,9 +200,59 @@ def inbox(open: bool = False, s: Session = Depends(db)):
     for r in s.scalars(stmt):
         row = reply_row(r)
         lead = s.get(Lead, r.lead_id)
-        row.update({"name": lead_row(lead)["name"], "company": lead_row(lead)["company"], "email": lead.contact.email, "score": lead.score})
+        row.update({"name": lead_row(lead)["name"], "company": lead_row(lead)["company"], "email": lead.contact.email, "score": lead.score, "lead_status": lead.status})
         out.append(row)
     return out
+
+
+@router.get("/inbox/unmatched", summary="Mail from addresses that are not leads (an alias, a forward, someone else), newest first")
+def unmatched(open: bool = True, s: Session = Depends(db, scope="function")):
+    stmt = select(UnmatchedMail).order_by(UnmatchedMail.id.desc()).limit(200)
+    if open:
+        stmt = stmt.where(UnmatchedMail.handled.is_(False))
+    return [{"id": m.id, "from": m.from_addr, "to": m.to_addr, "subject": m.subject, "snippet": m.snippet, "flag": m.flag, "handled": m.handled, "created_at": iso(m.created_at)} for m in s.scalars(stmt)]
+
+
+@router.post("/inbox/unmatched/{mail_id}/dismiss", summary="Mark a piece of unmatched mail as read")
+def dismiss_unmatched(mail_id: int, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
+    m = s.get(UnmatchedMail, mail_id)
+    if m is None:
+        raise HTTPException(404, "That message does not exist.")
+    m.handled = True
+    record_audit(s, u["user"], "unmatched_mail.dismissed", f"unmatched:{m.id}", {})
+    return {"ok": True}
+
+
+@router.post("/inbox/unmatched/{mail_id}/suppress", summary="Never write to the sender of this unmatched mail again (a person read it and it is a request to stop)")
+def suppress_unmatched(mail_id: int, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
+    m = s.get(UnmatchedMail, mail_id)
+    if m is None:
+        raise HTTPException(404, "That message does not exist.")
+    addr = normalize_email(m.from_addr)
+    if not is_valid_email(addr):
+        raise HTTPException(422, "This message has no usable sender address to stop.")
+    stopped = suppress_everywhere(s, "email", addr, "asked to stop (mail from an address that is not a lead)", "inbox", actor=u["user"])
+    m.handled = True
+    record_audit(s, u["user"], "unmatched_mail.suppressed", f"unmatched:{m.id}", {"leads_stopped": stopped})
+    return {"ok": True, "leads_stopped": stopped}
+
+
+@router.post("/messages/{message_id}/not-sent", summary="This message is marked unconfirmed and a person checked the Sent folder: it never left, so try the step again")
+def message_not_sent(message_id: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+    try:
+        result = mark_not_sent(s, message_id, decided_by=u["user"], now=ctx.now(s))
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return {"ok": True, "result": result}
+
+
+@router.post("/inbox/{reply_id}/dismiss", summary="Mark a reply that needs no answer (for example an unverified bounce notice) as read")
+def dismiss(reply_id: int, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
+    try:
+        dismiss_reply(s, reply_id, decided_by=u["user"])
+    except ApprovalError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return {"ok": True}
 
 
 class ApproveIn(BaseModel):
@@ -186,7 +260,7 @@ class ApproveIn(BaseModel):
 
 
 @router.post("/inbox/{reply_id}/approve", summary="Approve the draft reply and send it")
-def approve_reply(reply_id: int, body: ApproveIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def approve_reply(reply_id: int, body: ApproveIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     try:
         status, reason = approve_and_send(s, ctx.effective(s), ctx.adapters, reply_id, decided_by=u["user"], role=u["role"], body=body.body, now=ctx.now(s))
     except ApprovalError as exc:
@@ -195,7 +269,7 @@ def approve_reply(reply_id: int, body: ApproveIn, s: Session = Depends(db), ctx:
 
 
 @router.post("/inbox/{reply_id}/reject", summary="Reject the draft reply")
-def reject(reply_id: int, s: Session = Depends(db), u: dict = Depends(writer)):
+def reject(reply_id: int, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
     try:
         reject_reply(s, reply_id, decided_by=u["user"], role=u["role"])
     except ApprovalError as exc:
@@ -208,7 +282,7 @@ class BookIn(BaseModel):
 
 
 @router.get("/inbox/{reply_id}/slots", summary="Open times from the calendar")
-def slots(reply_id: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
+def slots(reply_id: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     from datetime import timedelta
 
     now = ctx.now(s)
@@ -216,12 +290,13 @@ def slots(reply_id: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx)):
 
 
 @router.post("/inbox/{reply_id}/book", summary="Book a call from a reply")
-def book(reply_id: int, body: BookIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def book(reply_id: int, body: BookIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     r = s.get(Reply, reply_id)
     if r is None:
         raise HTTPException(404, "That reply does not exist.")
     guard_write(ctx.effective(s), "calendar.book")
-    lead = s.get(Lead, r.lead_id)
+    # Lock the lead's row until this request ends, so two clicks at once cannot both pass the "already booked" check and book two calls (Postgres; SQLite has one writer anyway).
+    lead = s.scalars(select(Lead).where(Lead.id == r.lead_id).with_for_update()).first()
     if lead.status in {"suppressed", "dead"} or r.intent in {"unsubscribe", "bounce"}:
         raise HTTPException(409, "This person asked not to be contacted, so no call can be booked.")
     if s.scalars(select(Meeting).where(Meeting.lead_id == lead.id)).first() is not None:
@@ -246,7 +321,7 @@ def book(reply_id: int, body: BookIn, s: Session = Depends(db), ctx: Ctx = Depen
 
 
 @router.get("/pipeline", summary="Deals by stage")
-def pipeline(s: Session = Depends(db)):
+def pipeline(s: Session = Depends(db, scope="function")):
     return {"stages": list(DEAL_STAGES), "deals": [deal_row(d) for d in s.scalars(select(Deal).order_by(Deal.id))]}
 
 
@@ -256,7 +331,7 @@ class MoveIn(BaseModel):
 
 
 @router.post("/pipeline/{deal_id}/move", summary="Move a deal to another stage")
-def move(deal_id: int, body: MoveIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def move(deal_id: int, body: MoveIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     d = s.get(Deal, deal_id)
     if d is None:
         raise HTTPException(404, "That deal does not exist.")

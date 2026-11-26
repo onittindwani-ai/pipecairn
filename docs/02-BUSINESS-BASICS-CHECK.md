@@ -9,7 +9,7 @@ Do this before you send a single real message. It is boring and it matters more 
 3. **Warm up each mailbox.** A new mailbox should send only a few messages a day and build up over weeks. Pipecairn caps each mailbox per day and pauses one that bounces more than 5 percent over 20 or more sends.
 4. **Set up the domain records.** SPF, DKIM and DMARC are three DNS records that tell receiving mail servers your mail is really yours. Your mail provider has a setup page for each. Pipecairn does not set these for you and cannot check them.
 5. **Texting needs registration.** In the US, business texts need your brand and campaign registered with carriers (called 10DLC). This is your job, takes days to weeks, and Pipecairn does not do it. Only text people who agreed to be texted.
-6. **A real way to say stop.** Every email carries an unsubscribe line. Every text carries a stop line. Pipecairn stops contacting anyone who replies with a stop word.
+6. **A real way to say stop.** Pipecairn adds a footer to every email (your `COMPANY_NAME`, your `COMPANY_ADDRESS` and "Reply STOP to opt out"), adds `List-Unsubscribe` headers, and adds a stop line to every text that lacks one. You must set the name and the address, and the app refuses to go live until you do. Pipecairn stops contacting anyone who replies with a stop word.
 7. **Know your rules.** Rules differ by country and state. This is not legal advice. Ask someone qualified where you operate.
 8. **Who is allowed to approve.** Decide who may approve replies and proposals. Set an approver account (see `04`).
 

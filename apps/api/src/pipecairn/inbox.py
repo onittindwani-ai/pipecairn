@@ -1,33 +1,46 @@
 """Inbox: capture an inbound message, read it, act on it, and send an approved reply.
 
 Rules about acting:
-- unsubscribe, bounce: act at once, no message goes out (stop and suppress).
+- a complete request to stop, a verified bounce: act at once, no message goes out (stop and suppress).
+- wording that only MIGHT be a stop request, a bounce or an automatic reply (a single word, a date, a ticket number): the sequence stops, nothing is suppressed, and the
+  reply stays open for a person.
 - everything that would send a message goes to the approval queue first.
 - the text of a reply is data. It can never trigger a tool call.
 """
 
 from __future__ import annotations
 
+import hashlib
 import re
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from pipecairn import model_tasks, offline_llm
 from pipecairn.adapters.base import InboundEmail, InboundSms
-from pipecairn.models import Activity, Deal, Enrollment, Lead, Mailbox, Message, Reply
-from pipecairn.replies import MONTHS, classify_reply
-from pipecairn.sender import deliver, maybe_pause_for_bounces
+from pipecairn.models import Activity, Deal, Enrollment, Lead, Mailbox, Message, Reply, State, UnmatchedMail
+from pipecairn.reply_rules import DELAY
+from pipecairn.reply_text import human_part
+from pipecairn.replies import MONTHS, Classification, classify_reply
+from pipecairn.sender import bounce_limits, deliver, maybe_pause_for_bounces
 from pipecairn.suppression import add_suppression
 from pipecairn.util import aware, normalize_email
-from sendora_core.approvals import ApprovalError, decide, request_approval, require_approved
+from sendora_core.approvals import ROLES_THAT_DECIDE, ApprovalError, decide, request_approval, require_approved
 from sendora_core.audit import record_audit
 from sendora_core.events import record_event
 from sendora_core.llm import LLM
+from sendora_core.models import Approval
 from sendora_core.settings import BaseAppSettings
 
 PLACEHOLDER = "[[FILL IN"
+STATUS_CODE = re.compile(r"\b([245])\.\d{1,3}\.\d{1,3}\b")
+MAX_READ_FAILURES = 3  # a message that fails to store this many polls in a row is kept as unreadable mail for a person instead of blocking the line
+
+
+def _own_subjects(session: Session, lead_id: int) -> list[str]:
+    """The subjects of the messages we sent this lead: a reply that only repeats one of them says nothing about stopping."""
+    return list(session.scalars(select(Message.subject).where(Message.lead_id == lead_id, Message.direction == "out", Message.subject != "").distinct().limit(30)))
 
 
 def _stop_enrollments(session: Session, lead_id: int, reason: str) -> None:
@@ -65,22 +78,127 @@ def find_lead_by_email(session: Session, addr: str) -> Lead | None:
     return session.scalars(select(Lead).where(Lead.contact_id == c.id)).first() if c else None
 
 
-def capture_email(session: Session, settings: BaseAppSettings, llm: LLM | None, calendar, inbound: InboundEmail, now: datetime) -> Reply | None:
-    lead = find_lead_by_email(session, inbound.from_addr)
-    if lead is None and "mailer-daemon" in inbound.from_addr.lower():
-        # a bounce comes from the mail system, not the lead: match the address named in the text
-        m = re.search(r"[\w.+\-]+@[\w\-]+(?:\.[\w\-]+)+", inbound.body)
-        lead = find_lead_by_email(session, m.group(0)) if m else None
-    if lead is None:
-        record_event(session, "reply.unmatched", None, None, {"from": "redacted"})
+def _message_id(raw: str) -> str:
+    return raw.strip().strip("<>").strip().lower()
+
+
+def lead_for_delivery_report(session: Session, references: tuple[str, ...]) -> Lead | None:
+    """The lead whose outbound message a delivery failure notice names. Matching is by the Message-ID we wrote, never by an address in the text."""
+    ids = {_message_id(r) for r in references if r.strip()}
+    if not ids:
         return None
-    if inbound.external_id and session.scalars(select(Message).where(Message.external_id == inbound.external_id, Message.direction == "in")).first():
-        return None  # already captured (polling twice must not double count)
-    msg = Message(lead_id=lead.id, channel="email", direction="in", to_addr=inbound.to_addr, subject=inbound.subject[:300], body=inbound.body[:20000],
-                  status="received", external_id=inbound.external_id, created_at=now, sent_at=inbound.received_at or now)
+    for m in session.scalars(select(Message).where(Message.direction == "out", Message.status.in_(("sent", "unconfirmed")), Message.external_id != "").order_by(Message.id.desc()).limit(5000)):
+        if _message_id(m.external_id) in ids:
+            return session.get(Lead, m.lead_id)
+    return None
+
+
+def content_key(inbound: InboundEmail) -> str:
+    """A stable id for a message that came without a Message-ID, so the same signed message sent twice is stored once."""
+    raw = "\x1f".join((inbound.from_addr.lower(), inbound.to_addr.lower(), inbound.subject, inbound.body))
+    return "h-" + hashlib.sha256(raw.encode()).hexdigest()[:40]
+
+
+EXTERNAL_ID_MAX = 120  # the width of Message.external_id; Postgres refuses a longer value, so a very long Message-ID is shortened to a stable hash
+ADDRESS_MAX = 254
+
+
+def fit_external_id(ext: str) -> str:
+    return ext if len(ext) <= EXTERNAL_ID_MAX else "h-" + hashlib.sha256(ext.encode()).hexdigest()[:40]
+
+
+def keep_unmatched(session: Session, settings: BaseAppSettings, inbound: InboundEmail, ext: str, now: datetime) -> None:
+    """Mail from an address that is not a lead. By default it is left completely alone: not read, not copied, not marked as read, because the inbox may be a
+    person's own. With KEEP_UNMATCHED_MAIL=true (a mailbox used only for this system) it is kept where the owner can read it, once, with a one click "stop writing to
+    this address". Mail that could not be read at all is always kept, but only its sender and subject, because nobody can tell what it is."""
+    if session.scalars(select(UnmatchedMail).where(UnmatchedMail.external_id == ext)).first() is not None:
+        return
+    if inbound.unreadable:
+        flag, snippet = "unreadable", ""
+    elif getattr(settings, "keep_unmatched_mail", False):
+        flag, snippet = "", human_part(inbound.body[:20000])[:600]
+    else:
+        inbound.skipped = True
+        return
+    session.add(UnmatchedMail(external_id=ext, from_addr=inbound.from_addr[:ADDRESS_MAX], to_addr=inbound.to_addr[:ADDRESS_MAX], subject=inbound.subject[:300],
+                              snippet=snippet, flag=flag, created_at=now))
+    record_event(session, "reply.unmatched", None, None, {"from": "redacted"})
+
+
+def keep_failed(session: Session, inbound: InboundEmail, now: datetime) -> None:
+    """The last resort for a message that could not be stored again and again: its sender and subject are kept for a person, never its text."""
+    ext = fit_external_id(inbound.external_id or content_key(inbound))
+    if session.scalars(select(UnmatchedMail).where(UnmatchedMail.external_id == ext)).first() is None:
+        session.add(UnmatchedMail(external_id=ext, from_addr=inbound.from_addr[:ADDRESS_MAX], to_addr=inbound.to_addr[:ADDRESS_MAX], subject=inbound.subject[:300],
+                                  snippet="", flag="unreadable", created_at=now))
+
+
+def note_read_failure(session: Session, inbound: InboundEmail, now: datetime) -> bool:
+    """Count one failed attempt to store this message. At the third, it is kept as unreadable mail for a person and True comes back (so it can be marked read)."""
+    key = "pf:" + hashlib.sha256((inbound.external_id or content_key(inbound)).encode()).hexdigest()[:40]
+    row = session.get(State, key)
+    n = int(row.value or 0) + 1 if row is not None else 1
+    if row is None:
+        session.add(State(key=key, value=str(n)))
+    else:
+        row.value = str(n)
+    if n < MAX_READ_FAILURES:
+        return False
+    keep_failed(session, inbound, now)
+    return True
+
+
+def dsn_outcome(inbound: InboundEmail) -> str:
+    """What a delivery status report says happened: "hard" (failed for good), "temporary" (late, mailbox full, retrying: nothing is wrong with the address),
+    "other" (delivered, relayed) or "unknown". Decided from the report's own Action and Status lines; the words around them are only used when they are missing."""
+    action, status = inbound.dsn_action.lower(), inbound.dsn_status
+    if action:
+        if action == "failed" and status.startswith("5"):
+            return "hard"
+        if action == "failed" and not status:
+            return "unknown"  # it says failed but not why or for how long: a person reads it, nothing is changed
+        if action == "delayed" or status.startswith("4") or action == "failed":
+            return "temporary"
+        return "other"
+    text = human_part(inbound.body) + "\n" + inbound.subject
+    m = STATUS_CODE.search(text)
+    if m:
+        return "hard" if m.group(1) == "5" else "temporary" if m.group(1) == "4" else "other"
+    return "temporary" if DELAY.search(text) else "unknown"
+
+
+def capture_email(session: Session, settings: BaseAppSettings, llm: LLM | None, calendar, inbound: InboundEmail, now: datetime) -> Reply | None:
+    """Read one inbound email. The sender line proves nothing, so what a message may do depends on what it can prove:
+    a request to stop is honoured at once (a wrong stop can be undone by hand, a missed one cannot), but a bounce, which suppresses the address
+    and counts against the mailbox, is believed only from a real delivery status report that names a message we sent and says the delivery failed for good
+    (Action failed with a 5.x.x Status). A report that says "delayed" or a 4.x.x status changes nothing."""
+    ext = fit_external_id(inbound.external_id or content_key(inbound))
+    if inbound.is_dsn:
+        lead = lead_for_delivery_report(session, inbound.references)
+    else:
+        lead = find_lead_by_email(session, inbound.from_addr)
+        if lead is None:
+            lead = lead_for_delivery_report(session, inbound.references)  # an alias or a forward: the reply still names the message of ours it answers
+    if lead is None:
+        keep_unmatched(session, settings, inbound, ext, now)
+        return None
+    if session.scalars(select(Message).where(Message.external_id == ext, Message.direction == "in")).first():
+        return None  # already captured (polling twice, or a signed webhook sent twice, must not double count)
+    verified = False
+    if inbound.is_dsn:
+        outcome = dsn_outcome(inbound)
+        if outcome in {"temporary", "other"}:
+            # The mail is late, a mailbox is full, or it was delivered: nothing is wrong with the address, so nothing is suppressed, stopped or counted against the mailbox.
+            record_audit(session, "system", "bounce.not_permanent", f"lead:{lead.id}", {"action": inbound.dsn_action or "unknown", "status": inbound.dsn_status or "unknown"})
+            session.add(Activity(lead_id=lead.id, kind="delivery", summary=f"Delivery notice ignored ({inbound.dsn_action or 'no action'} {inbound.dsn_status}): the mail was late, not refused".strip(), created_at=now))
+            return None
+        verified = outcome == "hard"
+    msg = Message(lead_id=lead.id, channel="email", direction="in", to_addr=inbound.to_addr[:ADDRESS_MAX], subject=inbound.subject[:300], body=inbound.body[:20000],
+                  status="received", external_id=ext, blocked_reason=inbound.parse_problem[:120], created_at=now, sent_at=inbound.received_at or now)
     session.add(msg)
     session.flush()
-    return _read_and_act(session, settings, llm, calendar, lead, msg, now)
+    return _read_and_act(session, settings, llm, calendar, lead, msg, now, bounce_verified=verified, auth_note=(inbound.auth_results or "none")[:300], is_dsn=inbound.is_dsn,
+                         unreadable=inbound.unreadable, auto_reply=inbound.auto_reply)
 
 
 def capture_sms(session: Session, settings: BaseAppSettings, llm: LLM | None, calendar, inbound: InboundSms, now: datetime) -> Reply | None:
@@ -99,9 +217,20 @@ def capture_sms(session: Session, settings: BaseAppSettings, llm: LLM | None, ca
     return _read_and_act(session, settings, llm, calendar, lead, msg, now)
 
 
-def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, calendar, lead: Lead, msg: Message, now: datetime) -> Reply:
-    cls = classify_reply(msg.body, llm, msg.subject or "")
-    reply = Reply(message_id=msg.id, lead_id=lead.id, intent=cls.intent, confidence=cls.confidence, summary=cls.summary, created_at=now)
+def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, calendar, lead: Lead, msg: Message, now: datetime, *, bounce_verified: bool = False,
+                  auth_note: str = "", is_dsn: bool = False, unreadable: bool = False, auto_reply: bool | None = None) -> Reply:
+    if bounce_verified:
+        cls = Classification(intent="bounce", confidence=0.99, summary="The mail server reported that the message could not be delivered for good.", source="rule")
+    elif is_dsn:
+        # A delivery status report that does not say whether the delivery failed for good: a person reads it, nothing is changed and nothing is drafted.
+        cls = Classification(intent="bounce", confidence=0.6, summary="A delivery report that does not say whether the message failed for good.", source="rule")
+    else:
+        cls = classify_reply(msg.body, None if unreadable else llm, msg.subject or "", is_dsn=is_dsn, auto_reply=auto_reply,
+                             own_subjects=_own_subjects(session, lead.id))  # raw text of a message that could not be read never goes to the model
+    summary = cls.summary
+    if msg.blocked_reason.startswith("parse:") and not unreadable:
+        summary = f"{summary} Not fully readable ({msg.blocked_reason[7:]}), so check the text."
+    reply = Reply(message_id=msg.id, lead_id=lead.id, intent=cls.intent, confidence=cls.confidence, summary=summary[:300], created_at=now)
     session.add(reply)
     session.flush()
     record_event(session, "reply.classified", "reply", reply.id, {"intent": cls.intent, "source": cls.source})
@@ -109,13 +238,31 @@ def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, 
     deal = session.scalars(select(Deal).where(Deal.lead_id == lead.id)).first()
     c = lead.contact
     i = cls.intent
-    if i == "unsubscribe":
+    if cls.stop_wording:
+        record_audit(session, "system", "reply.stop_wording_not_certain", f"reply:{reply.id}", {"intent": i, "certain": cls.certain})
+    if i == "unsubscribe" and not cls.certain:
+        # The reader took it for a request to stop, but the words are not a complete one ("block", "legal team", "remove the setup fee"). Nothing is suppressed: the
+        # sequence stops and a person reads it. One click on the reply makes it permanent, and a wrongly stopped person can be written to by hand.
+        _stop_enrollments(session, lead.id, "possible_stop")
+        if lead.status not in {"suppressed", "dead", "won"}:
+            lead.status = "replied"
+        reply.suggested_action, reply.handled = "review_stop", False
+    elif i == "unsubscribe":
         add_suppression(session, "email", c.email, "asked to stop (reply)", "reply")
         if msg.channel == "sms" and c.phone:
             add_suppression(session, "phone", c.phone, "asked to stop (text)", "reply")
         _stop_enrollments(session, lead.id, "unsubscribe")
         lead.status = "suppressed"
         reply.suggested_action, reply.handled = "suppressed", True
+        # Mail can be forged, so the owner can see how the sender was checked and undo a wrong stop by hand.
+        record_audit(session, "system", "suppression.from_reply", f"lead:{lead.id}", {"channel": msg.channel, "authentication": auth_note or "not available"})
+    elif i == "bounce" and not bounce_verified:
+        # "Mail delivery failed" typed into any email proves nothing. It changes no address, no lead and no mailbox. It also is not hidden: a person may have
+        # written "your mail bounced to my spam, happy to talk Tuesday", so it stays open in the Inbox until someone reads it and marks it done.
+        # The sequence stops meanwhile: a person who may just have answered must not get the next step while this waits.
+        _stop_enrollments(session, lead.id, "unverified_bounce")
+        reply.suggested_action, reply.handled = "unverified_bounce", False
+        record_audit(session, "system", "bounce.not_verified", f"reply:{reply.id}", {"authentication": auth_note or "not available"})
     elif i == "bounce":
         add_suppression(session, "email", c.email, "bounced", "reply")
         _stop_enrollments(session, lead.id, "bounce")
@@ -125,8 +272,13 @@ def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, 
             mb = session.get(Mailbox, last.mailbox_id)
             if mb:
                 mb.bounce_count += 1
-                maybe_pause_for_bounces(mb)
+                maybe_pause_for_bounces(mb, *bounce_limits(settings))
         reply.suggested_action, reply.handled = "suppressed", True
+    elif i == "out_of_office" and not cls.certain:
+        # A date or a ticket number with no auto reply header ("I'm back in the office next Tuesday", "re ticket #4412") is often a person. The sequence stops, nothing is
+        # drafted and the reply stays open, so a hot reply is not buried as an away message.
+        _stop_enrollments(session, lead.id, "possible_auto_reply")
+        reply.suggested_action, reply.handled = "check_auto_reply", False
     elif i == "out_of_office":
         until = parse_return_date(msg.body, now, 7)
         for e in session.scalars(select(Enrollment).where(Enrollment.lead_id == lead.id, Enrollment.status == "active")):
@@ -136,9 +288,14 @@ def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, 
         until = parse_return_date(msg.body, now, 90)
         for e in session.scalars(select(Enrollment).where(Enrollment.lead_id == lead.id, Enrollment.status == "active")):
             e.status, e.paused_until, e.next_send_at = "paused", until, None
-        reply.suggested_action, reply.handled, reply.return_on = "snooze", True, until.date().isoformat()
+        reply.suggested_action, reply.handled, reply.return_on = "snooze", cls.certain, until.date().isoformat()  # stop wording in it: a person still reads it
         if deal and deal.stage in {"new", "contacted"}:
             deal.stage = "replied"
+    elif unreadable:
+        # Nothing could be understood from this message, so nothing is drafted and nothing is sent. The person wrote back, so the sequence stops until a human has read it.
+        _stop_enrollments(session, lead.id, "unreadable_reply")
+        lead.status = "replied"
+        reply.summary, reply.suggested_action = "The message could not be read properly. Open it in your mailbox.", "unreadable_mail"
     else:
         _stop_enrollments(session, lead.id, i)
         lead.status = "replied"
@@ -151,15 +308,27 @@ def _read_and_act(session: Session, settings: BaseAppSettings, llm: LLM | None, 
             except Exception:
                 slots = []
         reply.suggested_action = {"interested": "book_call", "question": "answer_question", "wrong_person": "ask_referral"}[i]
-        reply.draft_reply = model_tasks.write_draft(llm, i, c.first_name, slots, msg.body, offline_llm.draft_text(i, c.first_name, slots))
+        sender = getattr(settings, "sender_name", "Alex")
+        reply.draft_reply = model_tasks.write_draft(llm, i, c.first_name, slots, msg.body, offline_llm.draft_text(i, c.first_name, slots, sender), sender)
         ap = request_approval(session, "reply.send", f"Reply to {c.first_name} {c.last_name} ({i})", {"reply_id": reply.id, "lead_id": lead.id}, "medium", "system")
         reply.approval_id = ap.id
     session.flush()
     return reply
 
 
+def _set_handled(session: Session, reply_id: int, value: bool, only_if: bool | None = None) -> int:
+    """One conditional update, so two clicks at once cannot both win. Returns how many rows changed."""
+    stmt = update(Reply).where(Reply.id == reply_id)
+    if only_if is not None:
+        stmt = stmt.where(Reply.handled.is_(only_if))
+    return session.execute(stmt.values(handled=value).execution_options(synchronize_session=False)).rowcount or 0
+
+
 def approve_and_send(session: Session, settings: BaseAppSettings, adapters, reply_id: int, *, decided_by: str, role: str, body: str | None, now: datetime) -> tuple[str, str]:
-    """A person approves the draft (optionally edited), then it goes through the same gates as any send."""
+    """A person approves the draft (optionally edited), then it goes through the same gates as any send.
+
+    The approval is decided first (one atomic update, so a double click cannot approve twice). When the send does not happen (the daily cap is reached, a quiet
+    hour, the vendor failed, a safety check stopped it) the reply stays open and the approval stays "approved", so approving again simply tries again."""
     reply = session.get(Reply, reply_id)
     if reply is None or reply.approval_id is None:
         raise ApprovalError("This reply has no draft waiting for approval.")
@@ -170,20 +339,56 @@ def approve_and_send(session: Session, settings: BaseAppSettings, adapters, repl
         raise ApprovalError("The reply is empty. Write a message, or reject the draft, before you approve.")
     if PLACEHOLDER in text:
         raise ApprovalError("The draft still has a [[FILL IN]] part. Write that part, then approve.")
-    decide(session, reply.approval_id, True, decided_by, role)
+    approval = session.get(Approval, reply.approval_id)
+    if approval is None:
+        raise ApprovalError("This reply has no draft waiting for approval.")
+    again = approval.status == "approved" and not reply.handled
+    if approval.status == "pending":
+        decide(session, reply.approval_id, True, decided_by, role)
+    elif again:
+        if role not in ROLES_THAT_DECIDE:
+            raise ApprovalError("Only an owner or an approver can send.")
+    else:
+        raise ApprovalError(f"Approval {approval.id} was already {approval.status}.")
     require_approved(session, reply.approval_id, "reply.send")
+    if _set_handled(session, reply.id, True, only_if=False) != 1:
+        raise ApprovalError("This reply was already sent.")  # a second click at the same moment lost the claim
     lead = session.get(Lead, reply.lead_id)
     status, reason = deliver(session, settings, adapters, lead=lead, enr=None, channel=reply.message.channel, subject=("Re: " + reply.message.subject)[:300], body=text, now=now, respect_quiet=False)
-    reply.handled = status in {"sent", "drafted"}
-    record_audit(session, decided_by, "reply.approved", f"reply:{reply.id}", {"result": status, "reason": reason})
-    if status in {"sent", "drafted"}:
-        session.add(Activity(lead_id=lead.id, kind="message", summary="Approved reply " + ("sent" if status == "sent" else "saved as a draft (draft mode)"), created_at=now))
+    done = status in {"sent", "drafted", "unconfirmed"}  # unconfirmed: the connection broke after the message was handed over, so it must not be sent again
+    if not done:
+        _set_handled(session, reply.id, False)  # still open: the person can try again, or reject it
+    session.refresh(reply)
+    record_audit(session, decided_by, "reply.sent_again" if again else "reply.approved", f"reply:{reply.id}", {"result": status, "reason": reason})
+    if done:
+        session.add(Activity(lead_id=lead.id, kind="message", summary="Approved reply " + {"sent": "sent", "unconfirmed": "may or may not have been sent (the connection broke); check the Sent folder"}.get(status, "saved as a draft (draft mode)"), created_at=now))
     return status, reason
 
 
 def reject_reply(session: Session, reply_id: int, *, decided_by: str, role: str, note: str = "") -> None:
+    """Reject a draft that is waiting, or dismiss one that was approved but could not be sent (it can never be sent now, so it is closed as rejected)."""
     reply = session.get(Reply, reply_id)
     if reply is None or reply.approval_id is None:
         raise ApprovalError("This reply has no draft waiting for approval.")
-    decide(session, reply.approval_id, False, decided_by, role, note)
-    reply.handled = True
+    approval = session.get(Approval, reply.approval_id)
+    if approval is not None and approval.status == "approved" and not reply.handled:
+        if role not in ROLES_THAT_DECIDE:
+            raise ApprovalError("Only an owner or an approver can decide.")
+        session.execute(update(Approval).where(Approval.id == approval.id, Approval.status == "approved")
+                        .values(status="rejected", decided_by=decided_by, decision_note=(note or "Dismissed: it was approved but could not be sent.")[:500]).execution_options(synchronize_session=False))
+        record_audit(session, decided_by, "approval.rejected", f"approval:{approval.id}", {"note": note, "after_approval": True})
+    else:
+        decide(session, reply.approval_id, False, decided_by, role, note)
+    _set_handled(session, reply.id, True)
+    session.refresh(reply)
+
+
+def dismiss_reply(session: Session, reply_id: int, *, decided_by: str) -> None:
+    """Mark a reply that needs no draft (an unverified bounce, an answer already handled by hand) as read. It never sends anything."""
+    reply = session.get(Reply, reply_id)
+    if reply is None:
+        raise ApprovalError("That reply does not exist.")
+    if reply.approval_id is not None and not reply.handled:
+        raise ApprovalError("This reply has a draft waiting. Approve or reject it instead.")
+    _set_handled(session, reply.id, True)
+    record_audit(session, decided_by, "reply.dismissed", f"reply:{reply.id}", {})

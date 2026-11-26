@@ -36,7 +36,8 @@ def _locked_update(path: Path, fn):
 
 def push_inbound_email(settings: BaseAppSettings, e: InboundEmail) -> None:
     """Used by the demo to drop a reply into the seed inbox. The reply poll job picks it up."""
-    _locked_update(inbox_path(settings), lambda d: (d + [{"external_id": e.external_id, "from_addr": e.from_addr, "to_addr": e.to_addr, "subject": e.subject, "body": e.body}], None))
+    _locked_update(inbox_path(settings), lambda d: (d + [{"external_id": e.external_id, "from_addr": e.from_addr, "to_addr": e.to_addr, "subject": e.subject, "body": e.body,
+                                                          "is_dsn": e.is_dsn, "references": list(e.references), "auth_results": e.auth_results}], None))
 
 
 def clear_inbox(settings: BaseAppSettings) -> None:
@@ -53,7 +54,10 @@ class SeedEmail:
 
     def fetch_replies(self) -> list[InboundEmail]:
         box = _locked_update(inbox_path(self.settings), lambda d: ([], d))
-        return [InboundEmail(**m) for m in box]
+        return [InboundEmail(**{**m, "references": tuple(m.get("references", ()))}) for m in box]
+
+    def mark_seen(self, uids: list[str]) -> None:
+        """The offline inbox hands each message over once, so there is nothing to mark."""
 
     def healthcheck(self) -> tuple[bool, str]:
         return True, "Offline seed mailbox. Nothing leaves this machine."
@@ -110,8 +114,10 @@ class SeedEsign:
     def __init__(self, settings: BaseAppSettings):
         self.settings = settings
 
-    def prepare(self, *, contract_pdf: bytes, title: str, signers: list[dict]) -> HandoffResult:
-        return HandoffResult(package_path="", instructions="Seed e-signature: nothing is prepared on disk.", sent=False)
+    def prepare(self, *, contract_pdf: bytes, title: str, signers: list[dict], open_items: list[str] | None = None, folder_key: str = "") -> HandoffResult:
+        from pipecairn.handoff import STEPS
+
+        return HandoffResult(package_path="", instructions="Offline seed e-signature: no folder is written. Set ESIGN_ADAPTER=breezedoc_handoff to get one.\n\n" + STEPS, sent=False)
 
     def healthcheck(self) -> tuple[bool, str]:
         return True, "Offline seed e-signature."

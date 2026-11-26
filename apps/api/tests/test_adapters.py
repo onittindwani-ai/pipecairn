@@ -13,7 +13,7 @@ from pipecairn.adapters.google_calendar import GoogleCalendar
 from pipecairn.adapters.smtp_imap import SmtpImapEmail
 from pipecairn.adapters.telnyx import TelnyxSms, parse_inbound, verify_telnyx_webhook
 from pipecairn.registry import build_adapters, build_registry
-from conftest import make_settings
+from support import make_settings
 from mock.calcom_mock import CalcomMock
 from mock.mail_servers import FakeMailServers
 from mock.telnyx_mock import TelnyxMock
@@ -33,6 +33,8 @@ def test_smtp_imap_send_and_fetch_against_fake_servers(tmp_path):
         srv.store.deliver(b"From: Ava <ava@x.example.test>\r\nTo: alex@mail.example.test\r\nSubject: Re: Hi\r\nMessage-ID: <abc@x>\r\n\r\nYes please\r\n")
         got = a.fetch_replies()
         assert [(g.from_addr, g.body.strip(), g.external_id) for g in got] == [("ava@x.example.test", "Yes please", "<abc@x>")]
+        assert len(a.fetch_replies()) == 1  # reading does not mark it read: that happens after it is stored, with mark_seen
+        a.mark_seen([g.uid for g in got])
         assert a.fetch_replies() == []  # marked seen
         assert a.healthcheck()[0] is True
 

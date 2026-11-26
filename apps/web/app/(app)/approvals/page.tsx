@@ -20,7 +20,7 @@ export default function ApprovalsPage() {
   });
   if (q.isError) return <div className="cl-page"><PageHead title="Approvals" /><LoadError error={q.error} onRetry={() => q.refetch()} what="approvals" /></div>;
   if (!q.data) return <div className="cl-page"><PageHead title="Approvals" /><ListSkeleton /></div>;
-  const pending = q.data.filter((a) => a.status === "pending"), done = q.data.filter((a) => a.status !== "pending");
+  const pending = q.data.filter((a) => a.status === "pending"), done = q.data.filter((a) => a.status !== "pending" && !(a.status === "approved" && a.reply_open)), stuck = q.data.filter((a) => a.status === "approved" && a.reply_open);
   const tone = (r: string) => (r === "high" ? "danger" : r === "medium" ? "warning" : "neutral") as "danger" | "warning" | "neutral";
   return (
     <div className="cl-page">
@@ -31,6 +31,7 @@ export default function ApprovalsPage() {
             <li key={a.id} className="cl-item" style={{ cursor: "default" }}>
               <span className="cl-item__top"><strong>{plainWords(a.summary)}</strong><Badge tone={tone(a.risk)}>{a.risk} risk</Badge></span>
               <span className="cl-mini">{ACTION_WORDS[a.action] ?? plainWords(a.action)} · requested by {a.requested_by} · {formatWhen(new Date(a.created_at))}{a.action === "reply.send" ? <> · <Link href="/inbox">Read the draft in the Inbox</Link></> : null}</span>
+              {a.draft ? <blockquote className="cl-quote cl-pre" style={{ margin: 0 }}>{a.draft}</blockquote> : null}
               {canWrite ? <span className="sx-row">
                 <Button size="sm" variant="primary" onClick={async () => { await decide.mutateAsync({ id: a.id, approve: true }); }}>Approve</Button>
                 <Button size="sm" variant="ghost" onClick={async () => { await decide.mutateAsync({ id: a.id, approve: false }); }}>Reject</Button>
@@ -38,6 +39,20 @@ export default function ApprovalsPage() {
             </li>))}</ul>
         )}
       </Card>
+      {stuck.length ? (
+        <Card title={`Approved but not sent (${stuck.length})`}>
+          <ul className="cl-list">{stuck.map((a) => (
+            <li key={a.id} className="cl-item" style={{ cursor: "default" }}>
+              <span className="cl-item__top"><strong>{plainWords(a.summary)}</strong><Badge tone="warning">not sent yet</Badge></span>
+              <span className="cl-mini">It was approved, but it did not go out: the daily limit may be reached, it may be outside sending hours, or a safety check stopped it. Try again, or reject it.</span>
+              {a.draft ? <blockquote className="cl-quote cl-pre" style={{ margin: 0 }}>{a.draft}</blockquote> : null}
+              {canWrite ? <span className="sx-row">
+                <Button size="sm" variant="primary" onClick={async () => { await decide.mutateAsync({ id: a.id, approve: true }); }}>Send again</Button>
+                <Button size="sm" variant="ghost" onClick={async () => { await decide.mutateAsync({ id: a.id, approve: false }); }}>Reject</Button>
+              </span> : <span className="cl-mini">Read only: the viewer role cannot send.</span>}
+            </li>))}</ul>
+        </Card>
+      ) : null}
       <Card title="Recently decided">
         <ul className="cl-list">{done.slice(0, 20).map((a) => <li key={a.id} className="cl-item" style={{ cursor: "default" }}><span className="cl-item__top"><span>{plainWords(a.summary)}</span><Badge tone={a.status === "approved" ? "success" : "neutral"}>{a.status}</Badge></span><span className="cl-mini">{a.decided_by ? `by ${a.decided_by}` : ""}</span></li>)}</ul>
         {done.length === 0 ? <span className="cl-mini">Nothing decided yet.</span> : null}

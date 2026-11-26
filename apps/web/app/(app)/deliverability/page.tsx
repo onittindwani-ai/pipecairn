@@ -1,13 +1,34 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
-import { Badge, Button, Card, CountUp, EmptyState, Gauge, notify } from "@sendora/ui-kit";
+import { useState } from "react";
+import { Badge, Button, Card, CountUp, EmptyState, Field, Gauge, notify } from "@sendora/ui-kit";
 import { ListSkeleton, LoadError, PageHead } from "@/components/Parts";
 import { get, post } from "@/lib/api";
 import { useMe } from "@/lib/hooks";
 import type { Mailbox } from "@/lib/types";
 
 const Dns = ({ ok, name }: { ok: boolean; name: string }) => <span className={`cl-chip ${ok ? "cl-chip--ok" : "cl-chip--bad"}`}>{ok ? <Check size={13} aria-hidden /> : <X size={13} aria-hidden />}{name} {ok ? "set" : "missing"}</span>;
+
+function AddMailbox({ onAdded }: { onAdded: () => void }) {
+  const [address, setAddress] = useState("");
+  const [cap, setCap] = useState("30");
+  const add = useMutation({
+    mutationFn: () => post("/mailboxes", { address: address.trim(), daily_cap: Math.max(1, Math.min(2000, Number(cap) || 30)) }),
+    onSuccess: () => { notify.success("Mailbox added."); setAddress(""); onAdded(); },
+    onError: (e: Error) => notify.error("Could not add the mailbox", e.message),
+  });
+  return (
+    <Card title="Add a sending mailbox">
+      <div className="cl-stack">
+        <p className="cl-mini">Use the address of the account you set in SMTP_USER, or one that account may send as. Start with a low daily cap and raise it as the mailbox warms up.</p>
+        <Field label="Mailbox address" type="email" value={address} onChange={setAddress} maxLength={254} />
+        <Field label="Daily cap" type="number" min={1} value={cap} onChange={setCap} />
+        <div><Button variant="primary" disabled={!address.includes("@")} disabledReason="Type the mailbox address first" onClick={async () => { await add.mutateAsync(); }}>Add mailbox</Button></div>
+      </div>
+    </Card>
+  );
+}
 
 export default function DeliverabilityPage() {
   const qc = useQueryClient();
@@ -19,7 +40,8 @@ export default function DeliverabilityPage() {
   return (
     <div className="cl-page">
       <PageHead title="Deliverability" sub="Each sending mailbox has a daily cap. Use separate domains for cold email, never your main one. A mailbox that bounces too much is paused for you." />
-      {q.data.length === 0 ? <Card><EmptyState title="No mailboxes yet" body="Connect a mailbox on the Integrations page." /></Card> : (
+      {me.data?.role === "owner" ? <AddMailbox onAdded={() => qc.invalidateQueries({ queryKey: ["deliverability"] })} /> : null}
+      {q.data.length === 0 ? <Card><EmptyState title="No mailboxes yet" body="Nothing can be sent until a mailbox is added. The owner can add one above." /></Card> : (
         <div className="cl-cols cl-mail">
           {q.data.map((m) => {
             const pct = m.daily_cap ? m.sent_today / m.daily_cap : 0;

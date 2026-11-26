@@ -26,6 +26,10 @@ export function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((c) => c.trim() !== ""));
 }
 
+/** The names the server accepts for the email column (the server does the same matching: case, spaces, hyphens and a few common spellings do not matter). */
+const EMAIL_HEADERS = new Set(["email", "e_mail", "email_address", "mail"]);
+export const isEmailHeader = (name: string) => EMAIL_HEADERS.has(name.replace(/^\ufeff/, "").trim().toLowerCase().replace(/[\s\-.]+/g, "_").replace(/^_+|_+$/g, ""));
+
 export function summariseCsv(text: string, previewRows = 5): CsvSummary {
   const all = parseCsv(text);
   const columns = (all[0] ?? []).map((c) => c.trim());
@@ -33,6 +37,6 @@ export function summariseCsv(text: string, previewRows = 5): CsvSummary {
     columns,
     rows: Math.max(0, all.length - 1),
     preview: all.slice(1, 1 + previewRows),
-    hasEmail: columns.some((c) => c.toLowerCase() === "email"),
+    hasEmail: columns.some(isEmailHeader),
   };
 }

@@ -16,7 +16,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives import serialization
 
-from conftest import make_settings
+from support import make_settings
 from pipecairn.adapters.calcom import CalcomCalendar
 from pipecairn.adapters.telnyx import TelnyxSms, parse_inbound, verify_telnyx_webhook
 from sendora_core.adapters import AdapterError

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -18,14 +20,15 @@ router = APIRouter(prefix="/api", tags=["proposals"])
 class ProposalIn(BaseModel):
     lead_id: int
     title: str = Field(min_length=1, max_length=200)
-    scope: list[str] = Field(default_factory=list, max_length=20)
+    scope: list[Annotated[str, StringConstraints(max_length=300)]] = Field(default_factory=list, max_length=20)  # 20 items of up to 300 characters
     price_cents: int = Field(ge=0, le=100_000_000)
     call_notes: str = Field(default="", max_length=8000)
 
 
-def _md(lead: Lead, b: ProposalIn) -> str:
-    c = lead.contact
-    return proposals.build_proposal_md(title=b.title, client_name=f"{c.first_name} {c.last_name}".strip() or c.email, client_company=c.company.name if c.company else "", scope=b.scope, price_cents=b.price_cents, call_notes=b.call_notes)
+def _md(lead: Lead, b: ProposalIn, ctx: Ctx) -> str:
+    c, st = lead.contact, ctx.settings
+    return proposals.build_proposal_md(title=b.title, client_name=f"{c.first_name} {c.last_name}".strip() or c.email, client_company=c.company.name if c.company else "", scope=b.scope,
+                                       price_cents=b.price_cents, call_notes=b.call_notes, your_company=st.company_name, valid_days=st.proposal_valid_days, currency=st.currency_symbol)
 
 
 def row(p: Proposal) -> dict:
@@ -33,19 +36,19 @@ def row(p: Proposal) -> dict:
 
 
 @router.post("/proposals/preview", summary="Build the proposal text without saving")
-def preview(b: ProposalIn, s: Session = Depends(db)):
+def preview(b: ProposalIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     lead = s.get(Lead, b.lead_id)
     if lead is None:
         raise HTTPException(404, "That lead does not exist.")
-    return {"body_md": _md(lead, b)}
+    return {"body_md": _md(lead, b, ctx)}
 
 
 @router.post("/proposals", summary="Save a proposal")
-def create(b: ProposalIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def create(b: ProposalIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     lead = s.get(Lead, b.lead_id)
     if lead is None:
         raise HTTPException(404, "That lead does not exist.")
-    p = Proposal(lead_id=lead.id, title=b.title, scope=b.scope, price_cents=b.price_cents, call_notes=b.call_notes, body_md=_md(lead, b), status="ready", created_at=ctx.now(s))
+    p = Proposal(lead_id=lead.id, title=b.title, scope=b.scope, price_cents=b.price_cents, call_notes=b.call_notes, body_md=_md(lead, b, ctx), status="ready", created_at=ctx.now(s))
     s.add(p)
     deal = s.scalars(select(Deal).where(Deal.lead_id == lead.id)).first()
     if deal:
@@ -58,7 +61,7 @@ def create(b: ProposalIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx),
 
 
 @router.get("/proposals", summary="List proposals")
-def listing(lead_id: int | None = None, s: Session = Depends(db)):
+def listing(lead_id: int | None = None, s: Session = Depends(db, scope="function")):
     stmt = select(Proposal).order_by(Proposal.id.desc())
     if lead_id:
         stmt = stmt.where(Proposal.lead_id == lead_id)
@@ -66,22 +69,23 @@ def listing(lead_id: int | None = None, s: Session = Depends(db)):
 
 
 @router.get("/proposals/{pid}/pdf", summary="The proposal as a PDF")
-def pdf(pid: int, s: Session = Depends(db)):
+def pdf(pid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     p = s.get(Proposal, pid)
     if p is None:
         raise HTTPException(404, "That proposal does not exist.")
-    return Response(proposals.md_to_pdf(p.body_md, p.title), media_type="application/pdf", headers={"content-disposition": f'inline; filename="proposal-{p.id}.pdf"'})
+    return Response(proposals.md_to_pdf(p.body_md, p.title, ctx.settings.page_size), media_type="application/pdf", headers={"content-disposition": f'inline; filename="proposal-{p.id}.pdf"'})
 
 
 @router.post("/proposals/{pid}/contract", summary="Create the contract text from a proposal")
-def make_contract(pid: int, s: Session = Depends(db), u: dict = Depends(writer)):
+def make_contract(pid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     p = s.get(Proposal, pid)
     if p is None:
         raise HTTPException(404, "That proposal does not exist.")
     c = s.scalars(select(Contract).where(Contract.proposal_id == p.id)).first()
     if c is None:
         lead = s.get(Lead, p.lead_id)
-        md = proposals.build_contract_md(proposal_title=p.title, client_name=f"{lead.contact.first_name} {lead.contact.last_name}".strip(), client_company=lead.contact.company.name if lead.contact.company else "", scope=p.scope, price_cents=p.price_cents)
+        md = proposals.build_contract_md(proposal_title=p.title, client_name=f"{lead.contact.first_name} {lead.contact.last_name}".strip(), client_company=lead.contact.company.name if lead.contact.company else "", scope=p.scope, price_cents=p.price_cents,
+                                        your_company=ctx.settings.company_name, currency=ctx.settings.currency_symbol, notice_days=ctx.settings.contract_notice_days)
         c = Contract(proposal_id=p.id, body_md=md)
         s.add(c)
         s.flush()
@@ -90,23 +94,25 @@ def make_contract(pid: int, s: Session = Depends(db), u: dict = Depends(writer))
 
 
 @router.get("/contracts/{cid}/pdf", summary="The contract as a PDF")
-def contract_pdf(cid: int, s: Session = Depends(db)):
+def contract_pdf(cid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx)):
     c = s.get(Contract, cid)
     if c is None:
         raise HTTPException(404, "That contract does not exist.")
-    return Response(proposals.md_to_pdf(c.body_md, "Contract"), media_type="application/pdf")
+    return Response(proposals.md_to_pdf(c.body_md, "Contract", ctx.settings.page_size), media_type="application/pdf")
 
 
 @router.post("/contracts/{cid}/handoff", summary="Prepare the signing package (nothing is sent)")
-def handoff(cid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def handoff(cid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     c = s.get(Contract, cid)
     if c is None:
         raise HTTPException(404, "That contract does not exist.")
     p = s.get(Proposal, c.proposal_id)
     lead = s.get(Lead, p.lead_id)
-    adapter = ctx.registry.get("esign", "breezedoc_handoff") if ctx.settings.esign_adapter != "seed" or True else ctx.adapters.esign
-    res = adapter.prepare(contract_pdf=proposals.md_to_pdf(c.body_md, "Contract"), title=f"{lead.contact.company.name if lead.contact.company else lead.contact.email} {p.title}",
-                          signers=[{"name": f"{lead.contact.first_name} {lead.contact.last_name}".strip(), "email": lead.contact.email}], open_items=proposals.contract_open_items(c.body_md))
+    res = ctx.adapters.esign.prepare(
+        contract_pdf=proposals.md_to_pdf(c.body_md, "Contract", ctx.settings.page_size),
+        title=f"{lead.contact.company.name if lead.contact.company else lead.contact.email} {p.title}",
+        signers=[{"name": f"{lead.contact.first_name} {lead.contact.last_name}".strip(), "email": lead.contact.email}],
+        open_items=proposals.contract_open_items(c.body_md), folder_key=f"c{c.id}")  # the contract id keeps two folders from ever sharing a name
     c.status, c.package_path = "handed_off", res.package_path
     record_audit(s, u["user"], "contract.handed_off", f"contract:{c.id}", {"sent": False})
     return {"status": c.status, "package_path": "(folder on the server)" if res.package_path else "", "instructions": res.instructions, "sent": res.sent}

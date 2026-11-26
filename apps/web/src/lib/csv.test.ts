@@ -33,3 +33,8 @@ test("limits the preview and reports a missing email column", () => {
 test("an empty file has no rows", () => {
   assert.deepEqual(summariseCsv(""), { columns: [], rows: 0, preview: [], hasEmail: false });
 });
+
+test("an email column is recognised the way the server recognises it", () => {
+  for (const name of ["Email", " E-mail ", "email address", "Email_Address", "MAIL"]) assert.equal(summariseCsv(`${name},first_name\na@x.test,Ann\n`).hasEmail, true, name);
+  assert.equal(summariseCsv("name,phone\nAnn,1\n").hasEmail, false);
+});

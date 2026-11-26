@@ -2,12 +2,26 @@
 
 from __future__ import annotations
 
-from pydantic import Field
+import re
 
-from sendora_core.settings import BaseAppSettings, Mode
+from pydantic import Field
+from pydantic_settings import SettingsConfigDict
+
+from sendora_core.settings import MIN_SECRET_LENGTH, PLACEHOLDER_SECRET, BaseAppSettings, Mode
+
+DEFAULT_SENDER_NAME = "Alex"
+DEFAULT_COMPANY_NAME = "Your Company"
+EMAIL_LIKE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def secret_is_weak(secret: str) -> bool:
+    return len(secret) < MIN_SECRET_LENGTH or bool(PLACEHOLDER_SECRET.search(secret))
 
 
 class Settings(BaseAppSettings):
+    # An empty line in .env (LLM_CALL_BUDGET=) means "not set", so a copy of .env.example loads as it is.
+    model_config = SettingsConfigDict(env_ignore_empty=True)
+
     app_name: str = "pipecairn"
     database_url: str = "sqlite:///./pipecairn.sqlite3"
 
@@ -55,18 +69,79 @@ class Settings(BaseAppSettings):
     google_calendar_token: str = ""
 
     webhook_shared_secret: str = ""
+    session_secret_previous: str = ""  # SESSION_SECRET_PREVIOUS: the secret you replaced. Unsubscribe links already emailed were signed with it, so it stays valid for them. Empty once old links no longer matter
     quiet_start_hour: int = Field(default=18, ge=0, le=23)  # no sends from this local hour
     quiet_end_hour: int = Field(default=8, ge=0, le=23)  # until this local hour
     send_weekends: bool = False
     handoff_dir: str = "./handoff"
     seed_dir: str = ""  # path to the data folder, set by tools and the demo
 
+    # Who the messages come from. The defaults are placeholders: problems() lists them and a live, non demo start is refused until they are real.
+    sender_name: str = Field(default=DEFAULT_SENDER_NAME, max_length=80)  # SENDER_NAME: signs replies and fills {{sender_name}}
+    company_name: str = Field(default=DEFAULT_COMPANY_NAME, max_length=120)  # COMPANY_NAME: the "From" company on proposals and contracts and in the footer
+    company_address: str = Field(default="", max_length=300)  # COMPANY_ADDRESS: physical postal address, printed in every email footer
+    reply_to: str = Field(default="", max_length=254)  # REPLY_TO: optional Reply-To address for outgoing email
+    public_base_url: str = ""  # PUBLIC_BASE_URL: where this API is reachable from the internet; turns on the one click unsubscribe link in email headers
+    keep_unmatched_mail: bool = False  # KEEP_UNMATCHED_MAIL: also keep (a 600 character snippet of) mail from addresses that are not leads. Off by default: the inbox may be a person's own
+    allow_private_base_urls: bool = False  # ALLOW_PRIVATE_BASE_URLS: let CRM, calendar and texting URLs point at a private address (a self hosted Twenty or Cal.com)
+
+    # Business rules that used to be code constants. The defaults are the old values.
+    target_industries: str = "home services,dental,legal,real estate,accounting"  # TARGET_INDUSTRIES: comma separated, worth the full industry points
+    min_enroll_score: int = Field(default=40, ge=0, le=100)  # MIN_ENROLL_SCORE: leads scoring below this are not enrolled
+    bounce_pause_rate: float = Field(default=0.05, gt=0, le=1)  # BOUNCE_PAUSE_RATE: a mailbox above this share of bounces pauses
+    bounce_min_sends: int = Field(default=20, ge=1)  # BOUNCE_MIN_SENDS: the bounce check starts after this many sends
+    default_timezone: str = ""  # DEFAULT_TIMEZONE: used for a CSV row with no valid timezone (for example America/New_York). Empty means such rows are flagged and never sent to
+    currency_symbol: str = Field(default="$", max_length=3)  # CURRENCY_SYMBOL: shown before prices in proposals and contracts
+    proposal_valid_days: int = Field(default=14, ge=1, le=365)  # PROPOSAL_VALID_DAYS
+    contract_notice_days: int = Field(default=14, ge=0, le=365)  # CONTRACT_NOTICE_DAYS: written notice to end a contract
+    deal_value_small_cents: int = Field(default=150_000, ge=0)  # DEAL_VALUE_SMALL_CENTS: placeholder deal value for companies of 10 people or fewer
+    deal_value_medium_cents: int = Field(default=600_000, ge=0)  # DEAL_VALUE_MEDIUM_CENTS: 11 to 200 people
+    deal_value_large_cents: int = Field(default=1_200_000, ge=0)  # DEAL_VALUE_LARGE_CENTS: over 200 people
+    page_size: str = Field(default="letter", pattern="^(letter|a4)$")  # PAGE_SIZE: for proposal and contract PDFs
+    log_level: str = Field(default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR)$")  # LOG_LEVEL
+
+    def industries(self) -> tuple[str, ...]:
+        return tuple(x.strip().lower() for x in self.target_industries.split(",") if x.strip())
+
+    def deal_values(self) -> tuple[int, int, int]:
+        return (self.deal_value_small_cents, self.deal_value_medium_cents, self.deal_value_large_cents)
+
+    def identity_problems(self) -> list[str]:
+        """What is still a placeholder in the sender identity. A real email needs a real name, company and postal address."""
+        out: list[str] = []
+        if self.sender_name.strip() in {"", DEFAULT_SENDER_NAME}:
+            out.append("SENDER_NAME is still the placeholder. Set the name that signs your messages.")
+        if self.company_name.strip() in {"", DEFAULT_COMPANY_NAME}:
+            out.append("COMPANY_NAME is still the placeholder. Set your company name.")
+        if len(self.company_address.strip()) < 10:
+            out.append("COMPANY_ADDRESS is empty. Commercial email needs your physical postal address in the footer.")
+        if self.reply_to and not EMAIL_LIKE.match(self.reply_to):
+            out.append("REPLY_TO is not an email address.")
+        return out
+
+    def runtime_errors(self) -> list[str]:
+        out = super().runtime_errors()
+        if self.owner_password_hash and self.demo_mode and secret_is_weak(self.session_secret):
+            # The base check skips demo mode, but an owner password switches the demo shortcuts off: this is then a real login, and the session token is
+            # signed with SESSION_SECRET. The demo secret in the quick start guide is public, so anyone could sign a token for the owner.
+            out.append(
+                f"OWNER_PASSWORD_HASH is set, so this is a real login, but SESSION_SECRET is missing, too short (under {MIN_SECRET_LENGTH} characters) or still an example value. "
+                "Anyone who has read the public code could sign in as the owner. Create one with: python3 -c \"import secrets; print(secrets.token_urlsafe(48))\""
+            )
+        if self.mode is Mode.LIVE and not self.demo_mode:
+            out += self.identity_problems()
+            if self.email_adapter == "seed":
+                out.append("MODE is live but EMAIL_ADAPTER is seed, the offline stand in that sends nothing and records a fake \"sent\". Set EMAIL_ADAPTER=smtp_imap.")
+        return list(dict.fromkeys(out))
+
     def problems(self) -> list[str]:
         out = [p for p in super().problems() if not (self.demo_mode and p.startswith("MODE is live while DEMO_MODE"))]
         if not self.demo_mode and not self.owner_password_hash:
             out.append("OWNER_PASSWORD_HASH is empty. Create one with tools/hash_password.py and set it before you run outside demo mode.")
+        if self.demo_mode and self.owner_password_hash:
+            out.append("DEMO_MODE is true but an owner password is set. The public demo password is switched off; set DEMO_MODE=false for a real install.")
+        if not self.demo_mode:
+            out += [p for p in self.identity_problems() if p not in out]
         if not self.demo_mode and self.mode.value == "live" and self.webhook_shared_secret == "":
             out.append("WEBHOOK_SHARED_SECRET is empty, so signed inbound email webhooks are refused.")
-        if self.mode is Mode.LIVE and self.email_adapter == "seed" and not self.demo_mode:
-            out.append("MODE is live but EMAIL_ADAPTER is seed, so nothing real can be sent. Set EMAIL_ADAPTER=smtp_imap.")
         return out

@@ -129,8 +129,12 @@ test.describe("accessibility and behaviour", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
     // tab order reaches the main content from the top bar
     await page.goto("/pipeline");
-    for (let i = 0; i < 30; i++) await page.keyboard.press("Tab");
-    expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe("BODY");
+    let inMain = false;
+    for (let i = 0; i < 60 && !inMain; i++) {
+      await page.keyboard.press("Tab");
+      inMain = await page.evaluate(() => !!document.activeElement?.closest("main"));
+    }
+    expect(inMain, "Tab reaches the main content").toBe(true);
   });
 
   test("reduced motion removes page and chart animation", async ({ browser }) => {

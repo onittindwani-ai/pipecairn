@@ -3,7 +3,7 @@ import { FileUp } from "lucide-react";
 import { useId, useState } from "react";
 import { summariseCsv, type CsvSummary } from "@/lib/csv";
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 2_000_000; // the same limit the API enforces (MAX_CSV_BYTES in intake.py)
 
 type Picked = { name: string; summary: CsvSummary };
 
@@ -17,7 +17,7 @@ export function CsvFileInput({ onText }: { onText: (text: string) => void }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
-    if (file.size > MAX_BYTES) { setPicked(null); setError("That file is over 5 MB. Split it into smaller files."); return; }
+    if (file.size > MAX_BYTES) { setPicked(null); setError("That file is over 2 MB. Split it into smaller files."); return; }
     try {
       const text = await file.text();
       const summary = summariseCsv(text);

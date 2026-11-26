@@ -1,6 +1,6 @@
 [project]
 name = "pipecairn"
-version = "1.0.0"
+version = "1.0.1"
 description = "Pipecairn: lead to signed deal engine"
 requires-python = ">=3.12"
 license = { text = "MIT" }

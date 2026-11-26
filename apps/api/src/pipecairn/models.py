@@ -104,6 +104,8 @@ class Mailbox(Base):
     sent_day: Mapped[str] = mapped_column(String(10), default="")
     sent_total: Mapped[int] = mapped_column(Integer, default=0)
     bounce_count: Mapped[int] = mapped_column(Integer, default=0)
+    sent_base: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # sent_total and bounce_count when the mailbox was last resumed:
+    bounce_base: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # the pause rule counts the bounce rate from there, so a resume is not undone at once
     warmup_days: Mapped[int] = mapped_column(Integer, default=0)
     spf_ok: Mapped[bool] = mapped_column(Boolean, default=False)
     dkim_ok: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -146,6 +148,21 @@ class Reply(Base):
     return_on: Mapped[str] = mapped_column(String(10), default="")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
     message: Mapped[Message] = relationship()
+
+
+class UnmatchedMail(Base):
+    """Mail that came to the inbox from an address that is not a lead (an alias, a forward, someone else at the company). Kept so it is read, never silently dropped."""
+
+    __tablename__ = "cl_unmatched_mail"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    external_id: Mapped[str] = mapped_column(String(120), default="", index=True)
+    from_addr: Mapped[str] = mapped_column(String(254), default="")
+    to_addr: Mapped[str] = mapped_column(String(254), default="")
+    subject: Mapped[str] = mapped_column(String(300), default="")
+    snippet: Mapped[str] = mapped_column(Text, default="")
+    flag: Mapped[str] = mapped_column(String(20), default="", server_default="")  # "" or "unreadable" (the message could not be read; only sender and subject are kept)
+    handled: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
 class Meeting(Base):

@@ -47,7 +47,7 @@ class TelnyxSms:
         else:
             if not settings.telnyx_api_key:
                 raise AdapterError("TELNYX_API_KEY is empty.")
-            self.client = httpx.Client(base_url=safe_base_url(settings.telnyx_base_url), timeout=15, headers={"Authorization": f"Bearer {settings.telnyx_api_key}"})
+            self.client = httpx.Client(base_url=safe_base_url(settings.telnyx_base_url, allow_private=getattr(settings, "allow_private_base_urls", False)), timeout=15, headers={"Authorization": f"Bearer {settings.telnyx_api_key}"})
 
     @write_action("sms.send")
     def send(self, *, to: str, text: str) -> str:

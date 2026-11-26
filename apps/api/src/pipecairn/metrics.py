@@ -14,11 +14,13 @@ from pipecairn.util import aware
 
 SPEED_TARGET_MIN = 5.0
 INBOUND_SOURCES = ("form", "webhook", "referral")
+MAX_ROWS = 5000  # the most rows one dashboard number may read
+CHART_DAYS = 90
 
 
 def speed_to_lead(session: Session) -> dict:
     """Share of inbound leads (form, webhook, referral) first touched within 5 minutes of arriving, and the median minutes."""
-    rows = list(session.scalars(select(Lead).where(Lead.source.in_(INBOUND_SOURCES))))
+    rows = list(session.scalars(select(Lead).where(Lead.source.in_(INBOUND_SOURCES)).order_by(Lead.id.desc()).limit(MAX_ROWS)))  # the newest ones: a page load never reads a whole history
     touched = [l for l in rows if l.first_touch_at is not None]
     mins = [(aware(l.first_touch_at) - aware(l.created_at)).total_seconds() / 60 for l in touched]
     within = sum(1 for m in mins if m <= SPEED_TARGET_MIN)
@@ -41,9 +43,10 @@ def overview(session: Session, now: datetime) -> dict:
     positive = int(session.scalar(select(func.count()).select_from(Reply).where(Reply.intent.in_(("interested", "question")))) or 0)
     pipeline_cents = int(session.scalar(select(func.coalesce(func.sum(Deal.value_cents), 0)).where(Deal.stage.notin_(("won", "lost")))) or 0)
     won_cents = int(session.scalar(select(func.coalesce(func.sum(Deal.value_cents), 0)).where(Deal.stage == "won")) or 0)
-    day = [(now - timedelta(days=d)).date().isoformat() for d in range(89, -1, -1)]
+    day = [(now - timedelta(days=d)).date().isoformat() for d in range(CHART_DAYS - 1, -1, -1)]
     per_day = {d: 0 for d in day}
-    for m in session.scalars(select(Message).where(Message.direction == "out", Message.status.in_(("sent", "drafted")), Message.sent_at.is_not(None) | (Message.status == "drafted"))):
+    since = aware(now) - timedelta(days=CHART_DAYS + 1)  # only the days the chart shows are read, not every message ever sent
+    for m in session.scalars(select(Message).where(Message.direction == "out", Message.status.in_(("sent", "drafted")), Message.created_at >= since).limit(MAX_ROWS * 10)):
         d = aware(m.sent_at or m.created_at).date().isoformat()
         if d in per_day:
             per_day[d] += 1

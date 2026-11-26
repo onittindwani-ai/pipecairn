@@ -26,7 +26,7 @@ Start at [docs/00-START-HERE.md](docs/00-START-HERE.md). The guides run from `00
 
 ## What was measured
 
-- <!--n:tests.passed-->187<!--/n--> Python tests passed, <!--n:tests.skipped-->1<!--/n--> skipped (needs a Postgres), <!--n:tests.coverage_percent-->91<!--/n--> percent line coverage of the `pipecairn` package, plus <!--n:web_unit_tests-->5<!--/n--> unit tests of the CSV reader in the web app. Numbers come from `data/measured.json`.
+- <!--n:tests.passed-->540<!--/n--> Python tests passed, <!--n:tests.skipped-->1<!--/n--> skipped (needs a Postgres), <!--n:tests.coverage_percent-->93<!--/n--> percent line coverage of the `pipecairn` package, plus <!--n:web_unit_tests-->11<!--/n--> unit tests of the web app helpers (the CSV reader, the forwarded address and the sign in path guard of the web proxy). Numbers come from `data/measured.json`.
 - Database migrations up, down and up again on SQLite and Postgres 17.7. A hand run of the demo on Postgres (reset, send, replies read, audit chain verified) also worked; that was a manual check, not an automated test.
 - A fresh clone in a temporary folder was installed from nothing, built, tested and run through the browser tests, then deleted.
 - <!--n:browser_tests-->40<!--/n--> browser tests passed, three full runs in a row (including the CSV file upload and opening a pipeline card), including accessibility scans of 10 pages in light and dark (0 serious or critical problems).
@@ -35,7 +35,7 @@ Start at [docs/00-START-HERE.md](docs/00-START-HERE.md). The guides run from `00
 
 ## Honest limits
 
-No adapter has been run against a real service. The reply reader is an offline stand-in made of rules, not a language model. You must register business texting with carriers and set up your own sending domains yourself. Docker images and the three hosting guides were not run. Read [docs/14-LIMITS-AND-HONEST-NOTES.md](docs/14-LIMITS-AND-HONEST-NOTES.md) before real use.
+No adapter has been run against a real service. The reply reader is an offline stand-in made of rules, not a language model. You must register business texting with carriers and set up your own sending domains yourself. The Docker images are built and started by the GitHub CI workflow, but no real host (Vercel, Railway, Hetzner) was deployed to. Read [docs/14-LIMITS-AND-HONEST-NOTES.md](docs/14-LIMITS-AND-HONEST-NOTES.md) before real use.
 
 ## Layout
 

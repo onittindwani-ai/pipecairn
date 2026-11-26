@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { lastHop } from "@/lib/clientIp";
+import { encodeProxyPath, isBlockedProxyPath } from "@/lib/proxyPath";
 
 const API = process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
 const HOP = new Set(["connection", "keep-alive", "transfer-encoding", "content-encoding", "content-length"]);
@@ -7,8 +9,8 @@ const HOP = new Set(["connection", "keep-alive", "transfer-encoding", "content-e
 /** Forward /api/* to the private API. Adds the session from the cookie. Mutations need the x-pipecairn header, which a cross site page cannot send. */
 async function forward(request: Request, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
-  const joined = path.join("/");
-  if (joined.startsWith("auth/login") || joined.startsWith("webhooks")) return NextResponse.json({ error: { message: "Not found." } }, { status: 404 });
+  if (isBlockedProxyPath(path)) return NextResponse.json({ error: { message: "Not found." } }, { status: 404 });
+  const joined = encodeProxyPath(path) ?? "";  // forward the cleaned path, the one that was checked, with every segment encoded again
   if (!["GET", "HEAD"].includes(request.method) && request.headers.get("x-pipecairn") !== "1") {
     return NextResponse.json({ error: { message: "Missing request header." } }, { status: 400 });
   }
@@ -20,7 +22,7 @@ async function forward(request: Request, ctx: { params: Promise<{ path: string[]
   const ct = request.headers.get("content-type");
   if (ct) headers["content-type"] = ct;
   if (token) headers["x-session"] = token;
-  const ip = request.headers.get("x-forwarded-for");
+  const ip = lastHop(request.headers.get("x-forwarded-for"));
   if (ip) headers["x-forwarded-for"] = ip;
   const body = ["GET", "HEAD"].includes(request.method) ? undefined : await request.arrayBuffer();
   const send = () => fetch(`${API}/api/${joined}${url.search}`, {

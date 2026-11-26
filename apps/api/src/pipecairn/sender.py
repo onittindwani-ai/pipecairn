@@ -6,17 +6,22 @@ contact's own time zone, a mailbox with room under its daily cap, and finally th
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select, update
+from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 from sqlalchemy.orm import Session
 
 from pipecairn import timing
-from pipecairn.models import Activity, Deal, Enrollment, Lead, Mailbox, Message
-from pipecairn.suppression import suppression_reason
+from pipecairn.adapters.base import RecipientRefused, SendUnconfirmed
+from pipecairn.models import Activity, Deal, Enrollment, Lead, Mailbox, Message, State
+from pipecairn.suppression import add_suppression, suppression_reason
 from pipecairn.templating import TemplateError, render
+from pipecairn.unsubscribe import with_footer
 from pipecairn.util import aware, is_e164, is_valid_email, normalize_email
 from sendora_core.audit import record_audit
 from sendora_core.events import record_event, record_metric
@@ -26,6 +31,12 @@ from sendora_core.settings import BaseAppSettings
 STOP_STATUSES = {"replied", "meeting", "proposal", "won", "lost", "suppressed", "dead"}
 BOUNCE_RATE_PAUSE = 0.05
 MIN_SENDS_FOR_BOUNCE_CHECK = 20
+MAX_SEND_ATTEMPTS = 3  # one step is tried this many times (an hour apart) when the mail server refuses the message itself; then the lead is stopped for a person to look at
+STEP_COUNTED = ";step_counted"  # added to an unconfirmed message's blocked_reason once its sequence step has been counted as done, so that happens exactly once
+MAX_TICK_ERRORS = 3  # a sequence step that raises an error this many times in a row is stopped for a person to look at, so one broken row never blocks the queue
+SUBJECT_MAX = 300  # the width of Message.subject
+log = logging.getLogger("pipecairn.sender")
+SERVER_PROBLEM = "server:"  # blocked_reason prefix for a failure that is the mail server's or the mailbox's (login, certificate, connection): it is retried, but never counts toward the limit
 
 
 @dataclass
@@ -35,6 +46,7 @@ class TickReport:
     deferred: int = 0
     blocked: int = 0
     stopped: int = 0
+    errors: int = 0  # enrolments whose step raised an error and was set aside (see _isolate)
     halted: bool = False
     reasons: dict[str, int] = field(default_factory=dict)
 
@@ -58,12 +70,12 @@ def mailbox_health(mb: Mailbox) -> int:
     return max(0, min(100, score))
 
 
-def pick_mailbox(session: Session, now: datetime) -> Mailbox | None:
+def pick_mailbox(session: Session, now: datetime, rate: float = BOUNCE_RATE_PAUSE, min_sends: int = MIN_SENDS_FOR_BOUNCE_CHECK) -> Mailbox | None:
     boxes = list(session.scalars(select(Mailbox).where(Mailbox.is_active.is_(True)).order_by(Mailbox.id)))
     best, best_ratio = None, 2.0
     for mb in boxes:
         reset_mailbox_day(mb, now)
-        if maybe_pause_for_bounces(mb) or not mb.is_active:
+        if maybe_pause_for_bounces(mb, rate, min_sends) or not mb.is_active:
             continue
         if mb.sent_today >= mb.daily_cap:
             continue
@@ -73,11 +85,25 @@ def pick_mailbox(session: Session, now: datetime) -> Mailbox | None:
     return best
 
 
-def maybe_pause_for_bounces(mb: Mailbox) -> bool:
-    if mb.sent_total >= MIN_SENDS_FOR_BOUNCE_CHECK and mb.bounce_count / mb.sent_total > BOUNCE_RATE_PAUSE and mb.is_active:
-        mb.is_active, mb.paused_reason = False, f"Bounce rate above {int(BOUNCE_RATE_PAUSE * 100)} percent. Fix the list, then resume by hand."
+def bounce_limits(settings: BaseAppSettings) -> tuple[float, int]:
+    """(share of bounces that pauses a mailbox, sends before the check starts): BOUNCE_PAUSE_RATE and BOUNCE_MIN_SENDS, with the old values as defaults."""
+    return getattr(settings, "bounce_pause_rate", BOUNCE_RATE_PAUSE), getattr(settings, "bounce_min_sends", MIN_SENDS_FOR_BOUNCE_CHECK)
+
+
+def maybe_pause_for_bounces(mb: Mailbox, rate: float = BOUNCE_RATE_PAUSE, min_sends: int = MIN_SENDS_FOR_BOUNCE_CHECK) -> bool:
+    """Pause a mailbox whose bounce rate is above the limit. The rate is counted from the last resume (the whole history until there is one): the totals that caused a pause
+    would otherwise pause the mailbox again at the very next send, and resuming would do nothing."""
+    sent, bounced = (mb.sent_total or 0) - (mb.sent_base or 0), (mb.bounce_count or 0) - (mb.bounce_base or 0)  # a row not yet flushed has no defaults
+    if sent >= max(1, min_sends) and bounced / sent > rate and mb.is_active:
+        mb.is_active, mb.paused_reason = False, f"Bounce rate above {rate * 100:g} percent. Fix the list, then resume by hand."
         return True
     return False
+
+
+def resume_mailbox(mb: Mailbox) -> None:
+    """Switch a paused mailbox back on and start counting its bounce rate again from now: it gets min_sends fresh sends before the rule can pause it again."""
+    mb.is_active, mb.paused_reason = True, ""
+    mb.sent_base, mb.bounce_base = mb.sent_total or 0, mb.bounce_count or 0
 
 
 def _stop(session: Session, enr: Enrollment, reason: str, report: TickReport, now: datetime) -> None:
@@ -87,10 +113,10 @@ def _stop(session: Session, enr: Enrollment, reason: str, report: TickReport, no
     record_event(session, "enrollment.stopped", "enrollment", enr.id, {"reason": reason})
 
 
-def _ctx(lead: Lead) -> dict[str, str]:
+def _ctx(lead: Lead, sender_name: str = "Alex") -> dict[str, str]:
     c = lead.contact
     return {"first_name": c.first_name, "last_name": c.last_name, "company": c.company.name if c.company else "", "industry": c.company.industry if c.company else "",
-            "title": c.title, "sender_name": "Alex"}
+            "title": c.title, "sender_name": sender_name}
 
 
 def _record_block(session: Session, lead: Lead, enr: Enrollment, channel: str, to: str, reason: str, now: datetime) -> None:
@@ -104,6 +130,12 @@ def _touch(session: Session, lead: Lead, now: datetime, summary: str) -> None:
     if deal and deal.stage == "new":
         deal.stage = "contacted"
     session.add(Activity(lead_id=lead.id, kind="message", summary=summary, created_at=now))
+
+
+def offline_adapter_on_real_install(settings: BaseAppSettings, channel: str) -> bool:
+    """The offline `seed` adapters record a fake "sent". On a real install (DEMO_MODE=false) they must never be taken for a real send, so such a message stays a draft."""
+    name = getattr(settings, "email_adapter" if channel == "email" else "sms_adapter", "")
+    return (not settings.demo_mode) and name == "seed"
 
 
 def deliver(
@@ -137,16 +169,22 @@ def deliver(
             return "deferred", reason
     mb = None
     if channel == "email":
-        mb = pick_mailbox(session, now)
+        mb = pick_mailbox(session, now, *bounce_limits(settings))
         if mb is None:
             return "deferred", "mailbox_caps_reached"
+    subject = subject[:SUBJECT_MAX]
+    body = with_footer(settings, channel, body)  # who writes, where they are, how to say stop: added here so a draft shows exactly what would go out
     msg = Message(lead_id=lead.id, enrollment_id=enr.id if enr else None, mailbox_id=mb.id if mb else None, channel=channel, direction="out",
                   to_addr=to, subject=subject, body=body, created_at=now)
     session.add(msg)
-    if not would_write(settings):
+    if not would_write(settings) or offline_adapter_on_real_install(settings, channel):
         msg.status = "drafted"
         record_event(session, "message.drafted", "message", None, {"lead": lead.id, "channel": channel})
         return "drafted", ""
+    # Write down that a send is about to start, and make that durable BEFORE the vendor is called. If the process dies after the vendor accepted the
+    # message but before the answer is recorded, the row says "sending", and the next run counts it as unconfirmed instead of sending it again.
+    msg.status = "sending"
+    session.commit()
     try:
         if channel == "email":
             msg.external_id = adapters.email.send(from_addr=mb.address, to=to, subject=subject, body=body)
@@ -155,26 +193,158 @@ def deliver(
     except SafetyError:
         msg.status = "drafted"
         return "drafted", ""
-    except Exception as exc:  # the vendor failed, we keep the message and retry later
-        msg.status, msg.blocked_reason = "failed", f"{type(exc).__name__}"[:120]
+    except RecipientRefused:
+        return _refused(session, settings, lead, msg, mb, now)
+    except SendUnconfirmed as exc:
+        # The server was handed the message and then the connection broke before it answered. It may have been accepted, so it is never sent again.
+        msg.status, msg.blocked_reason, msg.external_id = "unconfirmed", "send_unconfirmed" + (STEP_COUNTED if enr is not None else ""), (getattr(exc, "external_id", "") or "")[:120]  # the caller advances the step
+        record_event(session, "message.unconfirmed", "message", None, {"lead": lead.id, "channel": channel})
+        return "unconfirmed", "send_unconfirmed"
+    except Exception as exc:  # the vendor failed, we keep the message and retry later (a limited number of times)
+        counts = getattr(exc, "message_specific", True)
+        policy_code = getattr(exc, "policy_refusal", None)
+        if policy_code is not None and mb is not None:  # the server said no for a reason that is not the address: a note for the mailbox, nothing for the lead
+            record_audit(session, "system", "mailbox.server_refusal", f"mailbox:{mb.id}", {"code": str(policy_code)})
+        msg.status, msg.blocked_reason = "failed", ("" if counts else SERVER_PROBLEM) + f"{type(exc).__name__}"[:100]
         record_event(session, "message.failed", "message", None, {"lead": lead.id, "error": type(exc).__name__})
         return "failed", type(exc).__name__
     msg.status, msg.sent_at = "sent", now
     if mb:
         mb.sent_today += 1
         mb.sent_total += 1
-        maybe_pause_for_bounces(mb)
+        maybe_pause_for_bounces(mb, *bounce_limits(settings))
     session.flush()
     record_metric(session, "messages_sent", 1, {"channel": channel})
     record_audit(session, "system", "message.sent", f"message:{msg.id}", {"lead": lead.id, "channel": channel})
     return "sent", ""
 
 
-def send_tick(session: Session, settings: BaseAppSettings, adapters: Any, now: datetime, batch: int = 200) -> TickReport:
+def _refused(session: Session, settings: BaseAppSettings, lead: Lead, msg: Message, mb: Mailbox | None, now: datetime) -> tuple[str, str]:
+    """The mail server refused this address for good before it took the message. That is a hard bounce: the address is suppressed, the lead is dead and the
+    mailbox's bounce count goes up, exactly as for a delivery report that arrives later."""
+    msg.status, msg.blocked_reason = "failed", "recipient_refused"
+    add_suppression(session, "email", lead.contact.email, "refused by the mail server when sending", "send")
+    lead.status = "dead"
+    if mb is not None:
+        mb.sent_total += 1  # the attempt counts as a send, otherwise a mailbox that only ever gets refusals would show a rate of nothing
+        mb.bounce_count += 1
+        maybe_pause_for_bounces(mb, *bounce_limits(settings))
+    record_audit(session, "system", "bounce.refused_at_send", f"lead:{lead.id}", {})
+    record_event(session, "message.failed", "message", None, {"lead": lead.id, "error": "recipient_refused"})
+    return "stop", "recipient_refused"
+
+
+def failed_attempts(session: Session, enr: Enrollment) -> int:
+    """How many times in a row the mail server refused the message of the step that is current: failed messages after the last one that was not a failure,
+    not counting problems that are the mail server's own (login, certificate, connection)."""
+    last_ok = session.scalar(select(func.max(Message.id)).where(Message.enrollment_id == enr.id, Message.direction == "out", Message.status != "failed")) or 0
+    return int(session.scalar(select(func.count(Message.id)).where(
+        Message.enrollment_id == enr.id, Message.direction == "out", Message.status == "failed", Message.id > last_ok, Message.blocked_reason.notlike(SERVER_PROBLEM + "%"))) or 0)
+
+
+STALE_SENDING_MINUTES = 10
+
+
+def _count_step(enr: Enrollment | None, messages: list[Message], now: datetime) -> None:
+    """The step these unconfirmed messages belonged to counts as done and is NOT repeated: the vendor may or may not have sent it, and a second copy to a real
+    person is worse than a missing one. The enrolment moves on once however many messages were left behind, and each message is marked so that it is never counted
+    twice. A stopped enrolment does not move (it is stopped)."""
+    todo = [m for m in messages if STEP_COUNTED not in m.blocked_reason]
+    if not todo:
+        return
+    for m in todo:
+        m.blocked_reason = (m.blocked_reason + STEP_COUNTED)[:120]
+    if enr is not None and enr.status in {"active", "paused"}:
+        _advance(enr, enr.sequence.steps, now)
+
+
+def _mark_unconfirmed(session: Session, m: Message) -> None:
+    m.status, m.blocked_reason = "unconfirmed", "worker_stopped_during_send"
+    record_event(session, "message.unconfirmed", "message", m.id, {"lead": m.lead_id})
+
+
+def sweep_stale_sends(session: Session, now: datetime) -> int:
+    """A message left at "sending" for a long time belongs to a process that died. It is marked unconfirmed so nobody waits on it. Its sequence step is counted as
+    done right here when the enrolment is running; for a paused one (a reply asked to wait) it is counted when the enrolment wakes, in _finish_unconfirmed_send.
+    Either way nothing sends it again, however late the restart is (a killed worker keeps its job for the 30 minute lease)."""
+    cutoff = aware(now) - timedelta(minutes=STALE_SENDING_MINUTES)
+    stale = list(session.scalars(select(Message).where(Message.direction == "out", Message.status == "sending", Message.created_at < cutoff).order_by(Message.id)))
+    by_enrollment: dict[int, list[Message]] = {}
+    for m in stale:
+        _mark_unconfirmed(session, m)
+        if m.enrollment_id:
+            by_enrollment.setdefault(m.enrollment_id, []).append(m)
+    for enr_id, rows in by_enrollment.items():
+        enr = session.get(Enrollment, enr_id)
+        if enr is not None and enr.status == "active":
+            _count_step(enr, rows, now)
+    return len(stale)
+
+
+def _finish_unconfirmed_send(session: Session, enr: Enrollment, steps: list, now: datetime, report: TickReport) -> bool:
+    """Before this enrolment sends anything, settle every message of it that is still "sending" (the last run died less than ten minutes ago, so the sweep has not
+    reached it) or "unconfirmed" and not yet counted (the enrolment was paused when the sweep ran, or the row is from an older version): the step counts as done."""
+    rows = list(session.scalars(select(Message).where(Message.enrollment_id == enr.id, Message.direction == "out", or_(
+        Message.status == "sending", (Message.status == "unconfirmed") & Message.blocked_reason.notlike("%" + STEP_COUNTED))).order_by(Message.id)))
+    if not rows:
+        return False
+    for m in rows:
+        if m.status == "sending":
+            _mark_unconfirmed(session, m)
+    report.why("send_unconfirmed")
+    _count_step(enr, rows, now)
+    return True
+
+
+def mark_not_sent(session: Session, message_id: int, *, decided_by: str, now: datetime) -> str:
+    """A person looked in the Sent folder and the message is not there: it becomes "not sent" and its step is tried again (at the next run, or when the pause
+    ends). Only the newest outgoing message of an enrolment can be reopened, so a step that later messages already followed is never repeated by mistake.
+    Returns "retry" (the enrolment is running), "paused" (it tries again when the pause ends) or "stopped" (the person was stopped meanwhile: nothing is sent)."""
+    m = session.get(Message, message_id)
+    if m is None or m.direction != "out":
+        raise ValueError("That message does not exist.")
+    if m.status != "unconfirmed":
+        raise ValueError("Only a message that is marked unconfirmed can be marked as not sent.")
+    enr = session.get(Enrollment, m.enrollment_id) if m.enrollment_id else None
+    if enr is None:
+        raise ValueError("This message was not part of a sequence, so there is no step to try again. Send it by hand.")
+    counted = STEP_COUNTED in m.blocked_reason
+    later = session.scalar(select(func.count(Message.id)).where(Message.enrollment_id == enr.id, Message.direction == "out", Message.id > m.id, Message.status.in_(("sent", "drafted", "unconfirmed", "sending")))) or 0
+    if later or (counted and enr.current_step < 1):
+        raise ValueError("Later steps were already sent to this person, so this one is not tried again. Send it by hand if it matters.")
+    m.status, m.blocked_reason = "not_sent", f"marked not sent by {decided_by}"[:120]
+    if enr.lead.status not in STOP_STATUSES:
+        if counted and enr.status in {"active", "paused", "done"}:
+            enr.current_step -= 1  # the step had been counted as done: it is open again
+        if enr.status == "done":
+            enr.status = "active"
+        if enr.status == "active":
+            enr.next_send_at = aware(now)
+    record_audit(session, decided_by, "message.marked_not_sent", f"message:{m.id}", {"enrollment": enr.id})
+    if enr.lead.status in STOP_STATUSES or enr.status not in {"active", "paused"}:
+        return "stopped"
+    return "retry" if enr.status == "active" else "paused"
+
+
+def _advance(enr: Enrollment, steps: list, now: datetime) -> None:
+    enr.current_step += 1
+    if enr.current_step >= len(steps):
+        enr.status, enr.next_send_at = "done", None
+    else:
+        enr.next_send_at = aware(now) + timedelta(hours=steps[enr.current_step].delay_hours)
+
+
+def send_tick(session: Session, settings: BaseAppSettings, adapters: Any, now: datetime, batch: int = 200, refresh: Callable[[], BaseAppSettings] | None = None) -> TickReport:
+    """One pass over the enrollments that are due. Every enrollment is committed on its own, so a crash or a kill part way through loses at most the one being
+    sent (marked "sending", see deliver), never the ones already sent. `refresh` returns the settings as they are NOW (the kill switch can be turned on in the app
+    while a batch runs); it is asked before every send."""
     report = TickReport()
-    if settings.kill_switch:
+    current = refresh or (lambda: settings)
+    if current().kill_switch:
         report.halted = True
         return report
+    if sweep_stale_sends(session, now):
+        session.commit()
     due = list(session.scalars(
         select(Enrollment).where(Enrollment.status == "active", Enrollment.next_send_at.is_not(None), Enrollment.next_send_at <= now)
         .order_by(Enrollment.next_send_at, Enrollment.id).limit(batch)
@@ -184,49 +354,122 @@ def send_tick(session: Session, settings: BaseAppSettings, adapters: Any, now: d
     for e in woken:
         e.status, e.paused_until, e.next_send_at = "active", None, now
         due.append(e)
+    if woken:
+        session.commit()
     for enr in due:
-        lead = enr.lead
-        steps = enr.sequence.steps
-        if enr.current_step >= len(steps):
-            enr.status, enr.next_send_at = "done", None
+        live = current()  # Pause all and "force draft" take effect between two sends, not at the next minute
+        if live.kill_switch:
+            report.halted = True
+            break
+        session.refresh(enr)  # a reply or an unsubscribe may have stopped it since the list was read
+        if enr.status != "active":
             continue
-        step = steps[enr.current_step]
+        session.refresh(enr.lead)
+        enr_id = enr.id
         try:
-            subject = render(step.subject, _ctx(lead), header=True)
-            body = render(step.body, _ctx(lead))
-        except TemplateError:
-            _stop(session, enr, "template_error", report, now)
-            continue
-        status, reason = deliver(session, settings, adapters, lead=lead, enr=enr, channel=step.channel, subject=subject, body=body, now=now, report=report)
-        if status == "stop":
-            _stop(session, enr, reason, report, now)
-            continue
-        if status == "deferred":
-            report.deferred += 1
-            report.why(reason)
-            if reason == "mailbox_caps_reached":
-                enr.next_send_at = timing.next_utc_midnight(now)
-            else:
-                enr.next_send_at = timing.next_window(now, lead.contact.timezone, settings.quiet_start_hour, settings.quiet_end_hour, settings.send_weekends) or now + timedelta(days=1)  # type: ignore[attr-defined]
-            continue
-        if status == "failed":
-            enr.next_send_at = now + timedelta(hours=1)
-            report.why("send_failed")
-            continue
-        if status == "blocked":
-            _record_block(session, lead, enr, step.channel, lead.contact.phone, reason, now)
-            report.blocked += 1
-            report.why(reason)
-        elif status == "drafted":
-            report.drafted += 1
-            _touch(session, lead, now, f"Draft {step.channel} step {enr.current_step + 1} (draft mode, not sent)")
+            _tick_enrollment(session, live, adapters, enr, now, report)
+            session.commit()
+        except (OperationalError, InterfaceError):
+            raise  # the database itself is not answering: that is not this enrolment's fault, and the next run starts again from the same rows
+        except DBAPIError as exc:
+            if getattr(exc, "connection_invalidated", False):
+                raise
+            _isolate(session, enr_id, exc, now, report)
+        except Exception as exc:  # one broken row: set it aside and carry on with the others
+            _isolate(session, enr_id, exc, now, report)
         else:
-            report.sent += 1
-            _touch(session, lead, now, f"Sent {step.channel} step {enr.current_step + 1}")
-        enr.current_step += 1
-        if enr.current_step >= len(steps):
-            enr.status, enr.next_send_at = "done", None
-        else:
-            enr.next_send_at = aware(now) + timedelta(hours=steps[enr.current_step].delay_hours)
+            _clear_errors(session, enr_id)
     session.flush()
     return report
+
+
+def _error_key(enr_id: int) -> str:
+    return f"se:{enr_id}"
+
+
+def _clear_errors(session: Session, enr_id: int) -> None:
+    row = session.get(State, _error_key(enr_id))
+    if row is not None:
+        session.delete(row)
+        session.commit()
+
+
+def _isolate(session: Session, enr_id: int, exc: Exception, now: datetime, report: TickReport) -> None:
+    """A step raised an error. Undo what it half did, write the error on the enrolment (an Activity line and a counter), move the enrolment an hour back in the queue so it
+    is not first in line again, and stop it for a person after MAX_TICK_ERRORS errors in a row. The others in the batch are not touched."""
+    session.rollback()
+    report.errors += 1
+    report.why("tick_error")
+    log.warning("sequence step failed for enrolment %s: %s", enr_id, type(exc).__name__)
+    enr = session.get(Enrollment, enr_id)
+    if enr is None:
+        return
+    key = _error_key(enr_id)
+    row = session.get(State, key)
+    n = int(row.value or 0) + 1 if row is not None else 1
+    if row is None:
+        session.add(State(key=key, value=str(n)))
+    else:
+        row.value = str(n)
+    step = enr.current_step + 1
+    if n >= MAX_TICK_ERRORS:
+        session.add(Activity(lead_id=enr.lead_id, kind="message", summary=f"Step {step} could not be prepared {n} times ({type(exc).__name__}). The sequence for this person is stopped: check the step and the lead.", created_at=now))
+        _stop(session, enr, "send_error", report, now)
+    else:
+        session.add(Activity(lead_id=enr.lead_id, kind="message", summary=f"Step {step} could not be prepared ({type(exc).__name__}). It will be tried again in an hour.", created_at=now))
+        enr.next_send_at = now + timedelta(hours=1)
+    session.commit()
+
+
+def _tick_enrollment(session: Session, settings: BaseAppSettings, adapters: Any, enr: Enrollment, now: datetime, report: TickReport) -> None:
+    lead = enr.lead
+    steps = enr.sequence.steps
+    if enr.current_step >= len(steps):
+        enr.status, enr.next_send_at = "done", None
+        return
+    if _finish_unconfirmed_send(session, enr, steps, now, report):
+        return
+    step = steps[enr.current_step]
+    try:
+        name = getattr(settings, "sender_name", "Alex")
+        subject = render(step.subject, _ctx(lead, name), header=True)[:SUBJECT_MAX]  # the column holds this much; a longer one is refused by Postgres
+        body = render(step.body, _ctx(lead, name))
+    except TemplateError:
+        _stop(session, enr, "template_error", report, now)
+        return
+    status, reason = deliver(session, settings, adapters, lead=lead, enr=enr, channel=step.channel, subject=subject, body=body, now=now, report=report)
+    if status == "stop":
+        _stop(session, enr, reason, report, now)
+        return
+    if status == "deferred":
+        report.deferred += 1
+        report.why(reason)
+        if reason == "mailbox_caps_reached":
+            enr.next_send_at = timing.next_utc_midnight(now)
+        else:
+            enr.next_send_at = timing.next_window(now, lead.contact.timezone, settings.quiet_start_hour, settings.quiet_end_hour, settings.send_weekends) or now + timedelta(days=1)  # type: ignore[attr-defined]
+        return
+    if status == "failed":
+        report.why("send_failed")
+        if failed_attempts(session, enr) >= MAX_SEND_ATTEMPTS:
+            session.add(Activity(lead_id=lead.id, kind="message", summary=f"The mail server refused step {enr.current_step + 1} {MAX_SEND_ATTEMPTS} times. The sequence for this person is stopped: check the address and the mailbox.", created_at=now))
+            _stop(session, enr, "send_failed_repeatedly", report, now)  # the server keeps refusing this message: a person decides, it is not retried for ever
+            return
+        enr.next_send_at = now + timedelta(hours=1)
+        return
+    if status == "unconfirmed":  # deliver() already marked the message as counted
+        report.why("send_unconfirmed")
+        session.add(Activity(lead_id=lead.id, kind="message", summary=f"Step {enr.current_step + 1} may or may not have been sent (the connection broke). It will not be sent again; check the Sent folder.", created_at=now))
+        _advance(enr, steps, now)
+        return
+    if status == "blocked":
+        _record_block(session, lead, enr, step.channel, lead.contact.phone, reason, now)
+        report.blocked += 1
+        report.why(reason)
+    elif status == "drafted":
+        report.drafted += 1
+        _touch(session, lead, now, f"Draft {step.channel} step {enr.current_step + 1} (draft mode, not sent)")
+    else:
+        report.sent += 1
+        _touch(session, lead, now, f"Sent {step.channel} step {enr.current_step + 1}")
+    _advance(enr, steps, now)

@@ -14,7 +14,7 @@ const SAMPLE = "email,first_name,last_name,title,company,domain,timezone,source\
 
 export default function LeadsPage() {
   const qc = useQueryClient();
-  const { canWrite } = usePermissions();
+  const { canWrite, isOwner } = usePermissions();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [open, setOpen] = useState<LeadRow | null>(null);
@@ -23,8 +23,8 @@ export default function LeadsPage() {
   const [toSuppress, setToSuppress] = useState<{ rows: LeadRow[]; clear: () => void } | null>(null);
   const q = useQuery({ queryKey: ["leads", search, status], queryFn: () => get<LeadList>(`/leads?limit=5000&q=${encodeURIComponent(search)}&status=${status}`) });
   const importer = useMutation({
-    mutationFn: () => post<{ rows: number; created: number; duplicates: number; flagged: Record<string, number> }>("/leads/import", { csv }),
-    onSuccess: (r) => { const f = Object.entries(r.flagged).map(([k, v]) => `${v} ${flagLabel(k)}`).join(", "); notify.success(`Imported ${r.created} of ${r.rows} rows. ${r.duplicates} duplicates skipped${f ? `. Flagged: ${f}` : ""}.`); setImp(false); qc.invalidateQueries({ predicate: (x) => x.queryKey[0] !== "me" }); },
+    mutationFn: () => post<{ rows: number; created: number; duplicates: number; flagged: Record<string, number>; ignored_columns: string[] }>("/leads/import", { csv }),
+    onSuccess: (r) => { const f = Object.entries(r.flagged).map(([k, v]) => `${v} ${flagLabel(k)}`).join(", "); notify.success(`Imported ${r.created} of ${r.rows} rows. ${r.duplicates} duplicates skipped${f ? `. Flagged: ${f}` : ""}.${r.ignored_columns.length ? ` Columns not used: ${r.ignored_columns.join(", ")}.` : ""}`); setImp(false); qc.invalidateQueries({ predicate: (x) => x.queryKey[0] !== "me" }); },
     onError: (e: Error) => notify.error("Import failed", e.message),
   });
   const suppress = useMutation({
@@ -42,13 +42,13 @@ export default function LeadsPage() {
   ];
   return (
     <div className="cl-page">
-      <PageHead title="Leads" sub="Everyone who has been imported or has filled in a form. Duplicates are merged and risky addresses are flagged on the way in." actions={canWrite ? <Button variant="primary" feedback={false} onClick={() => setImp(true)}><Upload size={14} aria-hidden />Import CSV</Button> : undefined} />
+      <PageHead title="Leads" sub="Everyone who has been imported or has filled in a form. Duplicates are merged and risky addresses are flagged on the way in." actions={isOwner ? <Button variant="primary" feedback={false} onClick={() => setImp(true)}><Upload size={14} aria-hidden />Import CSV</Button> : undefined} />
       <FilterBar>
         <Field label="Search" value={search} onChange={setSearch} placeholder="Name, company or email" clearable />
         <label className="sx-field"><span className="sx-label">Status</span><select className="cl-select" value={status} onChange={(e) => setStatus(e.target.value)}><option value="">All</option>{["new", "scored", "enrolled", "replied", "meeting", "proposal", "won", "lost", "suppressed", "dead"].map((s) => <option key={s}>{s}</option>)}</select></label>
       </FilterBar>
       {q.isError ? <LoadError error={q.error} onRetry={() => q.refetch()} what="leads" /> : !q.data ? <TableSkeleton rows={8} columns={5} /> : q.data.rows.length === 0 ? (
-        <Card><EmptyState title="No leads match" body={search || status ? "Clear the search or the status filter." : "Import a CSV to start."} actionLabel={canWrite ? "Import CSV" : undefined} onAction={canWrite ? () => setImp(true) : undefined} /></Card>
+        <Card><EmptyState title="No leads match" body={search || status ? "Clear the search or the status filter." : "Import a CSV to start."} actionLabel={isOwner ? "Import CSV" : undefined} onAction={isOwner ? () => setImp(true) : undefined} /></Card>
       ) : (
         <DataTable label="Leads" rows={q.data.rows} rowKey={(r) => String(r.id)} columns={columns} height={560} selectable onRowOpen={setOpen} rowActions={(r) => <Button size="sm" feedback={false} onClick={() => setOpen(r)}>Open</Button>} bulkActions={canWrite ? (rows, clear) => <Button variant="danger" feedback={false} onClick={() => setToSuppress({ rows, clear })}>Never contact</Button> : undefined} />
       )}

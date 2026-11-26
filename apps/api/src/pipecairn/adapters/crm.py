@@ -22,7 +22,7 @@ class TwentyCrm:
         else:
             if not settings.twenty_base_url or not settings.twenty_api_key:
                 raise AdapterError("TWENTY_BASE_URL and TWENTY_API_KEY must both be set.")
-            self.client = httpx.Client(base_url=safe_base_url(settings.twenty_base_url), timeout=15, headers={"Authorization": f"Bearer {settings.twenty_api_key}"})
+            self.client = httpx.Client(base_url=safe_base_url(settings.twenty_base_url, allow_private=getattr(settings, "allow_private_base_urls", False)), timeout=15, headers={"Authorization": f"Bearer {settings.twenty_api_key}"})
 
     def _gql(self, op: str, query: str, variables: dict) -> dict:
         r = self.client.post("/graphql", json={"operationName": op, "query": query, "variables": variables})

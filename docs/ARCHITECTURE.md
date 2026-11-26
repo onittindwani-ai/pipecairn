@@ -22,13 +22,13 @@ Browser  ->  Web app (Next.js)  ->  API (FastAPI)  ->  Database (SQLite or Postg
 2. **Enrich and score**: a 0 to 100 fit score from simple rules (see `apps/api/src/pipecairn/scoring.py`).
 3. **Enrol** in the sequence.
 4. **Send tick** (the heart): for each due step it runs the gates in order and then chooses a mailbox.
-5. **Replies** arrive through IMAP, the Telnyx webhook or the email webhook. A reader sorts them; stop words stop everything for that person at once.
+5. **Replies** arrive through IMAP, the Telnyx webhook or the email webhook. A reader sorts them; a complete request to stop suppresses that person at once, and wording that only might be one stops the follow ups and waits for a person.
 6. **Draft reply and approval**: the suggested reply waits in the Inbox until a person approves.
 7. **Book** a call (Cal.com or Google Calendar), **proposal** and **contract** as PDFs, then **handoff** for signature.
 
 ## The send gates, in order
 
-kill switch, lead status stop rules, suppression list (read again from the database every time), address validity, role based address, existing customer, text consent and phone format, quiet hours (08:00 to 18:00 local on weekdays; an unknown time zone stops), a mailbox under its daily cap, then the mode (draft records and advances; live sends). A mailbox over 5 percent bounces on 20 or more sends is paused.
+kill switch, lead status stop rules, suppression list (read again from the database every time), address validity, role based address, existing customer, text consent and phone format, quiet hours (08:00 to 18:00 local on weekdays; an unknown time zone stops), a mailbox under its daily cap, then the mode (draft records and advances; live sends). The footer (company, address, stop line) is added to the body at this step. A mailbox over `BOUNCE_PAUSE_RATE` (5 percent) bounces on `BOUNCE_MIN_SENDS` (20) or more sends is paused. The business rules that are settings are listed in `04`.
 
 ## Safety design
 
@@ -36,8 +36,8 @@ The app can pull toward draft or stop (State keys `kill_switch`, `force_draft`).
 
 ## Data
 
-15 tables prefixed `cl_` plus the base's `core_` tables (events, approvals, audit, jobs, costs). Alembic migrations in `apps/api/alembic`. Migration up, drift check, down and up again pass on SQLite and Postgres 17.7.
+16 tables prefixed `cl_` plus the base's `core_` tables (events, approvals, audit, jobs, costs). Alembic migrations in `apps/api/alembic`. Migration up, drift check, down and up again pass on SQLite and Postgres 17.7.
 
 ## API
 
-46 paths, 48 operations, in `docs/openapi.json`. Live docs at `/docs` on the API.
+58 paths, 63 operations, in `docs/openapi.json`. Live docs at `/docs` on the API, in demo mode only (they are off when `DEMO_MODE=false`).

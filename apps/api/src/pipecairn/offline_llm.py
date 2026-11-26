@@ -79,16 +79,16 @@ def classify_text(text: str) -> tuple[str, float, str]:
 NEXT_STEP = {"interested": "book_call", "question": "answer_question", "wrong_person": "ask_referral", "out_of_office": "wait", "not_now": "snooze", "unsubscribe": "stop_contact", "bounce": "stop_contact"}
 
 
-def draft_text(intent: str, first_name: str, slots: list[str]) -> str:
+def draft_text(intent: str, first_name: str, slots: list[str], sender_name: str = "Alex") -> str:
     hi = f"Hi {first_name or 'there'},"
     if intent == "interested":
         times = "\n".join(f"- {s}" for s in slots) or "- [[FILL IN: two or three times you can do]]"
-        return f"{hi}\n\nGreat to hear. Here are a few times for a short call:\n{times}\n\nTell me which one works and I will send the invite.\n\nBest,\nAlex"
+        return f"{hi}\n\nGreat to hear. Here are a few times for a short call:\n{times}\n\nTell me which one works and I will send the invite.\n\nBest,\n{sender_name}"
     if intent == "question":
-        return f"{hi}\n\nThanks for asking. [[FILL IN: your answer to their question]]\n\nWould a short call help?\n\nBest,\nAlex"
+        return f"{hi}\n\nThanks for asking. [[FILL IN: your answer to their question]]\n\nWould a short call help?\n\nBest,\n{sender_name}"
     if intent == "wrong_person":
-        return f"{hi}\n\nThanks for letting me know. Who would be the right person to talk to about this? I will keep it short.\n\nBest,\nAlex"
-    return f"{hi}\n\nThanks for your reply.\n\nBest,\nAlex"
+        return f"{hi}\n\nThanks for letting me know. Who would be the right person to talk to about this? I will keep it short.\n\nBest,\n{sender_name}"
+    return f"{hi}\n\nThanks for your reply.\n\nBest,\n{sender_name}"
 
 
 def _plain_points(raw: str) -> str:
@@ -110,7 +110,7 @@ class OfflineBackend:
             text = json.dumps({"intent": intent, "confidence": conf, "reason": reason, "next_step": NEXT_STEP[intent]})
         elif task == "draft_reply":
             facts = json.loads((re.search(r"Facts \(JSON\): (\{.*\})", prompt) or [None, "{}"])[1])
-            text = json.dumps({"body": draft_text(facts.get("intent", ""), facts.get("recipient_first_name", ""), facts.get("times_you_may_offer", []))})
+            text = json.dumps({"body": draft_text(facts.get("intent", ""), facts.get("recipient_first_name", ""), facts.get("times_you_may_offer", []), facts.get("sender_first_name") or "Alex")})
         elif task == "explain_score":
             score = re.search(r"score: (\d+)", prompt)
             pts = re.search(r"points: (\{.*?\})", prompt)

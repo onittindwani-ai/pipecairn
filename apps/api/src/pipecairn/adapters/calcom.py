@@ -32,7 +32,7 @@ class CalcomCalendar:
         else:
             if not settings.calcom_api_key or not settings.calcom_event_type_id:
                 raise AdapterError("CALCOM_API_KEY and CALCOM_EVENT_TYPE_ID must both be set.")
-            self.client = httpx.Client(base_url=safe_base_url(settings.calcom_base_url), timeout=15, headers={"Authorization": f"Bearer {settings.calcom_api_key}"})
+            self.client = httpx.Client(base_url=safe_base_url(settings.calcom_base_url, allow_private=getattr(settings, "allow_private_base_urls", False)), timeout=15, headers={"Authorization": f"Bearer {settings.calcom_api_key}"})
 
     def _check(self, r: httpx.Response, what: str) -> dict:
         if r.status_code == 401:

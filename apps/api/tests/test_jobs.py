@@ -9,7 +9,7 @@ from pipecairn.adapters.seed import push_inbound_email
 from pipecairn.context import Ctx
 from pipecairn.models import Lead, Message, Reply, State
 from pipecairn.worker import run_once
-from conftest import DATA, make_settings
+from support import DATA, make_settings
 from sendora_core.jobs import Worker
 from sendora_core.models import Job
 
@@ -37,7 +37,7 @@ def test_reply_poll_captures_and_crm_sync_respects_draft_mode(tmp_path, factory,
         lead = s.scalars(select(Lead).where(Lead.status == "enrolled")).first()
         push_inbound_email(s_draft, InboundEmail("e1", lead.contact.email, "x@y.test", "Re", "Not now, try me in January"))
         s.commit()
-        assert jobs.job_reply_poll(s, ctx) == {"captured": 1}
+        assert jobs.job_reply_poll(s, ctx)["captured"] == 1
         res = jobs.job_crm_sync(s, ctx)
         assert res["synced"] == 0 and res["skipped_by_safety"] == 1  # draft mode writes nothing to a CRM
         s.commit()

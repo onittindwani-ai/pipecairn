@@ -5,7 +5,7 @@ Every outside fact this project relies on, with where it came from and when it w
 | Fact | Status | Source |
 |---|---|---|
 | Telnyx sends a text with `POST /v2/messages`, Bearer key, body `to`, `text`, `from`; the reply has `data.id` | VERIFIED | https://developers.telnyx.com (messages API) |
-| Telnyx signs webhooks with Ed25519 over `timestamp|body`; headers `telnyx-signature-ed25519` and `telnyx-timestamp`; 5 minute tolerance | VERIFIED | https://developers.telnyx.com (webhook signing) |
+| Telnyx signs webhooks with Ed25519 over `timestamp\|body`; headers `telnyx-signature-ed25519` and `telnyx-timestamp`; 5 minute tolerance | VERIFIED | https://developers.telnyx.com (webhook signing) |
 | Where the Telnyx public key lives in the portal | UNVERIFIED | A third party guide said Account Settings, Keys and Credentials |
 | Cal.com books with `POST /v2/bookings`, header `cal-api-version: 2026-02-25`, body `start`, `attendee`, `eventTypeId` | VERIFIED | https://cal.com/docs/api-reference/v2 |
 | Cal.com slots version header value | UNVERIFIED | Two docs pages gave two values, so it is a setting (`CALCOM_SLOTS_VERSION`) |
@@ -41,7 +41,7 @@ Tool comparison sources (pricing pages, licences, 2026-11-23): see `facts/compar
 
 | Fact | Source | Status |
 |---|---|---|
-| The live reader, drafter, score explainer and week summary call the shared wrapper (`sendora_core.llm`, Anthropic Messages API: `POST /v1/messages`, headers `x-api-key`, `anthropic-version: 2026-10-21`, `output_config.format` json_schema, no temperature or tools) | hub `docs/FACTS-AND-SOURCES.md` (Anthropic docs read 2026-11-23) | Request shape VERIFIED against the docs and a local fake server; **live behaviour UNVERIFIED** (no real key was used) |
-| Reply reading uses `claude-haiku-5-5`, drafts use `claude-sonnet-5-5` (the base defaults for bulk and hard) | hub facts, models overview | VERIFIED (docs) that the ids exist; their quality on replies here is UNVERIFIED |
+| The live reader, drafter, score explainer and week summary call the shared wrapper (`sendora_core.llm`, Anthropic Messages API: `POST /v1/messages`, headers `x-api-key`, `anthropic-version: 2026-10-21`, `output_config.format` json_schema, no temperature or tools) | Anthropic public API documentation read 2026-11-23 (the page addresses are in the facts file of the shared base, which is not part of this repository) | Request shape VERIFIED against the docs and a local fake server; **live behaviour UNVERIFIED** (no real key was used) |
+| Reply reading uses `claude-haiku-5-5`, drafts use `claude-sonnet-5-5` (the base defaults for bulk and hard) | Anthropic public models overview, read 2026-11-23 | VERIFIED (docs) that the ids exist; their quality on replies here is UNVERIFIED |
 | Recorded fixtures in `data/llm_fixtures/` | made by `tools/record_llm_fixtures.py` | Recorded from a local fake server that answers like the offline stand in. They are **not** answers of a real model |
 

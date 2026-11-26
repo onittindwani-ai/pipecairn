@@ -2,19 +2,20 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import timedelta
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from pipecairn import demo, inbox, intake, metrics, model_tasks
 from pipecairn.adapters.base import PersonRecord
 from pipecairn.context import Ctx, set_state
-from pipecairn.models import Lead, Sequence, State
+from pipecairn.models import Lead, Sequence, State, UnmatchedMail
 from pipecairn.sender import send_tick
 from sendora_core.events import record_event
 from sendora_core.jobs import Handler, enqueue
-from sendora_core.safety import SafetyError
+from sendora_core.safety import SafetyError, guard_write
 
 INTERVALS = {"send_tick": 60, "reply_poll": 60, "enrich": 300, "score": 300, "crm_sync": 600, "report": 7 * 24 * 3600}
 
@@ -28,28 +29,73 @@ def job_enrich(session: Session, ctx: Ctx) -> dict:
 
 
 def job_score(session: Session, ctx: Ctx) -> dict:
-    n = intake.score_pending(session, ctx.llm(session))
+    n = intake.score_pending(session, ctx.llm(session), ctx.settings.industries(), ctx.settings.deal_values())
     seq = active_sequence(session)
-    e = intake.enroll_pending(session, seq, ctx.now(session)) if seq else 0
+    e = intake.enroll_pending(session, seq, ctx.now(session), ctx.settings.min_enroll_score) if seq else 0
     return {"scored": n, "enrolled": e}
 
 
 def job_send_tick(session: Session, ctx: Ctx) -> dict:
-    r = send_tick(session, ctx.effective(session), ctx.adapters, ctx.now(session))
+    r = send_tick(session, ctx.effective(session), ctx.adapters, ctx.now(session), refresh=lambda: ctx.effective(session))  # the switch is read again before every send
     return {"sent": r.sent, "drafted": r.drafted, "deferred": r.deferred, "blocked": r.blocked, "stopped": r.stopped, "halted": r.halted, "reasons": r.reasons}
 
 
 def job_reply_poll(session: Session, ctx: Ctx) -> dict:
-    n = 0
-    for inbound in ctx.adapters.email.fetch_replies():
-        if inbox.capture_email(session, ctx.effective(session), ctx.llm(session), ctx.adapters.calendar, inbound, ctx.now(session)):
-            n += 1
-    return {"captured": n}
+    """Every message is stored and committed on its own, and only then marked as read in the mailbox. One message that cannot be read does not stop the
+    others; a message that cannot be stored three polls in a row is kept as unreadable mail for a person; mail that is not from a lead is left alone (not marked
+    as read) unless KEEP_UNMATCHED_MAIL is on. A failure part way keeps what was already stored, a stop request included."""
+    log = logging.getLogger("pipecairn.jobs")
+    n, failed = 0, 0
+    last_error: Exception | None = None
+    stored: list[str] = []
+    before = session.scalar(select(func.count()).select_from(UnmatchedMail)) or 0
+    email = ctx.adapters.email
+    try:
+        for inbound in email.fetch_replies():
+            try:
+                if inbox.capture_email(session, ctx.effective(session), ctx.llm(session), ctx.adapters.calendar, inbound, ctx.now(session)):
+                    n += 1
+                session.commit()
+            except Exception as exc:  # one bad message must not hide the ones behind it
+                session.rollback()
+                failed, last_error = failed + 1, exc
+                log.warning("could not store one inbound message: %s", type(exc).__name__)
+                if _give_up_on(session, inbound, ctx, log) and inbound.uid:
+                    stored.append(inbound.uid)
+                continue
+            if inbound.uid and not inbound.skipped:
+                stored.append(inbound.uid)
+    finally:
+        mark = getattr(email, "mark_seen", None)
+        if stored and mark is not None:
+            try:
+                mark(stored)
+            except Exception:  # not fatal: an unread message that is already stored is recognised and skipped next time
+                log.warning("could not mark %d message(s) as read", len(stored))
+    if failed and last_error is not None and n == 0 and not stored:
+        raise last_error  # nothing at all could be stored: let the job fail visibly instead of reporting success
+    return {"captured": n, "failed": failed, "unmatched": (session.scalar(select(func.count()).select_from(UnmatchedMail)) or 0) - before}
+
+
+def _give_up_on(session: Session, inbound, ctx: Ctx, log: logging.Logger) -> bool:
+    """Count the failure; at the limit keep the message as unreadable mail for a person. True when it was kept (so it can be marked as read)."""
+    try:
+        kept = inbox.note_read_failure(session, inbound, ctx.now(session))
+        session.commit()
+        return kept
+    except Exception as exc:
+        session.rollback()
+        log.warning("could not record the failure of one inbound message: %s", type(exc).__name__)
+        return False
 
 
 def job_crm_sync(session: Session, ctx: Ctx) -> dict:
     done = skipped = 0
-    eff = ctx.effective(session)
+    eff = ctx.effective(session)  # the kill switch and "force draft" are set in the app, so they live in the database, not in the environment
+    try:
+        guard_write(eff, "crm.upsert")  # the adapter only knows the environment; this is what makes the in app switch stop every write to the CRM
+    except SafetyError:
+        return {"synced": 0, "skipped_by_safety": 1, "mode": eff.mode.value}
     for lead in session.scalars(select(Lead).where(Lead.crm_id == "", Lead.score.is_not(None), Lead.status.notin_(("suppressed", "dead")))):
         c = lead.contact
         try:
@@ -96,7 +142,7 @@ def run_cycle(session: Session, ctx: Ctx) -> dict:
     """Everything once, in order. The demo's Run button and the tests use this. Jobs use the same functions."""
     out = {"enrich": job_enrich(session, ctx), "score": job_score(session, ctx)}
     out["send"] = job_send_tick(session, ctx)
-    if ctx.settings.demo_mode:
+    if ctx.settings.demo_shortcuts:
         out["scripted_replies"] = demo.deliver_scripted(session, ctx, ctx.now(session))
     out["replies"] = job_reply_poll(session, ctx)
     out["crm"] = job_crm_sync(session, ctx)
